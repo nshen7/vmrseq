@@ -30,7 +30,6 @@
 #' @return a \code{GRanges} object that contains the results of the inference.
 #'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
-#' @importFrom bumphunter clusterMaker getSegments
 #'
 #' @import GenomicRanges
 #' @import dplyr

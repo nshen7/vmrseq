@@ -23,7 +23,7 @@
 #' P(0|0) => '00'; P(0|1) => '01'; P(1|0) => '10'; P(1|1) => '11'.
 #'
 #' @import dplyr
-#' @import stats
+#' @importFrom stats loess
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #'
 #' @export
