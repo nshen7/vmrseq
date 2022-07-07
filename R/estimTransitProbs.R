@@ -68,7 +68,7 @@ estimTransitProbs <- function(list_cells,
   )
 }
 
-
+# compute probs in one cell
 .computeProb1Cell <- function(df, max_dist_bp, buffer_bp){
 
   df <- df %>% na.omit()
@@ -95,6 +95,7 @@ estimTransitProbs <- function(list_cells,
   return(smr_df)
 }
 
+# loess fitting from cell-level summary data
 .estimTransitProbsFromSummary <- function(smr_cells, max_dist_bp, buffer_bp, ...){
 
   stopifnot("max(smr_cells$dist_bp) not equal to max_dist_bp + buffer_bp." =

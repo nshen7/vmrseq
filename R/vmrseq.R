@@ -33,7 +33,8 @@
 #' @importFrom bumphunter clusterMaker getSegments
 #'
 #' @import GenomicRanges
-#' @import tidyverse
+#' @import dplyr
+#'
 #'
 #' @export
 #'
@@ -83,20 +84,20 @@ vmrseq <- function(gr, cutoff = 0.1,
   }
 
   # Bump hunting candidate regions. Outputs list of index vectors,
-  # each list element is one CR
+  # each list element is one CR.
   message("Detecting candidate regions with smoothed variance larger than ", cutoff)
-  CR_inds <- bumphunt(gr = gr, minInSpan = minInSpan,
-                      minNumRegion = minNumRegion, cutoff = cutoff,
-                      maxGap = maxGap,
-                      smooth = smooth,
-                      maxGapSmooth = maxGapSmooth, bpSpan = bpSpan,
-                      verbose = verbose,
-                      parallel = parallel)
+  CRI <- bumphunt(gr = gr, minInSpan = minInSpan,
+                  minNumRegion = minNumRegion, cutoff = cutoff,
+                  maxGap = maxGap,
+                  smooth = smooth,
+                  maxGapSmooth = maxGapSmooth, bpSpan = bpSpan,
+                  verbose = verbose,
+                  parallel = parallel)
 
   # check that at least one candidate region was found; if there were none
   # there is no need to go on to VMR detection
 
-  if (length(CRS) == 0) {
+  if (length(CRI) == 0) {
     message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
   } else {
