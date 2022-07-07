@@ -17,12 +17,15 @@
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
 #' backend. The default option is \code{BiocParallel::bpparam()} which will
 #' automatically creates a cluster appropriate for the operating system.
+#' @param degree 'degree' argument for `loess` function
+#' @param span 'span' argument for `loess` function
 #' @param ... additional arguments passed into the `loess` function.
 #'
 #' @return a 'transitProbs' object. Postfixes rule in the output variables:
 #' P(0|0) => '00'; P(0|1) => '01'; P(1|0) => '10'; P(1|1) => '11'.
 #'
 #' @import dplyr
+#' @importFrom methods new
 #' @importFrom stats loess
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #'

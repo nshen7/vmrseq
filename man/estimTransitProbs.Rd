@@ -27,6 +27,10 @@ reach constant value. Default value is 2000.}
 \item{buffer_bp}{length of buffer in base pairs used to fit smoothing
 curve near maximum distance and plot diagnostics. Default is 3000.}
 
+\item{degree}{'degree' argument for `loess` function}
+
+\item{span}{'span' argument for `loess` function}
+
 \item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
 backend. The default option is \code{BiocParallel::bpparam()} which will
 automatically creates a cluster appropriate for the operating system.}

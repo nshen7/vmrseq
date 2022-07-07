@@ -4,16 +4,19 @@
 \alias{plotTransitProbs}
 \title{Plot fitted transition probabilities}
 \usage{
-plotTransitProbs(tp, lineSize = 0.2, plotTrain = T, pointSize = 0.2)
+plotTransitProbs(tp, line_size = 0.2, plot_train = T, point_size = 0.2)
 }
 \arguments{
-\item{lineSize}{size of fitted loess smooth line. Default value is 0.2.}
+\item{tp}{'transitProbs' object storing information about trained transition
+probabilities. Can be obtained from function `estimTransitProbs`}
 
-\item{plotTrain}{logical value indiating whether to plot training data.
+\item{line_size}{size of fitted loess smooth line. Default value is 0.2.}
+
+\item{plot_train}{logical value indiating whether to plot training data.
 Default is TRUE.}
 
-\item{pointSize}{size of training data points. Only applicable when
-`plotTrain = T`. Default value is 0.2.}
+\item{point_size}{size of training data points. Only applicable when
+`plot_train = T`. Default value is 0.2.}
 }
 \description{
 Plot fitted transition probabilities
