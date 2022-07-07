@@ -40,6 +40,12 @@ estimTransitProbs <- function(list_cells,
   BiocParallel::register(BPPARAM)
   backend <- paste0("BiocParallel:", class(bpparam())[1])
 
+  for (i in length(list_cells)) {
+    list_cells[[i]] <- list_cells[[i]] %>% na.omit()
+    if(!all(list_cells[[i]][,3] %in% 0:1))
+      stop("Methylation value should be either integer 0 or 1.")
+  }
+
   if (bpparam()$workers == 1) {
     mes <- "Using a single core (backend: %s)."
     message(sprintf(mes, backend))
@@ -54,16 +60,27 @@ estimTransitProbs <- function(list_cells,
   message("Computing transition probs within cells.")
   # Proportions of sites in categories 00, 01, 10, 11 conditioning on
   # CpG distance
-  smr_cells <- do.call(rbind,
-                       list_cells %>% BiocParallel::bplapply(.computeProb1Cell,
-                                               max_dist_bp = max_dist_bp,
-                                               buffer_bp = buffer_bp)
-  )
+  if (parallel) {
+    smr_cells <- do.call(
+      "rbind",
+      list_cells %>% BiocParallel::bplapply(.computeProb1Cell,
+                                            max_dist_bp = max_dist_bp,
+                                            buffer_bp = buffer_bp)
+    )
+  } else {
+    smr_cells <- do.call(
+      "rbind",
+      list_cells %>% lapply(.computeProb1Cell,
+                            max_dist_bp = max_dist_bp,
+                            buffer_bp = buffer_bp)
+    )
+  }
 
-  return(.estimTransitProbsFromSummary(
-    smr_cells = smr_cells,
-    max_dist_bp = max_dist_bp, buffer_bp = buffer_bp,
-    parallel = parallel, ...
+  return(
+    .estimTransitProbsFromSummary(
+      smr_cells = smr_cells,
+      max_dist_bp = max_dist_bp, buffer_bp = buffer_bp,
+      parallel = parallel, ...
     )
   )
 }
@@ -71,14 +88,11 @@ estimTransitProbs <- function(list_cells,
 # compute probs in one cell
 .computeProb1Cell <- function(df, max_dist_bp, buffer_bp){
 
-  df <- df %>% na.omit()
-  if(!all(df[,3] %in% 0:1)) stop("Methylation value should be either 0 or 1.")
-
   colnames(df) <- c("chr", "pos", "MF")
   smr_df <- df %>%
     group_by(chr) %>%
-    mutate(MF_lag1 = lag(MF), dist_bp = c(NA, diff(pos))) %>%
-    filter(dist_bp <= max_dist_bp + buffer_bp) %>%
+    mutate(MF_lag1 = dplyr::lag(MF), dist_bp = c(NA, diff(pos))) %>%
+    dplyr::filter(dist_bp <= max_dist_bp + buffer_bp) %>%
     group_by(dist_bp) %>%
     summarise(N_00 = sum(MF == 0 & MF_lag1==0), # number of sites from 0 to 0
               N_10 = sum(MF == 1 & MF_lag1==0), # number of sites from 0 to 1
@@ -92,6 +106,7 @@ estimTransitProbs <- function(list_cells,
            p_11 = 1 - p_01 # P(X_i = 1 | X_{i-1} = 1)
     ) %>%
     dplyr::select(-c(N_00, N_10, N_01, N_11))
+
   return(smr_df)
 }
 
@@ -119,7 +134,7 @@ estimTransitProbs <- function(list_cells,
 
   message("Loess smoothing over probs.")
   x <- 1:(max_dist_bp+buffer_bp) # starting from 1 so that row number equal to distance
-  smoothed_probs <- with(train_data %>% na.omit() %>% filter(var_00!=0, var_01!=0, var_10!=0, var_11!=0),
+  smoothed_probs <- with(train_data %>% na.omit() %>% dplyr::filter(var_00!=0, var_01!=0, var_10!=0, var_11!=0),
                          data.frame(phat_00 = loess(pbar_00 ~ log(dist_bp), weights = 1/var_00, ...) %>% predict(newdata = log(x)),
                                     phat_01 = loess(pbar_01 ~ log(dist_bp), weights = 1/var_01, ...) %>% predict(newdata = log(x)),
                                     phat_10 = loess(pbar_10 ~ log(dist_bp), weights = 1/var_10, ...) %>% predict(newdata = log(x)),
