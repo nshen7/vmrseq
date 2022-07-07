@@ -33,6 +33,7 @@
 estimTransitProbs <- function(list_cells,
                               max_dist_bp = 2000,
                               buffer_bp = 3000,
+                              degree = 2, span = 0.02,
                               BPPARAM = bpparam(),
                               ...) {
 
@@ -80,6 +81,7 @@ estimTransitProbs <- function(list_cells,
     .estimTransitProbsFromSummary(
       smr_cells = smr_cells,
       max_dist_bp = max_dist_bp, buffer_bp = buffer_bp,
+      degree = degree, span = span,
       parallel = parallel, ...
     )
   )
@@ -111,13 +113,14 @@ estimTransitProbs <- function(list_cells,
 }
 
 # loess fitting from cell-level summary data
-.estimTransitProbsFromSummary <- function(smr_cells, max_dist_bp, buffer_bp, ...){
+.estimTransitProbsFromSummary <- function(smr_cells, max_dist_bp, buffer_bp, degree, span, ...){
 
   stopifnot("max(smr_cells$dist_bp) not equal to max_dist_bp + buffer_bp." =
               max(smr_cells$dist_bp) == max_dist_bp + buffer_bp)
 
   message("Computing mean and var of the probs across cells.")
   train_data <- smr_cells %>%
+    dplyr::filter(dist_bp > 0) %>%
     group_by(dist_bp) %>%
     summarise(pbar_00 = mean(p_00, na.rm = T),
               pbar_01 = mean(p_01, na.rm = T),
@@ -134,11 +137,11 @@ estimTransitProbs <- function(list_cells,
 
   message("Loess smoothing over probs.")
   x <- 1:(max_dist_bp+buffer_bp) # starting from 1 so that row number equal to distance
-  smoothed_probs <- with(train_data %>% na.omit() %>% dplyr::filter(var_00!=0, var_01!=0, var_10!=0, var_11!=0),
-                         data.frame(phat_00 = loess(pbar_00 ~ log(dist_bp), weights = 1/var_00, ...) %>% predict(newdata = log(x)),
-                                    phat_01 = loess(pbar_01 ~ log(dist_bp), weights = 1/var_01, ...) %>% predict(newdata = log(x)),
-                                    phat_10 = loess(pbar_10 ~ log(dist_bp), weights = 1/var_10, ...) %>% predict(newdata = log(x)),
-                                    phat_11 = loess(pbar_11 ~ log(dist_bp), weights = 1/var_11, ...) %>% predict(newdata = log(x))
+  smoothed_probs <- with(train_data %>% dplyr::filter(var_00!=0, var_01!=0, var_10!=0, var_11!=0),
+                         data.frame(phat_00 = loess(pbar_00 ~ log(dist_bp), weights = 1/var_00, degree = degree, span = span, ...) %>% predict(newdata = log(x)),
+                                    phat_01 = loess(pbar_01 ~ log(dist_bp), weights = 1/var_01, degree = degree, span = span, ...) %>% predict(newdata = log(x)),
+                                    phat_10 = loess(pbar_10 ~ log(dist_bp), weights = 1/var_10, degree = degree, span = span, ...) %>% predict(newdata = log(x)),
+                                    phat_11 = loess(pbar_11 ~ log(dist_bp), weights = 1/var_11, degree = degree, span = span, ...) %>% predict(newdata = log(x))
                          )
   )
   tp <- new("transitProbs",

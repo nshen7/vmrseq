@@ -8,6 +8,8 @@ estimTransitProbs(
   list_cells,
   max_dist_bp = 2000,
   buffer_bp = 3000,
+  degree = 2,
+  span = 0.02,
   BPPARAM = bpparam(),
   ...
 )
