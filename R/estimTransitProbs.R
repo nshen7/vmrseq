@@ -66,14 +66,14 @@ estimTransitProbs <- function(list_cells,
   # CpG distance
   if (parallel) {
     smr_cells <- do.call(
-      "rbind",
+      rbind,
       list_cells %>% BiocParallel::bplapply(.computeProb1Cell,
                                             max_dist_bp = max_dist_bp,
                                             buffer_bp = buffer_bp)
     )
   } else {
     smr_cells <- do.call(
-      "rbind",
+      rbind,
       list_cells %>% lapply(.computeProb1Cell,
                             max_dist_bp = max_dist_bp,
                             buffer_bp = buffer_bp)

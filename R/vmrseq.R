@@ -5,10 +5,13 @@
 #' using a hidden Markov model.
 #'
 #' @param gr GRanges object containing the chromosome position and methylation
-#' values. Should contain two metadata columns: `meth` and `total`, indicating
-#' number of methylated cells and total number of cells.
+#' values. Should contain two element metadata columns that can be extracted using
+#' `values(gr)`: `meth` and `total`, indicating number of methylated cells and
+#' total number of cells.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
+#' @param maxGap integer value representing maximum number of basepairs in
+#' between neighboring CpGs to be included in the same VMR.
 #' @param minNumRegion positive integer that represents the minimum number of
 #' CpGs to consider for an VMR as well as a candidate region. Default value is
 #' 5. Minimum value is 3.
@@ -21,7 +24,6 @@
 #' @param bpSpan
 #' @param minInSpan
 #' @param maxGapSmooth
-#' @param maxGap
 #' @param verbose
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
 #' backend. The default option is \code{BiocParallel::bpparam()} which will
@@ -30,7 +32,7 @@
 #' @return a \code{GRanges} object that contains the results of the inference.
 #'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
-#'
+#' @importFrom bumphunter clusterMaker getSegments
 #' @import GenomicRanges
 #' @import dplyr
 #'
@@ -40,11 +42,14 @@
 #' @examples
 #'
 #'
-vmrseq <- function(gr, cutoff = 0.1,
-                   minNumRegion = 5, minNumLong = 20,
+vmrseq <- function(gr,
+                   cutoff = 0.1, # params for CR calling
+                   maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    transitProbs = NULL,
-                   smooth = TRUE, bpSpan = 1000,
-                   minInSpan = 10, maxGapSmooth = 2500, maxGap = 1000,
+                   minNumLong = 20,
+                   smooth = TRUE,
+                   maxGapSmooth = 2500,
+                   bpSpan = 1000, minInSpan = 10, # params for smoother
                    verbose = TRUE, BPPARAM = bpparam()) {
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
@@ -53,6 +58,13 @@ vmrseq <- function(gr, cutoff = 0.1,
     stop("'minNumRegion' must be at least 3.")
   if (minNumLong < minNumRegion)
     stop("'minNumLong' must be greater or equal to `minNumRegion`.")
+  if (class(gr)[1] != "GRanges")
+    stop("'gr' must be a GRanges object.")
+  if (is.null(gr$total) | all(gr$total != round(gr$total)))
+    stop("'gr' must contain an integer column 'total' in element metadata.")
+  if (is.null(gr$meth) | all(gr$meth != round(gr$meth)))
+    stop("'gr' must contain an integer column 'meth' in element metadata.")
+
 
   # TODO: formality check for 'transitProbs'
 
@@ -85,11 +97,12 @@ vmrseq <- function(gr, cutoff = 0.1,
   # Bump hunting candidate regions. Outputs list of index vectors,
   # each list element is one CR.
   message("Detecting candidate regions with smoothed variance larger than ", cutoff)
-  CRI <- bumphunt(gr = gr, minInSpan = minInSpan,
-                  minNumRegion = minNumRegion, cutoff = cutoff,
-                  maxGap = maxGap,
+  CRI <- bumphunt(gr = gr,
+                  cutoff = cutoff,
+                  maxGap = maxGap, minNumRegion = minNumRegion,
                   smooth = smooth,
-                  maxGapSmooth = maxGapSmooth, bpSpan = bpSpan,
+                  maxGapSmooth = maxGapSmooth,
+                  minInSpan = minInSpan, bpSpan = bpSpan,
                   verbose = verbose,
                   parallel = parallel)
 

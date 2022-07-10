@@ -7,25 +7,29 @@
 vmrseq(
   gr,
   cutoff = 0.1,
+  maxGap = 1000,
   minNumRegion = 5,
-  minNumLong = 20,
   transitProbs = NULL,
+  minNumLong = 20,
   smooth = TRUE,
+  maxGapSmooth = 2500,
   bpSpan = 1000,
   minInSpan = 10,
-  maxGapSmooth = 2500,
-  maxGap = 1000,
   verbose = TRUE,
   BPPARAM = bpparam()
 )
 }
 \arguments{
 \item{gr}{GRanges object containing the chromosome position and methylation
-values. Should contain two metadata columns: `meth` and `total`, indicating
-number of methylated cells and total number of cells.}
+values. Should contain two element metadata columns that can be extracted using
+`values(gr)`: `meth` and `total`, indicating number of methylated cells and
+total number of cells.}
 
 \item{cutoff}{positive scalar value that represents the cutoff value of
 variance that is used to discover candidate regions. Default value is 0.10.}
+
+\item{maxGap}{integer value representing maximum number of basepairs in
+between neighboring CpGs to be included in the same VMR.}
 
 \item{minNumRegion}{positive integer that represents the minimum number of
 CpGs to consider for an VMR as well as a candidate region. Default value is
