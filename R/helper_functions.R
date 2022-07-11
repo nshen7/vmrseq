@@ -70,14 +70,14 @@ smoother <- function(x, y, weights, chr,
                           weightsi = weightsi)
 
       # balance minInSpan and bpSpan
-      nn <- minInSpan / length(Index)
+      nn <- minInSpan / length(ix)
       fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan),
                     data = sdata, weights = weightsi, family = "gaussian",
                     maxk = 10000)
       yi <- fitted(fit)
       smoothed <- TRUE
     } else {
-      yi <- NA
+      yi <- rep(NA, length(yi))
       smoothed <- FALSE
     }
     return(data.frame(fitted = as.vector(yi), smoothed = smoothed))
@@ -97,11 +97,9 @@ smoother <- function(x, y, weights, chr,
   Indexes <- split(seq(along = clusterC), clusterC)
 
   if (parallel) {
-    ret <- do.call(rbind, bplapply(Indexes,
-                                   function(idx) locfitByCluster(idx)))
+    ret <- do.call(rbind, bplapply(Indexes, function(idx) locfitByCluster(idx)))
   } else {
-    ret <- do.call(rbind, lapply(Indexes,
-                                 function(idx) locfitByCluster(idx)))
+    ret <- do.call(rbind, lapply(Indexes, function(idx) locfitByCluster(idx)))
   }
 
   if (verbose) {
@@ -111,6 +109,6 @@ smoother <- function(x, y, weights, chr,
             appendLF = FALSE)
   }
 
-  return(ret)
+  return(ret) # data.frame with columns: 'fitted' (numeric), 'smoothed' (logical)
 }
 
