@@ -1,38 +1,79 @@
-bumphunt <- function(gr,
-                     cutoff = 0.1,
-                     maxGap = 1000, minNumRegion = 5,
-                     smooth = T,
-                     maxGapSmooth = 2500,
-                     minInSpan = 10, bpSpan = 1000,
-                     verbose = TRUE,
-                     parallel = FALSE) {
+callCandiRegions <- function(gr,
+                             cutoff = 0.1,
+                             maxGap = 1000, minNumRegion = 5,
+                             smooth = T,
+                             maxGapSmooth = 2500,
+                             minInSpan = 10, bpSpan = 1000,
+                             verbose = TRUE,
+                             parallel = FALSE) {
 
   # Compute variance for individual sites
   gr$MF <- with(values(gr), meth / total)
-  gr$var <- with(values(gr), MF * (1-MF))
+  gr$var_raw <- with(values(gr), MF * (1-MF))
 
   # Apply smoother on each chromosome serially
   chrs <- as.character(unique(seqnames(gr)))
+
+  fit <- NULL
   for (chromosome in chrs) {
+
+    if (verbose) message("...Chromosome ", paste(chromosome, collapse = ", "), ": ", appendLF = FALSE)
+
     # Subset one chromosome from gr
     gr_chr <- subset(gr, seqnames(gr) == chromosome)
-    if (smooth) {
 
-      weights <- gr_chr$total
-      # smooth on one chromosome
-      smooth_fit <- smoother(x = start(gr_chr), y = gr_chr$var,
-                             chr = chromosome,
-                             weights = weights,
-                             maxGap = maxGap, minNumRegion = minNumRegion,
-                             maxGapSmooth = maxGapSmooth,
-                             minInSpan = minInSpan, bpSpan = bpSpan,
-                             verbose = verbose,
-                             parallel = parallel)
-
+    # Skip chromosomes that have fewer than minNumRegion loci
+    if (length(gr_chr) < minNumRegion){
+      message("No candidates found.")
+      next
     }
 
+    # Locfit smooth on var
+    if (smooth) {
+      weights <- gr_chr$total
+      # smooth on one chromosome
+      fit_chr <- smoother(x = start(gr_chr), y = gr_chr$var_raw,
+                          chr = chromosome,
+                          weights = weights,
+                          maxGap = maxGap, minNumRegion = minNumRegion,
+                          maxGapSmooth = maxGapSmooth,
+                          minInSpan = minInSpan, bpSpan = bpSpan,
+                          verbose = verbose,
+                          parallel = parallel)
+    } else {
+      fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), smoothed = FALSE)
+    }
+
+    # Keep the raw var if not smoothed
+    ind <- which(!fit_chr$smoothed)
+    if (length(ind) > 0) {
+      fit_chr$fitted[ind] <- gr_chr$var_raw[ind]
+    } else {
+      fit_chr$fitted <- gr_chr$var_raw
+    }
+
+    # Concatenate fit_chr from all chromosomes
+    fit <- rbind(fit, fit_chr)
   }
 
+  if (nrow(fit) != length(gr)) {
+    stop("nrow(fit) does not match with length(gr).")
+  } else {
+    gr$var <- fit$fitted
+  }
+
+  # Call candidate regions
+  cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
+                                      pos = start(gr),
+                                      maxGap = maxGap,
+                                      assumeSorted = TRUE)
+  Indexes <- bumphunter::getSegments(x = gr$var, f = cluster,
+                                     cutoff = cutoff,
+                                     assumeSorted = TRUE,
+                                     verbose = FALSE)
+
+  CRI <- Indexes$upIndex[sapply(Indexes$upIndex, length) >= minNumRegion]
+  return(CRI)
 }
 
 
@@ -57,7 +98,7 @@ smoother <- function(x, y, weights, chr,
     clusteri <- clusterC[ix]
 
     if (is.null((yi)))
-      stop("y (var) is missing")
+      stop("y (var_raw) is missing")
     if (is.null(xi))
       stop("x (pos) is missing")
     if (is.null(clusteri))
@@ -91,7 +132,7 @@ smoother <- function(x, y, weights, chr,
   chr_len <- rep(chr, each = length(x))
   clusterC <- bumphunter::clusterMaker(factor(chr_len, levels=unique(chr_len)),
                                        x,
-                                       assumeSorted = T,
+                                       assumeSorted = TRUE,
                                        maxGap = maxGapSmooth)
 
   Indexes <- split(seq(along = clusterC), clusterC)

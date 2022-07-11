@@ -10,6 +10,9 @@
 #' total number of cells.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
+#' @param minCov integer scalar value that represents minimum across-cell coverage
+#' in QC step. Sites with coverage lower than `minCov` are removed. Default value
+#' is 5.
 #' @param maxGap integer value representing maximum number of basepairs in
 #' between neighboring CpGs to be included in the same VMR.
 #' @param minNumRegion positive integer that represents the minimum number of
@@ -44,6 +47,7 @@
 #'
 vmrseq <- function(gr,
                    cutoff = 0.1, # params for CR calling
+                   minCov = 5,
                    maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    transitProbs = NULL,
                    minNumLong = 20,
@@ -74,6 +78,11 @@ vmrseq <- function(gr,
     gr <- sort(gr)
   }
 
+  # QC: remove low-coverage sites
+  if (minCov > 0 & min(gr$total) < minCov) {
+    gr <- subset(gr, gr$total >= minCov)
+    message("Removed sites with coverage lower than ", minCov)
+  }
 
   # Register the parallel backend
   BiocParallel::register(BPPARAM)
@@ -97,14 +106,14 @@ vmrseq <- function(gr,
   # Bump hunting candidate regions. Outputs list of index vectors,
   # each list element is one CR.
   message("Detecting candidate regions with smoothed variance larger than ", cutoff)
-  CRI <- bumphunt(gr = gr,
-                  cutoff = cutoff,
-                  maxGap = maxGap, minNumRegion = minNumRegion,
-                  smooth = smooth,
-                  maxGapSmooth = maxGapSmooth,
-                  minInSpan = minInSpan, bpSpan = bpSpan,
-                  verbose = verbose,
-                  parallel = parallel)
+  CRI <- callCandiRegions(gr = gr,
+                          cutoff = cutoff,
+                          maxGap = maxGap, minNumRegion = minNumRegion,
+                          smooth = smooth,
+                          maxGapSmooth = maxGapSmooth,
+                          minInSpan = minInSpan, bpSpan = bpSpan,
+                          verbose = verbose,
+                          parallel = parallel)
 
   # check that at least one candidate region was found; if there were none
   # there is no need to go on to VMR detection
