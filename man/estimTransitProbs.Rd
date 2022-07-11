@@ -47,3 +47,6 @@ conditioning on CpG-CpG distance in each cell. Then the probs from
 individual cells are smoothed over CpG-CpG distance using `loess`
 with inverse-variance fitting.
 }
+\examples{
+
+}
