@@ -7,6 +7,7 @@
 vmrseq(
   gr,
   cutoff = 0.1,
+  minCov = 5,
   maxGap = 1000,
   minNumRegion = 5,
   transitProbs = NULL,
@@ -27,6 +28,10 @@ total number of cells.}
 
 \item{cutoff}{positive scalar value that represents the cutoff value of
 variance that is used to discover candidate regions. Default value is 0.10.}
+
+\item{minCov}{integer scalar value that represents minimum across-cell coverage
+in QC step. Sites with coverage lower than `minCov` are removed. Default value
+is 5.}
 
 \item{maxGap}{integer value representing maximum number of basepairs in
 between neighboring CpGs to be included in the same VMR.}

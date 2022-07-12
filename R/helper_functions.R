@@ -72,7 +72,8 @@ callCandiRegions <- function(gr,
                                      assumeSorted = TRUE,
                                      verbose = FALSE)
 
-  CRI <- Indexes$upIndex[sapply(Indexes$upIndex, length) >= minNumRegion]
+  upIndex <- Indexes$upIndex
+  CRI <- upIndex[lengths(upIndex) >= minNumRegion]
   return(CRI)
 }
 
@@ -152,4 +153,6 @@ smoother <- function(x, y, weights, chr,
 
   return(ret) # data.frame with columns: 'fitted' (numeric), 'smoothed' (logical)
 }
+
+
 

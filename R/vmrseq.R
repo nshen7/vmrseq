@@ -115,12 +115,15 @@ vmrseq <- function(gr,
                           verbose = verbose,
                           parallel = parallel)
 
-  # check that at least one candidate region was found; if there were none
-  # there is no need to go on to VMR detection
-
   if (length(CRI) == 0) {
     message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
+  } else {
+    message("Finished calling candidate regions. (", length(CRI), " candidate regions found in total)")
+  }
+
+  if (parallel) {
+
   } else {
 
   }
