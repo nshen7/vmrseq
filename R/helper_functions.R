@@ -1,11 +1,11 @@
-callCandiRegions <- function(gr,
-                             cutoff = 0.1,
-                             maxGap = 1000, minNumRegion = 5,
-                             smooth = T,
-                             maxGapSmooth = 2500,
-                             minInSpan = 10, bpSpan = 1000,
-                             verbose = TRUE,
-                             parallel = FALSE) {
+callCandiRegion <- function(gr,
+                            cutoff = 0.1,
+                            maxGap = 1000, minNumRegion = 5,
+                            smooth = T,
+                            maxGapSmooth = 2500,
+                            minInSpan = 10, bpSpan = 1000,
+                            verbose = TRUE,
+                            parallel = FALSE) {
 
   # Compute variance for individual sites
   gr$MF <- with(values(gr), meth / total)
@@ -156,15 +156,15 @@ smoother <- function(x, y, weights, chr,
 
 
 
-detectVMRs <- function(gr,
-                     CRI,
-                     maxGap = 1000, minNumRegion = 5,
-                     tp = NULL,
-                     maxNumMerge = 1,
-                     minNumLong = 20,
-                     control = optimize.control(),
-                     verbose = TRUE,
-                     parallel = FALSE) {
+detectVMR <- function(gr,
+                      CRI,
+                      maxGap = 1000, minNumRegion = 5,
+                      tp = NULL,
+                      maxNumMerge = 1,
+                      minNumLong = 20,
+                      control = optimize.control(),
+                      verbose = TRUE,
+                      parallel = FALSE) {
 
   # If no `tp` provided, use internal `tp0`
   if (is.null(tp)) tp <- vmrseq:::tp0
