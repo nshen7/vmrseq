@@ -1,7 +1,8 @@
-# For computing REFARRAY, i.e., array of log factorial of length `max_size` -- for the purpose of easy computation
-.calRefArray <- function(max_size) cumsum(log(1:max_size))
+###### utils =====
+# For computing REFARRAY, i.e., array of log factorial of length `max_cov` -- for the purpose of easy computation
+.calRefArray <- function(max_cov) cumsum(log(1:max_cov))
 
-# Outputs the log factorial with Stirling's approximation when int >= max_size
+# Outputs the log factorial with Stirling's approximation when int >= max_cov
 .logFactorial <- function(int, REFARRAY){
   # `int` is a non-negative integer
   if(int == 0) return(0)
@@ -18,130 +19,80 @@
 .calChoiceArray <- function(REFARRAY){
   # To store the values when n or k equals 0, we add one dimension for both row and column
   # thus the choose(n, k) is CHOICEARRAY[n+1, k+1]
-  max_size <- length(REFARRAY)
-  CHOICEARRAY <- matrix(0, max_size+1, max_size+1)
+  max_cov <- length(REFARRAY)
+  CHOICEARRAY <- matrix(0, max_cov+1, max_cov+1)
 
-  for(n in 1:(max_size+1))
+  for(n in 1:(max_cov+1))
     for(k in 1:n)
       CHOICEARRAY[n,k] <- .logChoose(n-1, k-1, REFARRAY)
 
-  rownames(CHOICEARRAY) <- colnames(CHOICEARRAY) <- 0:max_size
+  rownames(CHOICEARRAY) <- colnames(CHOICEARRAY) <- 0:max_cov
   return(CHOICEARRAY)
 }
 
-# mod0_u <- readRDS("code/deprecated/estim_emiBetaPrior_ZIBBregression/model_unmeth_ZIBBregression.rds")
-# mod0_m <- readRDS("code/deprecated/estim_emiBetaPrior_ZIBBregression/model_meth_BBregression.rds")
-# data0_u <- readRDS("data/interim/deprecated/estim_emiBetaPrior_ZIBBregression/emiBetaPrior_subtype_subsample_unmethClust.rds")
-# data0_m <- readRDS("data/interim/deprecated/estim_emiBetaPrior_ZIBBregression/emiBetaPrior_subtype_subsample_methClust.rds")
-
-.priorParams <- function(med_cov, type,
-                         mod_u = mod0_u, mod_m = mod0_m,
-                         data_u = data0_u, data_m = data0_m){
-  # Estimates parameters in beta-mixture priors based on number of cells.
+# Estimates parameters in beta-mixture priors based on number of cells.
+.priorParams <- function(med_cov, type){
   # `med_cov` is the median across-cell coverage in the input dataset.
   # `type` should be 'u' or 'm' indicating grouping type.
 
   stopifnot("`type` should be either 'u' or 'm'." = type %in% c('u','m'))
-  stopifnot("`med_cov` should be positive." = med_cov > 0)
+  stopifnot("`med_cov` should be a positive integer." = med_cov > 0 & round(med_cov)==med_cov)
 
-  if(type == 'u'){
-    nu <- mod_u %>% predict(what = "nu", type = "response",
-                            newdata = data.frame(med_cov = med_cov),
-                            data = data_u)
-    mu <- mod_u %>% predict(what = "mu", type = "response",
-                            newdata = data.frame(med_cov = med_cov),
-                            data = data_u)
-    sigma <- mod_u %>% predict(what = "sigma", type = "response",
-                               newdata = data.frame(med_cov = med_cov),
-                               data = data_u)
-    return(c(nu = nu, mu = mu, sigma = sigma))
+  if (type == 'u') {
+    pars <- vmrseq::params_u
+    max_mc <- max(pars$med_cov)
+    if (med_cov > max_mc) {
+      return(c(nu = pars$nu[max_mc], mu = pars$mu[max_mc], sigma = pars$sigma[max_mc]))
+    } else {
+      return(c(nu = pars$nu[med_cov], mu = pars$mu[med_cov], sigma = pars$sigma[med_cov]))
+    }
   } else {
-    mu <- mod_m %>% predict(what = "mu", type = "response",
-                            newdata = data.frame(med_cov = med_cov),
-                            data = data_m)
-    sigma <- mod_m %>% predict(what = "sigma", type = "response",
-                               newdata = data.frame(med_cov = med_cov),
-                               data = data_m)
-    return(c(mu = mu, sigma = sigma))
+    pars <- vmrseq::params_m
+    return(c(mu = pars$mu[1], sigma = pars$sigma[1]))
   }
 }
 
-# .priorParams <- function(med_cov, type){
-#   # Estimates parameters in beta-mixture priors based on number of cells.
-#   # `med_cov` is the median across-cell coverage in the input dataset.
-#   # `type` should be 'u' or 'm' indicating grouping type.
-#
-#   stopifnot("`type` should be either 'u' or 'm'." = type %in% c('u','m'))
-#   stopifnot("`med_cov` should be positive." = med_cov > 0)
-#   smr <- fread(here::here("data/interim/estim_emiBetaPrior_inflated/emiBetaPrior_subtype_summary.csv"))
-#
-#   if(type == 'u'){
-#     model_w <- lm(w_u ~ log(med_cov), data = smr)
-#     w <- model_w %>% predict(newdata = data.frame(med_cov = med_cov)) %>% max(0) %>% min(1)
-#
-#     alpha <- lm(alpha_u ~ I(1/med_cov), data = smr) %>% predict(newdata = data.frame(med_cov = med_cov)) #%>% max(0.5)
-#     beta <- lm(beta_u ~ I(1/med_cov), data = smr) %>% predict(newdata = data.frame(med_cov = med_cov)) #%>% max(3)
-#   } else {
-#     model_w <- lm(w_m ~ log(med_cov), data = smr)
-#     w <- model_w %>% predict(newdata = data.frame(med_cov = med_cov)) %>% max(0) %>% min(1)
-#
-#     alpha <- lm(alpha_m ~ I(1/med_cov), data = smr) %>% predict(newdata = data.frame(med_cov = med_cov)) %>% max(1)
-#     beta <- lm(beta_m ~ I(1/med_cov), data = smr) %>% predict(newdata = data.frame(med_cov = med_cov)) %>% max(0.01)
-#   }
-#
-#   return(c(w, alpha, beta) %>% unname())
-# }
-#
-
-# .calMethArray <- function(par_u, par_m, REFARRAY){
-.calMethArray <- function(par_u, par_m, max_size){
+.calMethArray <- function(par_u, par_m, max_cov){
   # To store the values when n or k equals 0, we add one dimension for both row and column
   # thus the betaBinom(n, k) - i.e. k methylated from n reads - is METHARRAY[n+1, k+1] or UNMETHARRAY[n+1, k+1]
   # `par_u` should be 3 parameters in beta-mixture prior (unmethylated): c(w_1, beta_1, beta_2), where the mixture is w_1*dbeta(1, beta_1) + (1-w_1)*dbeta(1, beta_2)
   # `par_m` should be 3 parameters in beta-mixture prior (methylated): c(w_1, alpha_1, alpha_2), where the mixture is w_1*dbeta(alpha_1, 1) + (1-w_1)*dbeta(alpha_2, 1)
 
-  # max_size <- length(REFARRAY)
-  # print(par_u); print(par_m)
-  METHARRAY <- matrix(data = 0, nrow = max_size+1, ncol = max_size+1)
-  UNMETHARRAY <- matrix(data = 0, nrow = max_size+1, ncol = max_size+1)
-  for (n in 1:(max_size+1)) {
+  METHARRAY <- matrix(data = 0, nrow = max_cov+1, ncol = max_cov+1)
+  UNMETHARRAY <- matrix(data = 0, nrow = max_cov+1, ncol = max_cov+1)
+  for (n in 1:(max_cov+1)) {
     for (k in 1:n) {
       UNMETHARRAY[n,k] <- dZIBB(x = k-1, mu = par_u['mu'], sigma = par_u['sigma'],
                                 nu = par_u['nu'], bd = n-1)
       METHARRAY[n,k] <- dBB(x = k-1, mu = par_m['mu'], sigma = par_m['sigma'],
                             bd = n-1)
-      # UNMETHARRAY[n,k] <- ifelse(k == 1,
-      #                            yes = par_u[1] + (1-par_u[1])*dbb(0, n-1, par_u[2], par_u[3]),
-      #                            no = (1-par_u[1])*dbb(k-1, n-1, par_u[2], par_u[3]))
-      # METHARRAY[n,k] <- ifelse(k == n,
-      #                          yes = par_m[1] + (1-par_m[1])*dbb(n-1, n-1, par_m[2], par_m[3]),
-      #                          no = (1-par_m[1])*dbb(k-1, n-1, par_m[2], par_m[3]))
     }
   }
-  rownames(METHARRAY) <- colnames(METHARRAY) <- 0:max_size
-  rownames(UNMETHARRAY) <- colnames(UNMETHARRAY) <- 0:max_size
+  rownames(METHARRAY) <- colnames(METHARRAY) <- 0:max_cov
+  rownames(UNMETHARRAY) <- colnames(UNMETHARRAY) <- 0:max_cov
 
   return(list(METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY))
 }
 
-# ==== Functions for computing emission probability ====
+###### functions for computing emission probability ====
 
 
-## Function for computing emission probability (1-grouping)
-.calEmissionProb1Grp <- function(state_1g, total_read, meth_read, METHARRAY, UNMETHARRAY)
-  ifelse(state_1g, METHARRAY[total_read+1, meth_read+1], UNMETHARRAY[total_read+1, meth_read+1])
-# Compute emission probability (in 1-grouping case) of observing `meth_read` methylated read in `total_read` total reads
+# Function for computing emission probability (1-grouping)
+.calEmissionProb1Grp <- function(state_1g, total, meth, METHARRAY, UNMETHARRAY)
+  ifelse(state_1g, METHARRAY[total+1, meth+1], UNMETHARRAY[total+1, meth+1])
+# Compute emission probability (in 1-grouping case) of observing `meth` methylated read in `total` total reads
 # `state_1g` is the binary code of underlying methylation states of the grouping: 1 - methylated; 0 - unmethylated.
+
 # Tests:
-# .calEmissionProb1Grp(state_1g = 1, total_read = 20, meth_read = 0, METHARRAY, UNMETHARRAY)
-# .calEmissionProb1Grp(state_1g = 1, total_read = 20, meth_read = 10, METHARRAY, UNMETHARRAY)
-# .calEmissionProb1Grp(state_1g = 1, total_read = 20, meth_read = 20, METHARRAY, UNMETHARRAY)
-# sum(map_dbl(0:20, ~.calEmissionProb1Grp(state_1g = 0, total_read = 20, meth_read = .x, METHARRAY, UNMETHARRAY)))
-# sum(map_dbl(0:20, ~.calEmissionProb1Grp(state_1g = 1, total_read = 20, meth_read = .x, METHARRAY, UNMETHARRAY)))
+# .calEmissionProb1Grp(state_1g = 1, total = 20, meth = 0, METHARRAY, UNMETHARRAY)
+# .calEmissionProb1Grp(state_1g = 1, total = 20, meth = 10, METHARRAY, UNMETHARRAY)
+# .calEmissionProb1Grp(state_1g = 1, total = 20, meth = 20, METHARRAY, UNMETHARRAY)
+# sum(map_dbl(0:20, ~.calEmissionProb1Grp(state_1g = 0, total = 20, meth = .x, METHARRAY, UNMETHARRAY)))
+# sum(map_dbl(0:20, ~.calEmissionProb1Grp(state_1g = 1, total = 20, meth = .x, METHARRAY, UNMETHARRAY)))
 
 
+# Translates state_2g 0, 1 or 2 into binary grouping state vectors
 .translateState2Grp <- function(state_2g){
-  # Translates state_2g 0, 1 or 2 into binary grouping state vectors
   # Three states are encoded as: `0`->(0,0), `1`->(1,0), `2`->(1,1)
   state_2g <- as.integer(state_2g)
   # stopifnot("`state_2g` should be 0, 1 or 2." = state_2g %in% 0:2)
@@ -151,33 +102,28 @@
   return(group_state_vector)
 }
 
+# Compute expected methylated fraction, e.g. if pi1 = 0.7, (0,1) is translated to 0.3
 .translateMethFrac2Grp <- function(state_2g, pi1){
-  # Compute expected methylated fraction, e.g. if pi1 = 0.7, (0,1) is translated to 0.3
   group_state_vector <- .translateState2Grp(state_2g)
   return(sum(group_state_vector*c(pi1, 1-pi1)))
 }
 
-.calEmissionProb2Grp <- function(state_2g, total_read, meth_read, pi1,
+.calEmissionProb2Grp <- function(state_2g, total, meth, pi1,
                                  REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY){
-  # Compute emission probability (in 2-grouping case) of observing `meth_read` methylated read in `total_read` total reads
+  # Compute emission probability (in 2-grouping case) of observing `meth` methylated read in `total` total reads
   # `state_2g` is the integer code of underlying methylation states of the 2 groupings (`0` = (0,0), `1` = (1,0), `2` = (1,1)).
   # `pi1` is the prevalence of the methylated grouping
 
-  max_size <- length(REFARRAY)
-  # stopifnot("state_2g` is either 0, 1 or 2." = state_2g %in% 0:2)
-  # stopifnot("Number of methylated reads succeeds coverage." = meth_read <= total_read)
-  # stopifnot("`total_read` is greater than maximum expected coverage." = total_read <= max_size)
-
-  max_size <- length(REFARRAY)
+  max_cov <- length(REFARRAY)
   p <- .translateMethFrac2Grp(state_2g, pi1)
   prob <- 0
-  for (i in 0:total_read) {
-    for (j in 0:meth_read) {
-      if (j <= i & meth_read-j <= total_read-i) {
+  for (i in 0:total) {
+    for (j in 0:meth) {
+      if (j <= i & meth-j <= total-i) {
         if (p < 0.01 & i == 0) log_lik_1 <- 0
-        else if (p > 0.99 & i == total_read) log_lik_1 <- 0
-        else log_lik_1 <- CHOICEARRAY[total_read+1, i+1] + i*log(p) + (total_read-i)*log(1-p)
-        log_lik_2 <- log(METHARRAY[i+1, j+1]) + log(UNMETHARRAY[total_read-i+1, meth_read-j+1])
+        else if (p > 0.99 & i == total) log_lik_1 <- 0
+        else log_lik_1 <- CHOICEARRAY[total+1, i+1] + i*log(p) + (total-i)*log(1-p)
+        log_lik_2 <- log(METHARRAY[i+1, j+1]) + log(UNMETHARRAY[total-i+1, meth-j+1])
         log_lik_i_j <- log_lik_1 + log_lik_2
         prob <- prob + exp(log_lik_i_j)
       }
@@ -186,51 +132,45 @@
   return(prob)
 }
 # Tests:
-# .calEmissionProb2Grp(state_2g = 0, total_read = 20, meth_read = 0, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# .calEmissionProb2Grp(state_2g = 0, total_read = 20, meth_read = 10, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# .calEmissionProb2Grp(state_2g = 0, total_read = 20, meth_read = 20, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 0, total_read = 20, meth_read = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 1, total_read = 20, meth_read = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 2, total_read = 20, meth_read = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 0, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 10, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 20, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 0, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 1, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 2, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
 
 
 
 
-# ==== Function for loading transition probabilities ====
-
-# tp0 <- read_rds(here::here("code/package_functions/transitProbs_27subtypes_1350cells_Luo2017&Liu2021.rds"))
-
-# `probs` should be a data.frame of 4 columns [P(0|0),P(0|1),P(1|0),P(1|1)], while row number represents CpG-CpG distance
-# `pos` is an atomic vector of genomic positions which shall be used to compute CpG-CpG distances and load transition probs
-.loadTransitProbs <- function(pos, all_probs = tp0@transit_probs)
+# Function for loading transition probabilities from tp
+.loadTransitProbs <- function(pos, all_probs)
+  # `probs` should be a data.frame of 4 columns [P(0|0),P(0|1),P(1|0),P(1|1)], while row number represents CpG-CpG distance
+  # `pos` is an atomic vector of genomic positions which shall be used to compute CpG-CpG distances and load transition probs
   all_probs[pmin(nrow(all_probs), diff(pos)), ]
 
 
 
-# ==== Viterbi algorithm for 1- and 2-grouping cases ====
-
-.Viterbi1Grp <- function(pos, total_reads, meth_reads, tp = NULL,
-                         METHARRAY, UNMETHARRAY){
-  if (any(c(length(total_reads), length(meth_reads)) != length(pos)))
+###### Viterbi algorithm for 1- and 2-grouping cases =====
+.Viterbi1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY){
+  if (any(c(length(totals), length(meths)) != length(pos)))
     stop("Wrong dimensions of input data.")
 
   # compute transition probability
-  if(is.null(tp)) trans_probs <- .loadTransitProbs(pos = pos)
-  else trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp0@transit_probs)
+  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
 
   # Two states are encoded as: `0`->unmethylated, `1`->methylated
   state_nums <- 0:1
-  num_CpG <- length(total_reads)
+  num_cpg <- length(totals)
 
   # Memory used during Viterbi computation and for storing results
-  V <- matrix(-Inf, nrow = num_CpG, ncol = 2) # for storing log likelihood
-  traceback <- matrix(0, nrow = num_CpG, ncol = 2) # for storing tracebback pointers
+  V <- matrix(-Inf, nrow = num_cpg, ncol = 2) # for storing log likelihood
+  traceback <- matrix(0, nrow = num_cpg, ncol = 2) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
-  for (i in 1:num_CpG) {
+  for (i in 1:num_cpg) {
     for (j in state_nums+1) {
       log_em_prob <- log(.calEmissionProb1Grp(state_1g = j-1,
-                                              total_read = total_reads[i], meth_read = meth_reads[i],
+                                              total = totals[i], meth = meths[i],
                                               METHARRAY, UNMETHARRAY))
       if (i == 1) { ## likelihood for the first CpG
         V[i, j] <- log_em_prob
@@ -254,13 +194,13 @@
   # print(V); print(traceback)
 
   # Viterbi traceback
-  state_path <- rep(0, num_CpG)
-  loglik_path <- rep(-Inf, num_CpG)
+  state_path <- rep(0, num_cpg)
+  loglik_path <- rep(-Inf, num_cpg)
 
-  state_path[num_CpG] <- which.max(V[num_CpG,])-1
-  loglik_path[num_CpG] <- max(V[num_CpG,])
+  state_path[num_cpg] <- which.max(V[num_cpg,])-1
+  loglik_path[num_cpg] <- max(V[num_cpg,])
 
-  for (i in (num_CpG-1):1) {
+  for (i in (num_cpg-1):1) {
     state_path[i] <- traceback[i+1, state_path[i+1]+1]
     loglik_path[i] <- V[i, state_path[i]+1]
   }
@@ -268,33 +208,31 @@
 }
 # Tests:
 # pos = cumsum(sample(100:2000, 10))
-# total_reads = sample(30:100, 10)
-# .Viterbi1Grp(pos, total_reads, meth_reads = round(total_reads*0.1), tp = NULL, METHARRAY, UNMETHARRAY)
-# .Viterbi1Grp(pos, total_reads, meth_reads = round(total_reads*0.9), tp = NULL, METHARRAY, UNMETHARRAY)
+# totals = sample(30:100, 10)
+# .Viterbi1Grp(pos, totals, meths = round(totals*0.1), METHARRAY, UNMETHARRAY)
+# .Viterbi1Grp(pos, totals, meths = round(totals*0.9), METHARRAY, UNMETHARRAY)
 
-
-
-.Viterbi2Grp <- function(total_reads, meth_reads, trans_probs, pi1,
+.Viterbi2Grp <- function(totals, meths, trans_probs, pi1,
                          REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # should be applied on 1 region
   # `trans_probs` should have four columns:  [P(0|0), P(0|1), P(1|0), P(1|1)]
 
-  if (any(c(length(total_reads), length(meth_reads)) != nrow(trans_probs)+1))
+  if (any(c(length(totals), length(meths)) != nrow(trans_probs)+1))
     stop("Wrong dimensions of input data.")
 
   # Three states are encoded as: `0`->(0,0), `1`->(1,0), `2`->(1,1)
   state_nums <- 0:2 # only allow three states
   num_group <- 2 # assuming 2 groupings
-  num_CpG <- length(total_reads)
+  num_cpg <- length(totals)
 
   # Memory used during Viterbi computation and for storing results
-  V <- matrix(-Inf, nrow = num_CpG, ncol = 3) # for storing log likelihood
-  traceback <- matrix(0, nrow = num_CpG, ncol = 3) # for storing tracebback pointers
+  V <- matrix(-Inf, nrow = num_cpg, ncol = 3) # for storing log likelihood
+  traceback <- matrix(0, nrow = num_cpg, ncol = 3) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
-  for (i in 1:num_CpG) {
+  for (i in 1:num_cpg) {
     for (j in state_nums+1) {
-      log_em_prob <- log(.calEmissionProb2Grp(state_2g = j-1, total_read = total_reads[i], meth_read = meth_reads[i],
+      log_em_prob <- log(.calEmissionProb2Grp(state_2g = j-1, total = totals[i], meth = meths[i],
                                               pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY))
       if (i == 1) { ## likelihood for the first CpG
         V[i, j] <- log_em_prob
@@ -328,15 +266,15 @@
   # print(traceback)
 
   # Viterbi traceback
-  state_path <- rep(0, num_CpG)
-  bin_state_path <- matrix(0, nrow = num_CpG, ncol = 2)
-  loglik_path <- rep(-Inf, num_CpG)
+  state_path <- rep(0, num_cpg)
+  bin_state_path <- matrix(0, nrow = num_cpg, ncol = 2)
+  loglik_path <- rep(-Inf, num_cpg)
 
-  state_path[num_CpG] <- which.max(V[num_CpG,])-1
-  bin_state_path[num_CpG,] <- .translateState2Grp(state_path[num_CpG])
-  loglik_path[num_CpG] <- max(V[num_CpG,])
+  state_path[num_cpg] <- which.max(V[num_cpg,])-1
+  bin_state_path[num_cpg,] <- .translateState2Grp(state_path[num_cpg])
+  loglik_path[num_cpg] <- max(V[num_cpg,])
 
-  for (i in (num_CpG-1):1) {
+  for (i in (num_cpg-1):1) {
     state_path[i] <- traceback[i+1, state_path[i+1]+1]
     bin_state_path[i, ] <- .translateState2Grp(state_path[i])
     loglik_path[i] <- V[i, state_path[i]+1]
@@ -348,11 +286,11 @@
 # Tests:
 # pi1 = 0.3
 # pos = cumsum(sample(100:2000, 10))
-# total_reads = sample(30:100, 10)
-# trans_probs = .loadTransitProbs(pos = pos)
+# totals = sample(1:10, 10)
+# trans_probs = .loadTransitProbs(pos = pos, all_probs = vmrseq:::tp0@transit_probs)
 #
-# meth_reads = round(total_reads*0.2)
-# .Viterbi2Grp(total_reads, meth_reads, trans_probs,
+# meths = round(totals*0.2)
+# .Viterbi2Grp(totals, meths, trans_probs,
 #          pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
 #
 
@@ -361,20 +299,18 @@
 
 
 
-# ==== Functions for prevalence optimization in 2-grouping case ====
+###### functions for prevalence optimization in 2-grouping case ====
 
-## Functions for interim calculation in exponentiated gradient update
-
-.gradntFunc <- function(x, total_read, meth_read, CHOICEARRAY, METHARRAY, UNMETHARRAY) {
-  # function g_k(x) in the derivative of likelihood
+# Function g_k(x) in the derivative of likelihood
+.gradntFunc <- function(x, total, meth, CHOICEARRAY, METHARRAY, UNMETHARRAY) {
   numer <- 0
   denom <- 0
-  for (i in 0:total_read) {
-    for (j in 0:meth_read) {
-      if (j <= i & meth_read-j <= total_read-i) {
-        log_c_ijk <- CHOICEARRAY[total_read+1, i+1] + log(METHARRAY[i+1, j+1]) + log(UNMETHARRAY[total_read-i+1, meth_read-j+1])
-        numer <- numer + exp(log_c_ijk + (i-1)*log(x) + (total_read-i-1)*log(1-x)) * (i-x*total_read)
-        denom <- denom + exp(log_c_ijk + i*log(x) + (total_read-i)*log(1-x))
+  for (i in 0:total) {
+    for (j in 0:meth) {
+      if (j <= i & meth-j <= total-i) {
+        log_c_ijk <- CHOICEARRAY[total+1, i+1] + log(METHARRAY[i+1, j+1]) + log(UNMETHARRAY[total-i+1, meth-j+1])
+        numer <- numer + exp(log_c_ijk + (i-1)*log(x) + (total-i-1)*log(1-x)) * (i-x*total)
+        denom <- denom + exp(log_c_ijk + i*log(x) + (total-i)*log(1-x))
       }
     }
   }
@@ -382,26 +318,26 @@
   return(val)
 }
 
-.loglikGrad <- function(pi1, state_path, total_reads, meth_reads, CHOICEARRAY, METHARRAY, UNMETHARRAY) {
-  # Gradient of the log-likelihood with respect to (\pi_1, \pi_2)
-  if (any(c(length(state_path), length(total_reads)) != length(meth_reads)))
+# Gradient of the log-likelihood with respect to (\pi_1, \pi_2)
+.loglikGrad <- function(pi1, state_path, totals, meths, CHOICEARRAY, METHARRAY, UNMETHARRAY) {
+  if (any(c(length(state_path), length(totals)) != length(meths)))
     stop("Wrong dimensions of input data.")
 
   grad1 <- 0#; grad2 <- 0 ## grad2 is always 0
   for (k in 1:length(state_path)) {
     state_2g <- state_path[k]
-    total_read <- total_reads[k]
-    meth_read <- meth_reads[k]
+    total <- totals[k]
+    meth <- meths[k]
 
     if (state_2g == 1) { ## Three states are encoded as: `0`->(0,0), `1`->(1,0), `2`->(1,1)
       p <- .translateMethFrac2Grp(state_2g, pi1)
-      grad1 <- grad1 + .gradntFunc(p, total_read, meth_read, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+      grad1 <- grad1 + .gradntFunc(p, total, meth, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     }
   }
   return(grad1)
 }
 
-.prevOptimSnglInit <- function(pos, total_reads, meth_reads, pi1_init, tp = NULL,
+.prevOptimSnglInit <- function(pos, totals, meths, pi1_init, tp,
                                epsilon = 1e-4, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
                                CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # `tp` is an transitProbs object, which stores the transition probability distribution
@@ -411,13 +347,12 @@
   # `epsilon` is the convergence upper bound of \pi_1
   # `max_iter` is the maximum number of iteration
   # `eta` is the learning rate
-  max_size <- nrow(CHOICEARRAY) - 1
+  max_cov <- nrow(CHOICEARRAY) - 1
 
-  if(is.null(tp)) trans_probs <- .loadTransitProbs(pos = pos)
-  else trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp0@transit_probs)
+  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
 
   pi_1 <- pi1_init; pi_2 <- 1 - pi_1
-  init_vit <- .Viterbi2Grp(total_reads, meth_reads, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+  init_vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
   state_path <- init_vit$state_path
   loglik <- init_vit$loglik_path[nrow(init_vit)]
 
@@ -426,12 +361,12 @@
 
     ## EG update (Experimented with unit test: slower when momentum is added)
     pi_2 <- 1 - pi_1
-    grad <- .loglikGrad(pi_1, state_path, total_reads, meth_reads, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+    grad <- .loglikGrad(pi_1, state_path, totals, meths, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     pi_1 <- pi_1 * exp(-eta*grad)
     pi_1 <- pi_1 / (pi_1 + pi_2)
 
     # viterbi update
-    vit <- .Viterbi2Grp(total_reads, meth_reads, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+    vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     old_loglik <- loglik
     loglik <- vit$loglik_path[nrow(init_vit)]
 
@@ -445,31 +380,38 @@
     if(abs(loglik - old_loglik) < epsilon & abs(old_pi_1 - pi_1) < epsilon) break
   }
 
-  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:3], loglik = loglik, n_iter = t))
+  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:4], loglik = loglik, n_iter = t))
 }
 # Tests:
 # pos = cumsum(sample(100:2000, 10))
-# total_reads = sample(30:100, 10)
-# meth_reads = round(total_reads*runif(length(pos), 0.5, 0.6))
-# .prevOptimSnglInit(pos, total_reads, meth_reads, tp = NULL, pi1_init = 0.75,
+# totals = sample(1:20, 10)
+# meths = round(totals*runif(length(pos), 0.5, 0.6))
+# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
 #                    epsilon = 1e-4, backtrack = F, eta = 0.005, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, total_reads, meth_reads, tp = NULL, pi1_init = 0.75,
+# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
 #                    epsilon = 1e-4, backtrack = T, eta = 0.05, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, total_reads, meth_reads, tp = NULL, pi1_init = 0.25,
+# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
 #                    epsilon = 1e-4, backtrack = F, eta = 0.005, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, total_reads, meth_reads, tp = NULL, pi1_init = 0.25,
+# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
 #                    epsilon = 1e-4, backtrack = T, eta = 0.05, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
 
 
+###### wrapper for 1- and 2-group optimization ======
 
-.prevOptimMultiInit <- function(pos, total_reads, meth_reads, inits, tp = NULL,
-                                epsilon = 1e-4, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
-                                CHOICEARRAY, METHARRAY, UNMETHARRAY){
+.optim1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY) {
+  vit <- .Viterbi1Grp(pos, totals, meths, tp, METHARRAY, UNMETHARRAY)
+  return(list(vit_path = vit[[1]], loglik = vit[nrow(vit), 2]))
+}
+
+.optim2Grp <- function(pos, totals, meths, inits, tp,
+                       epsilon = 1e-4, backtrack = T,
+                       eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
+                       CHOICEARRAY, METHARRAY, UNMETHARRAY){
   loglik <- -Inf; optim_pi_1 <- -1
   for (i in 1:length(inits)) {
 
@@ -477,7 +419,7 @@
     # if (i < length(inits) & optim_pi_1 >= inits[i]) next
 
     pi1_init <- inits[i]
-    res_temp <- .prevOptimSnglInit(pos, total_reads, meth_reads, pi1_init, tp,
+    res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, tp,
                                    epsilon, backtrack, eta, max_iter,
                                    CHOICEARRAY, METHARRAY, UNMETHARRAY)
     if (res_temp$loglik > loglik) {
@@ -486,6 +428,42 @@
       optim_pi_1 <- res$optim_pi_1
     }
   }
-  # if (is.null(findHVR(res$vit_path, min_nCpG_inHVR))) res$optim_pi_1 <- NA
   return(res)
+}
+
+
+# functions for detect VMRs in predicted state sequence
+.callVMR <- function(state_seq, min_n, max_n_merge){
+
+  is_vml <- as.logical(abs(state_seq[[1]] - state_seq[[2]]))
+
+  i <- j <- 1; start_ind <- end_ind <- NULL
+  while (j <= length(is_vml)) {
+    if (i==j) { # either i,j are non-VML or start of a VMR
+      if (is_vml[i]) {
+        start_ind <- c(start_ind, i)
+        if (j == length(is_vml)) end_ind <- c(end_ind, j)
+        j <- j + 1
+      } else {
+        i <- j <- j + 1
+      }
+    } else { # i at start of VMR, j goes to end of VMR
+      if (is_vml[j]) {
+        j <- j + 1
+      } else {
+        if (is_vml[j + max_n_merge]) {
+          j <- j + max_n_merge + 1
+        } else {
+          end_ind <- c(end_ind, j-1)
+          i <- j <- j + max_n_merge + 1
+        }
+      }
+      if (j == length(is_vml)) end_ind <- c(end_ind, j)
+    }
+  }
+
+  inds <- data.frame(start_ind = start_ind, end_ind = end_ind)
+  if (nrow(inds) > 0) inds <- inds %>% filter(end_ind - start_ind + 1 >= min_n)
+  if (nrow(inds) == 0) inds <- NULL
+  return(inds)
 }

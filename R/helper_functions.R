@@ -156,3 +156,56 @@ smoother <- function(x, y, weights, chr,
 
 
 
+detectVMRs <- function(gr,
+                     CRI,
+                     maxGap = 1000, minNumRegion = 5,
+                     tp = NULL,
+                     maxNumMerge = 1,
+                     minNumLong = 20,
+                     control = optimize.control(),
+                     verbose = TRUE,
+                     parallel = FALSE) {
+
+  # If no `tp` provided, use internal `tp0`
+  if (is.null(tp)) tp <- vmrseq:::tp0
+
+  # Pre-computation to ease computational burden
+  max_cov <- max(gr$total)
+  med_cov <- median(gr$total)
+  REFARRAY <- .calRefArray(max_cov = max_cov)
+  CHOICEARRAY <- .calChoiceArray(REFARRAY)
+  list <- .calMethArray(par_u = .priorParams(med_cov = med_cov, type = "u"),
+                        par_m = .priorParams(med_cov = med_cov, type = "m"),
+                        max_cov = max_cov)
+  METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
+
+  callVMRbyRegion <- function(ix) {
+
+    totals <- gr$total[ix]
+    meths <- gr$meth[ix]
+    pos <- start(gr[ix])
+
+    res_1g <- .optim1Grp(pos = pos, totals = totals, meths = meths,
+                         tp = tp,
+                         METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
+    res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
+                         tp = tp,
+                         inits = control$inits, epsilon = control$epsilon,
+                         backtrack = control$backtrack,
+                         eta = control$eta, max_iter = control$maxIter,
+                         CHOICEARRAY = CHOICEARRAY,
+                         METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
+
+    if (res_1g$loglik >= res_2g$loglik) {
+      return(NULL)
+    } else {
+
+    }
+
+  }
+
+}
+
+
+
+
