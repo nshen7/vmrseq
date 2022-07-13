@@ -198,7 +198,7 @@
 
 # ==== Function for loading transition probabilities ====
 
-tp0 <- read_rds(here::here("code/package_functions/transitProbs_27subtypes_1350cells_Luo2017&Liu2021.rds"))
+# tp0 <- read_rds(here::here("code/package_functions/transitProbs_27subtypes_1350cells_Luo2017&Liu2021.rds"))
 
 # `probs` should be a data.frame of 4 columns [P(0|0),P(0|1),P(1|0),P(1|1)], while row number represents CpG-CpG distance
 # `pos` is an atomic vector of genomic positions which shall be used to compute CpG-CpG distances and load transition probs

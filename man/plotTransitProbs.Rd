@@ -18,12 +18,6 @@ Default is TRUE.}
 \item{point_size}{size of training data points. Only applicable when
 `plot_train = T`. Default value is 0.2.}
 }
-\value{
-
-}
 \description{
 Plot fitted transition probabilities
-}
-\examples{
-
 }

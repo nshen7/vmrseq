@@ -57,7 +57,3 @@ Performs a two-step approach that (1) detects candidate regions,
 and (2) detect variably methylated region(s) inside each candidate region
 using a hidden Markov model.
 }
-\examples{
-
-
-}
