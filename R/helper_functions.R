@@ -196,11 +196,10 @@ detectVMR <- function(gr,
                          CHOICEARRAY = CHOICEARRAY,
                          METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
-    if (res_1g$loglik >= res_2g$loglik) {
-      return(NULL)
-    } else {
+    vmr <- .callVMR(state_seq = res_2g$vit_path[, 1:2],
+                    min_n = minNumRegion,
+                    max_n_merge = maxNumMerge)
 
-    }
 
   }
 

@@ -151,19 +151,18 @@
 
 
 ###### Viterbi algorithm for 1- and 2-grouping cases =====
-.Viterbi1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY){
-  if (any(c(length(totals), length(meths)) != length(pos)))
+.Viterbi1Grp <- function(totals, meths, trans_probs, METHARRAY, UNMETHARRAY){
+  if (any(c(length(totals), length(meths)) != nrow(trans_probs)+1))
     stop("Wrong dimensions of input data.")
-
-  # compute transition probability
-  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
 
   # Two states are encoded as: `0`->unmethylated, `1`->methylated
   state_nums <- 0:1
   num_cpg <- length(totals)
 
   # Memory used during Viterbi computation and for storing results
-  V <- matrix(-Inf, nrow = num_cpg, ncol = 2) # for storing log likelihood
+  V <- matrix(-Inf, nrow = num_cpg, ncol = 2) # for storing total log likelihood
+  P <- matrix(-Inf, nrow = num_cpg, ncol = 2) # for storing transition and emission probs
+  colnames(P) <- c("emission", "transition")
   traceback <- matrix(0, nrow = num_cpg, ncol = 2) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
@@ -174,16 +173,20 @@
                                               METHARRAY, UNMETHARRAY))
       if (i == 1) { ## likelihood for the first CpG
         V[i, j] <- log_em_prob
+        P[i, 'emission'] <- log_em_prob
+        P[i, 'transition'] <- NA
       } else {
         best_prior_state <- 0
         for (j_prior in state_nums+1) {
           log_tr_prob <- log(trans_probs[i-1, j_prior+2*j-2])
           oldVal <- V[i,j]
           newVal <- log_em_prob + log_tr_prob + V[i-1, j_prior]
-          if (oldVal < newVal){
+          if (oldVal < newVal) {
             V[i,j] <- newVal
+            P[i, 'emission'] <- log_em_prob
+            P[i, 'transition'] <- log_tr_prob
             best_prior_state <- j_prior - 1
-          }else if (oldVal == newVal){ ## tie-breaking in Viterbi
+          } else if (oldVal == newVal) { ## tie-breaking in Viterbi
             if (sample(0:1,1) == 0) best_prior_state <- j_prior - 1
           }
         }
@@ -204,13 +207,8 @@
     state_path[i] <- traceback[i+1, state_path[i+1]+1]
     loglik_path[i] <- V[i, state_path[i]+1]
   }
-  return(data.frame(state_path, loglik_path))
+  return(data.frame(state_path, loglik_path, P))
 }
-# Tests:
-# pos = cumsum(sample(100:2000, 10))
-# totals = sample(30:100, 10)
-# .Viterbi1Grp(pos, totals, meths = round(totals*0.1), METHARRAY, UNMETHARRAY)
-# .Viterbi1Grp(pos, totals, meths = round(totals*0.9), METHARRAY, UNMETHARRAY)
 
 .Viterbi2Grp <- function(totals, meths, trans_probs, pi1,
                          REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY){
@@ -227,6 +225,8 @@
 
   # Memory used during Viterbi computation and for storing results
   V <- matrix(-Inf, nrow = num_cpg, ncol = 3) # for storing log likelihood
+  P <- matrix(-Inf, nrow = num_cpg, ncol = 2) # for storing transition and emission probs
+  colnames(P) <- c("emission", "transition")
   traceback <- matrix(0, nrow = num_cpg, ncol = 3) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
@@ -236,6 +236,8 @@
                                               pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY))
       if (i == 1) { ## likelihood for the first CpG
         V[i, j] <- log_em_prob
+        P[i, 'emission'] <- log_em_prob
+        P[i, 'transition'] <- NA
       } else {
         best_prior_state <- 0
         for (j_prior in state_nums+1) {
@@ -251,6 +253,8 @@
           newVal <- log_em_prob + log_tr_prob + V[i-1, j_prior]
           if (oldVal < newVal){
             V[i,j] <- newVal
+            P[i, 'emission'] <- log_em_prob
+            P[i, 'transition'] <- log_tr_prob
             best_prior_state <- j_prior - 1
           }else if (oldVal == newVal){
             ## tie-breaking in Viterbi
@@ -281,21 +285,23 @@
   }
 
   colnames(bin_state_path) <- c("methState_group1", "methState_group2")
-  return(data.frame(state_path, bin_state_path, loglik_path))
+  return(data.frame(state_path, bin_state_path, loglik_path, P))
 }
 # Tests:
-# pi1 = 0.3
+# pi1 = 0.3; N = 10
 # pos = cumsum(sample(100:2000, 10))
-# totals = sample(1:10, 10)
+# totals = sample(1:N, 10)
 # trans_probs = .loadTransitProbs(pos = pos, all_probs = vmrseq:::tp0@transit_probs)
-#
-# meths = round(totals*0.2)
+# meths = totals
+# REFARRAY <- .calRefArray(max_cov = N)
+# CHOICEARRAY <- .calChoiceArray(REFARRAY)
+# list <- .calMethArray(par_u = .priorParams(med_cov = round(median(totals)), type = "u"),
+#                       par_m = .priorParams(med_cov = round(median(totals)), type = "m"),
+#                       max_cov = N)
+# METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
 # .Viterbi2Grp(totals, meths, trans_probs,
-#          pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-#
-
-
-
+#              pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
 
 
 
@@ -380,7 +386,7 @@
     if(abs(loglik - old_loglik) < epsilon & abs(old_pi_1 - pi_1) < epsilon) break
   }
 
-  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:4], loglik = loglik, n_iter = t))
+  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:6], loglik = loglik, n_iter = t))
 }
 # Tests:
 # pos = cumsum(sample(100:2000, 10))
@@ -404,8 +410,9 @@
 ###### wrapper for 1- and 2-group optimization ======
 
 .optim1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY) {
-  vit <- .Viterbi1Grp(pos, totals, meths, tp, METHARRAY, UNMETHARRAY)
-  return(list(vit_path = vit[[1]], loglik = vit[nrow(vit), 2]))
+  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
+  vit <- .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
+  return(list(vit_path = vit))
 }
 
 .optim2Grp <- function(pos, totals, meths, inits, tp,
@@ -428,6 +435,7 @@
       optim_pi_1 <- res$optim_pi_1
     }
   }
+  res$loglik <- NULL
   return(res)
 }
 
@@ -449,19 +457,22 @@
       }
     } else { # i at start of VMR, j goes to end of VMR
       if (is_vml[j]) {
+        if (j == length(is_vml)) end_ind <- c(end_ind, j)
         j <- j + 1
       } else {
         if (is_vml[j + max_n_merge]) {
-          j <- j + max_n_merge + 1
+          j <- j + max_n_merge
         } else {
           end_ind <- c(end_ind, j-1)
           i <- j <- j + max_n_merge + 1
         }
       }
-      if (j == length(is_vml)) end_ind <- c(end_ind, j)
+      # if (j == length(is_vml)) end_ind <- c(end_ind, j)
     }
   }
 
+  if (length(start_ind) != length(end_ind))
+    stop("Unmatched length of start_ind and end_ind.")
   inds <- data.frame(start_ind = start_ind, end_ind = end_ind)
   if (nrow(inds) > 0) inds <- inds %>% filter(end_ind - start_ind + 1 >= min_n)
   if (nrow(inds) == 0) inds <- NULL

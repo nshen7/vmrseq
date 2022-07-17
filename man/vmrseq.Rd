@@ -6,32 +6,34 @@
 \usage{
 vmrseq(
   gr,
-  cutoff = 0.1,
   minCov = 5,
+  cutoff = 0.1,
   maxGap = 1000,
   minNumRegion = 5,
-  transitProbs = NULL,
-  minNumLong = 20,
   smooth = TRUE,
   maxGapSmooth = 2500,
   bpSpan = 1000,
   minInSpan = 10,
+  tp = NULL,
+  maxNumMerge = 1,
+  minNumLong = 20,
+  control = optimize.control(),
   verbose = TRUE,
   BPPARAM = bpparam()
 )
 }
 \arguments{
 \item{gr}{GRanges object containing the chromosome position and methylation
-values. Should contain two element metadata columns that can be extracted using
-`values(gr)`: `meth` and `total`, indicating number of methylated cells and
-total number of cells.}
+values. Should contain two element metadata columns that can be extracted
+using `values(gr)`: `meth` and `total`, indicating number of methylated cells
+and total number of cells.}
+
+\item{minCov}{integer scalar value that represents minimum across-cell
+coverage in QC step. Sites with coverage lower than `minCov` are removed.
+Default value is 5.}
 
 \item{cutoff}{positive scalar value that represents the cutoff value of
 variance that is used to discover candidate regions. Default value is 0.10.}
-
-\item{minCov}{integer scalar value that represents minimum across-cell coverage
-in QC step. Sites with coverage lower than `minCov` are removed. Default value
-is 5.}
 
 \item{maxGap}{integer value representing maximum number of basepairs in
 between neighboring CpGs to be included in the same VMR.}
@@ -39,6 +41,15 @@ between neighboring CpGs to be included in the same VMR.}
 \item{minNumRegion}{positive integer that represents the minimum number of
 CpGs to consider for an VMR as well as a candidate region. Default value is
 5. Minimum value is 3.}
+
+\item{tp}{transitProbs object that contains estimated transition
+probabilities. Can be obtained by the 'estimTransitProbs' function. If
+`tp==NULL`, internal transition probabilities in `vmrseq` is used. Default is
+NULL.}
+
+\item{maxNumMerge}{positive integer that represents the maximum number of
+CpGs between two VMRs that can be tolerated when merging VMRs in the same
+candidate region.Default is 1.}
 
 \item{minNumLong}{positive integer that represents the minimum number of
 CpGs to consider for a *long* candidate region. For fast computation use.
