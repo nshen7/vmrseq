@@ -113,7 +113,7 @@ vmrseq <- function(gr,
           cutoff, "...")
   # Bumphunt candidate regions. Outputs list of index vectors.
   # Each list element is one CR.
-  CRI <- callCandiRegion(
+  CRI <- callCandidRegion(
     gr = gr,
     cutoff = cutoff,
     maxGap = maxGap, minNumRegion = minNumRegion,
@@ -134,7 +134,7 @@ vmrseq <- function(gr,
 
   message("Detecting VMRs...")
   # Outputs a GRanges objects with VMR ranges and summary information
-  VMR <- detectVMR(
+  VMRI <- searchVMR(
     gr = gr,
     CRI = CRI,
     maxGap = maxGap, minNumRegion = minNumRegion,
@@ -146,15 +146,15 @@ vmrseq <- function(gr,
     parallel = parallel
   )
 
-  if (length(VMR) == 0) {
+  if (length(VMRI) == 0) {
     message("No VMR detected.")
     return(NULL)
   } else {
-    message("Finished calling VMRs. (", length(VMR), " VMRs found in total)")
+    message("Finished calling VMRs. (", nrow(VMRI), " VMRs found in total)")
   }
 
 
-  return(VMR)
+  return(list(vmr.gr, cr.gr))
 }
 
 

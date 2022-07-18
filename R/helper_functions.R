@@ -1,4 +1,4 @@
-callCandiRegion <- function(gr,
+callCandidRegion <- function(gr,
                             cutoff = 0.1,
                             maxGap = 1000, minNumRegion = 5,
                             smooth = T,
@@ -8,8 +8,8 @@ callCandiRegion <- function(gr,
                             parallel = FALSE) {
 
   # Compute variance for individual sites
-  gr$MF <- with(values(gr), meth / total)
-  gr$var_raw <- with(values(gr), MF * (1-MF))
+  gr$MF <- gr$meth / gr$total
+  gr$var_raw <- gr$MF * (1-gr$MF)
 
   # Apply smoother on each chromosome serially
   chrs <- as.character(unique(seqnames(gr)))
@@ -75,7 +75,7 @@ callCandiRegion <- function(gr,
   upIndex <- Indexes$upIndex
   CRI <- upIndex[lengths(upIndex) >= minNumRegion]
   return(CRI)
-}
+} # end of function `callCandidRegion`
 
 
 
@@ -108,8 +108,7 @@ smoother <- function(x, y, weights, chr,
       weightsi <- matrix(1, nrow = nrow(yi), ncol = ncol(yi))
 
     if (length(ix) >= minNumRegion) {
-      sdata <- data.frame(posi = xi, yi = yi,
-                          weightsi = weightsi)
+      sdata <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
       # balance minInSpan and bpSpan
       nn <- minInSpan / length(ix)
@@ -123,7 +122,7 @@ smoother <- function(x, y, weights, chr,
       smoothed <- FALSE
     }
     return(data.frame(fitted = as.vector(yi), smoothed = smoothed))
-  }
+  } # end of function `locfitByCluster`
 
 
   if (!is.null(weights) && is.null(dim(weights)))
@@ -152,11 +151,12 @@ smoother <- function(x, y, weights, chr,
   }
 
   return(ret) # data.frame with columns: 'fitted' (numeric), 'smoothed' (logical)
-}
+
+} # end of function `smoother`
 
 
 
-detectVMR <- function(gr,
+searchVMR <- function(gr,
                       CRI,
                       maxGap = 1000, minNumRegion = 5,
                       tp = NULL,
@@ -169,6 +169,8 @@ detectVMR <- function(gr,
   # If no `tp` provided, use internal `tp0`
   if (is.null(tp)) tp <- vmrseq:::tp0
 
+  t1 <- proc.time()
+
   # Pre-computation to ease computational burden
   max_cov <- max(gr$total)
   med_cov <- median(gr$total)
@@ -179,8 +181,9 @@ detectVMR <- function(gr,
                         max_cov = max_cov)
   METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
 
-  callVMRbyRegion <- function(ix) {
+  searchVMRbyRegion <- function(i) {
 
+    ix <- CRI[[i]]
     totals <- gr$total[ix]
     meths <- gr$meth[ix]
     pos <- start(gr[ix])
@@ -188,22 +191,58 @@ detectVMR <- function(gr,
     res_1g <- .optim1Grp(pos = pos, totals = totals, meths = meths,
                          tp = tp,
                          METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-    res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
-                         tp = tp,
-                         inits = control$inits, epsilon = control$epsilon,
-                         backtrack = control$backtrack,
-                         eta = control$eta, max_iter = control$maxIter,
-                         CHOICEARRAY = CHOICEARRAY,
-                         METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
-    vmr <- .callVMR(state_seq = res_2g$vit_path[, 1:2],
-                    min_n = minNumRegion,
-                    max_n_merge = maxNumMerge)
+    if (length(ix) >= minNumLong) { # long region
+      res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
+                           tp = tp,
+                           inits = control$inits, epsilon = control$epsilon,
+                           backtrack = control$backtrack,
+                           eta = control$eta, max_iter = control$maxIter,
+                           CHOICEARRAY = CHOICEARRAY,
+                           METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
+    } else { # short region
+      res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
+                           tp = tp,
+                           inits = mean(meths/totals), epsilon = control$epsilon,
+                           backtrack = control$backtrack,
+                           eta = control$eta, max_iter = control$maxIter,
+                           CHOICEARRAY = CHOICEARRAY,
+                           METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
+    }
 
+    if (res_2g$loglik > res_1g$loglik) {
+      vmr_inds <- .callVMR(
+        state_seq = res_2g$vit_path[, 1:2],
+        min_n = minNumRegion,
+        max_n_merge = maxNumMerge
+      )
+      if (is.null(vmr_inds)) return(NULL)
+      else return(data.frame(vmr_inds + ix[1] - 1,
+                             cr_name = i,
+                             optim_pi = res_2g$optim_pi_1))
+    } else {
+      return(NULL)
+    }
+  } # end of function `searchVMRbyRegion`
 
+  if (parallel) {
+    VMRI <- do.call(rbind, bplapply(1:length(CRI), function(i) searchVMRbyRegion(i)))
+  } else {
+    VMRI <- do.call(rbind, lapply(1:length(CRI), function(i) searchVMRbyRegion(i)))
   }
 
-}
+  if (verbose) {
+    t2 <- proc.time()
+    message("Finished VMR detection (",
+            round((t2 - t1)[3]/60, 2), " min). ",
+            appendLF = FALSE)
+  }
+
+  # return  a data.frame with columns:
+  # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_name' (name of CR)
+  return(VMRI)
+
+} # end of function `searchVMR`
 
 
 

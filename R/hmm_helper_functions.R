@@ -412,7 +412,7 @@
 .optim1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY) {
   trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
   vit <- .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
-  return(list(vit_path = vit))
+  return(list(vit_path = vit, loglik = vit[nrow(vit), 'loglik_path']))
 }
 
 .optim2Grp <- function(pos, totals, meths, inits, tp,
@@ -421,10 +421,6 @@
                        CHOICEARRAY, METHARRAY, UNMETHARRAY){
   loglik <- -Inf; optim_pi_1 <- -1
   for (i in 1:length(inits)) {
-
-    # ## Skip the next initial value if the current optimized prevalence is larger than it. e.g., skip init=0.5 if optim_pi_1=0.55 from init=0.25
-    # if (i < length(inits) & optim_pi_1 >= inits[i]) next
-
     pi1_init <- inits[i]
     res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, tp,
                                    epsilon, backtrack, eta, max_iter,
@@ -435,7 +431,6 @@
       optim_pi_1 <- res$optim_pi_1
     }
   }
-  res$loglik <- NULL
   return(res)
 }
 
@@ -444,30 +439,31 @@
 .callVMR <- function(state_seq, min_n, max_n_merge){
 
   is_vml <- as.logical(abs(state_seq[[1]] - state_seq[[2]]))
+  len <- length(is_vml)
 
   i <- j <- 1; start_ind <- end_ind <- NULL
-  while (j <= length(is_vml)) {
+  while (j <= len) {
     if (i==j) { # either i,j are non-VML or start of a VMR
       if (is_vml[i]) {
         start_ind <- c(start_ind, i)
-        if (j == length(is_vml)) end_ind <- c(end_ind, j)
+        if (j == len) end_ind <- c(end_ind, j)
         j <- j + 1
       } else {
         i <- j <- j + 1
       }
     } else { # i at start of VMR, j goes to end of VMR
       if (is_vml[j]) {
-        if (j == length(is_vml)) end_ind <- c(end_ind, j)
+        if (j == len) end_ind <- c(end_ind, j)
         j <- j + 1
       } else {
-        if (is_vml[j + max_n_merge]) {
+        if (j + max_n_merge <= len & is_vml[j + max_n_merge]) {
           j <- j + max_n_merge
         } else {
           end_ind <- c(end_ind, j-1)
           i <- j <- j + max_n_merge + 1
         }
       }
-      # if (j == length(is_vml)) end_ind <- c(end_ind, j)
+      # if (j == len) end_ind <- c(end_ind, j)
     }
   }
 
