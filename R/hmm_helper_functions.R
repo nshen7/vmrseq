@@ -109,12 +109,12 @@
 }
 
 .calEmissionProb2Grp <- function(state_2g, total, meth, pi1,
-                                 REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY){
+                                 CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # Compute emission probability (in 2-grouping case) of observing `meth` methylated read in `total` total reads
   # `state_2g` is the integer code of underlying methylation states of the 2 groupings (`0` = (0,0), `1` = (1,0), `2` = (1,1)).
   # `pi1` is the prevalence of the methylated grouping
 
-  max_cov <- length(REFARRAY)
+  max_cov <- nrow(CHOICEARRAY) - 1
   p <- .translateMethFrac2Grp(state_2g, pi1)
   prob <- 0
   for (i in 0:total) {
@@ -132,12 +132,12 @@
   return(prob)
 }
 # Tests:
-# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 0, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 10, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 20, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 0, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 1, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
-# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 2, total = 20, meth = .x, pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 0, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 10, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# .calEmissionProb2Grp(state_2g = 0, total = 20, meth = 20, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 0, total = 20, meth = .x, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 1, total = 20, meth = .x, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
+# sum(map_dbl(0:20, ~.calEmissionProb2Grp(state_2g = 2, total = 20, meth = .x, pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)))
 
 
 
@@ -211,7 +211,7 @@
 }
 
 .Viterbi2Grp <- function(totals, meths, trans_probs, pi1,
-                         REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY){
+                         CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # should be applied on 1 region
   # `trans_probs` should have four columns:  [P(0|0), P(0|1), P(1|0), P(1|1)]
 
@@ -233,7 +233,7 @@
   for (i in 1:num_cpg) {
     for (j in state_nums+1) {
       log_em_prob <- log(.calEmissionProb2Grp(state_2g = j-1, total = totals[i], meth = meths[i],
-                                              pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY))
+                                              pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY))
       if (i == 1) { ## likelihood for the first CpG
         V[i, j] <- log_em_prob
         P[i, 'emission'] <- log_em_prob
@@ -300,7 +300,7 @@
 #                       max_cov = N)
 # METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
 # .Viterbi2Grp(totals, meths, trans_probs,
-#              pi1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+#              pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
 # .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
 
 
@@ -358,7 +358,7 @@
   trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
 
   pi_1 <- pi1_init; pi_2 <- 1 - pi_1
-  init_vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+  init_vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
   state_path <- init_vit$state_path
   loglik <- init_vit$loglik_path[nrow(init_vit)]
 
@@ -372,7 +372,7 @@
     pi_1 <- pi_1 / (pi_1 + pi_2)
 
     # viterbi update
-    vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, REFARRAY, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+    vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     old_loglik <- loglik
     loglik <- vit$loglik_path[nrow(init_vit)]
 

@@ -87,16 +87,16 @@ smoother <- function(x, y, weights, chr,
                      parallel = FALSE) {
 
 
-  locfitByCluster <- function(ix) {
+  locfitByCluster <- function(idx) {
 
-    yi <- y[ix]
-    xi <- x[ix]
+    yi <- y[idx]
+    xi <- x[idx]
     if (!is.null(weights)) {
-      weightsi <- matrix(weights[ix], ncol = 1)
+      weightsi <- weights[idx]
     } else {
       weightsi <- NULL
     }
-    clusteri <- clusterC[ix]
+    clusteri <- clusterC[idx]
 
     if (is.null((yi)))
       stop("y (var_raw) is missing")
@@ -104,14 +104,12 @@ smoother <- function(x, y, weights, chr,
       stop("x (pos) is missing")
     if (is.null(clusteri))
       stop("cluster is missing")
-    if (is.null(weightsi))
-      weightsi <- matrix(1, nrow = nrow(yi), ncol = ncol(yi))
 
-    if (length(ix) >= minNumRegion) {
+    if (length(idx) >= minNumRegion) {
       sdata <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
       # balance minInSpan and bpSpan
-      nn <- minInSpan / length(ix)
+      nn <- minInSpan / length(idx)
       fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan),
                     data = sdata, weights = weightsi, family = "gaussian",
                     maxk = 10000)
@@ -125,8 +123,8 @@ smoother <- function(x, y, weights, chr,
   } # end of function `locfitByCluster`
 
 
-  if (!is.null(weights) && is.null(dim(weights)))
-    weights <- matrix(weights, ncol = 1)
+  # if (!is.null(weights) && is.null(dim(weights)))
+  #   weights <- matrix(weights, ncol = 1)
 
   t1 <- proc.time()
   chr_len <- rep(chr, each = length(x))
@@ -139,6 +137,7 @@ smoother <- function(x, y, weights, chr,
 
   if (parallel) {
     ret <- do.call(rbind, bplapply(Indexes, function(idx) locfitByCluster(idx)))
+    # ret <- do.call(rbind, parallel::mclapply(Indexes, function(idx) locfitByCluster(idx), mc.cores = 6))
   } else {
     ret <- do.call(rbind, lapply(Indexes, function(idx) locfitByCluster(idx)))
   }
@@ -161,7 +160,7 @@ searchVMR <- function(gr,
                       maxGap = 1000, minNumRegion = 5,
                       tp = NULL,
                       maxNumMerge = 1,
-                      minNumLong = 20,
+                      minNumLong = 10,
                       control = optimize.control(),
                       verbose = TRUE,
                       parallel = FALSE) {
@@ -169,7 +168,7 @@ searchVMR <- function(gr,
   # If no `tp` provided, use internal `tp0`
   if (is.null(tp)) tp <- vmrseq:::tp0
 
-  t1 <- proc.time()
+  # t1 <- proc.time()
 
   # Pre-computation to ease computational burden
   max_cov <- max(gr$total)
@@ -219,24 +218,37 @@ searchVMR <- function(gr,
       if (is.null(vmr_inds)) return(NULL)
       else return(data.frame(vmr_inds + ix[1] - 1,
                              cr_name = i,
-                             optim_pi = res_2g$optim_pi_1))
+                             num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
+                             optim_pi = res_2g$optim_pi_1,
+                             loglik_1g = res_1g$loglik,
+                             loglik_2g = res_2g$loglik,
+                             loglik_diff = res_2g$loglik - res_1g$loglik))
     } else {
       return(NULL)
     }
   } # end of function `searchVMRbyRegion`
 
   if (parallel) {
-    VMRI <- do.call(rbind, bplapply(1:length(CRI), function(i) searchVMRbyRegion(i)))
+    VMRI <- do.call(
+      rbind,
+      bplapply(1:length(CRI), function(i) searchVMRbyRegion(i))
+    )
   } else {
-    VMRI <- do.call(rbind, lapply(1:length(CRI), function(i) searchVMRbyRegion(i)))
+    VMRI <- do.call(
+      rbind,
+      lapply(1:length(CRI), function(i) searchVMRbyRegion(i))
+    )
   }
 
-  if (verbose) {
-    t2 <- proc.time()
-    message("Finished VMR detection (",
-            round((t2 - t1)[3]/60, 2), " min). ",
-            appendLF = FALSE)
-  }
+  # t2 <- proc.time()
+  # if (length(VMRI) == 0) {
+  #   message("No VMR detected.")
+  #   return(NULL)
+  # } else {
+  #   message("Finished detecting VMRs (took ",
+  #           round((t2 - t1)[3]/60, 2), " min and ",
+  #           nrow(VMRI), " VMRs found in total).")
+  # }
 
   # return  a data.frame with columns:
   # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_name' (name of CR)
@@ -246,4 +258,29 @@ searchVMR <- function(gr,
 
 
 
+indexToGranges <- function(gr, index, type) {
 
+  if (!type %in% c("VMR", "CR")) stop("'type' has to be 'VMR' or 'CR'.")
+
+  if (type == "VMR") {
+    vmr.gr <- GRanges(
+      seqnames = seqnames(gr)[index$start_ind],
+      ranges = IRanges(start = start(gr)[index$start_ind],
+                       end = end(gr)[index$end_ind])
+    )
+    values(vmr.gr) <- DataFrame(VMRI[,-(1:2)])
+    return(vmr.gr)
+  } else {
+    start_inds <- sapply(index, function(ix) ix[1])
+    end_inds <- sapply(index, function(ix) ix[length(ix)])
+    num_cpg <- lengths(index)
+    cr.gr <- GRanges(
+      seqnames = seqnames(gr)[start_inds],
+      ranges = IRanges(start = start(gr)[start_inds],
+                       end = end(gr)[end_inds])
+    )
+    values(cr.gr) <- DataFrame(cr_name = 1:length(index),
+                               num_cpg = num_cpg)
+    return(cr.gr)
+  }
+}

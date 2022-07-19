@@ -6,11 +6,11 @@
 #'
 #' @param gr GRanges object containing the chromosome position and methylation
 #' values. Should contain two element metadata columns that can be extracted
-#' using `values(gr)`: `meth` and `total`, indicating number of methylated cells
-#' and total number of cells.
+#' using \code{values(gr)}: `meth` and `total`, indicating number of methylated
+#' cells and total number of cells.
 #' @param minCov integer scalar value that represents minimum across-cell
-#' coverage in QC step. Sites with coverage lower than `minCov` are removed.
-#' Default value is 5.
+#' coverage in QC step. Sites with coverage lower than \code{minCov} are
+#' removed. Default value is 5.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
 #' @param maxGap integer value representing maximum number of basepairs in
@@ -18,31 +18,40 @@
 #' @param minNumRegion positive integer that represents the minimum number of
 #' CpGs to consider for an VMR as well as a candidate region. Default value is
 #' 5. Minimum value is 3.
-#' @param smooth
-#' @param bpSpan
-#' @param minInSpan
-#' @param maxGapSmooth
+#' @param smooth logical value that indicates whether or not to smooth the CpG
+#' level signal when discovering candidate regions. Defaults to TRUE.
+#' @param bpSpan a positive integer that represents the length in base pairs of
+#' the smoothing span window if \code{smooth} is TRUE. Default value is 1000.
+#' @param minInSpan positive integer that represents the minimum number of CpGs
+#' in a smoothing span window if \code{smooth} is TRUE. Default value is 10.
+#' @param maxGapSmooth integer value representing maximum number of base pairs
+#' in between neighboring CpGs to be included in the same cluster when
+#' performing smoothing (should generally be larger than \code{maxGap})
 #' @param tp transitProbs object that contains estimated transition
 #' probabilities. Can be obtained by the 'estimTransitProbs' function. If
-#' `tp==NULL`, internal transition probabilities in `vmrseq` is used. Default is
-#' NULL.
+#' \code{tp==NULL}, internal transition probabilities in \code{vmrseq} is used.
+#' Default is NULL.
 #' @param maxNumMerge positive integer that represents the maximum number of
 #' CpGs between two VMRs that can be tolerated when merging VMRs in the same
 #' candidate region.Default is 1.
 #' @param minNumLong positive integer that represents the minimum number of
 #' CpGs to consider for a *long* candidate region. For fast computation use.
 #' Default is 20. Long regions will be performed a more thorough search of
-#' optimized prevalence value. Minimum value is the `minNumRegion`.
-#' @param control
-#' @param verbose
+#' optimized prevalence value. Minimum value is the \code{minNumRegion}.
+#' @param control this sets the control parameters of the outer iterations
+#' algorithm. The default setting is the \code{vmrseq.control} function.
+#' @param verbose logical value that indicates whether progress messages should
+#' be printed to stdout. Defaults value is TRUE.
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
 #' backend. The default option is \code{BiocParallel::bpparam()} which will
 #' automatically creates a cluster appropriate for the operating system.
 #'
-#' @return a \code{GRanges} object that contains the results of the inference.
+#' @return a list of two \code{GRanges} object that contains the results of the
+#' inference.
 #'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #' @importFrom bumphunter clusterMaker getSegments
+#' @importFrom stats fitted median
 #' @import GenomicRanges
 #' @import dplyr
 #'
@@ -59,8 +68,8 @@ vmrseq <- function(gr,
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 1000, minInSpan = 10, # params for smoother
                    tp = NULL,
-                   maxNumMerge = 1, minNumLong = 20,
-                   control = optimize.control(),
+                   maxNumMerge = 1, minNumLong = 10,
+                   control = vmrseq.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
@@ -82,6 +91,12 @@ vmrseq <- function(gr,
   if (is.unsorted(gr)) {
     message("'gr' is not sorted. Sorting 'gr' now.")
     gr <- sort(gr)
+  }
+
+  for (chromosome in unique(seqnames(gr))) {
+    gr_chr <- subset(gr, seqnames(gr) == chromosome)
+    if (min(diff(start(gr_chr))) < 2)
+      stop("There exists at least 2 rows with position difference less than 2 bp.")
   }
 
   # QC: remove low-coverage sites
@@ -128,11 +143,12 @@ vmrseq <- function(gr,
     message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
   } else {
-    message("Finished calling candidate regions. (", length(CRI),
-            " candidate regions found in total)")
+    message("Finished calling candidate regions (found ", length(CRI),
+            " candidate regions in total).")
   }
 
   message("Detecting VMRs...")
+  t1 <- proc.time()
   # Outputs a GRanges objects with VMR ranges and summary information
   VMRI <- searchVMR(
     gr = gr,
@@ -146,37 +162,42 @@ vmrseq <- function(gr,
     parallel = parallel
   )
 
+  t2 <- proc.time()
   if (length(VMRI) == 0) {
     message("No VMR detected.")
     return(NULL)
   } else {
-    message("Finished calling VMRs. (", nrow(VMRI), " VMRs found in total)")
+    message("Finished detecting VMRs (took ",
+            round((t2 - t1)[3]/60, 2), " min and ",
+            nrow(VMRI), " VMRs found in total).")
   }
 
+  vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")
+  cr.gr <- indexToGranges(gr = gr, index = CRI, type = "CR")
 
-  return(list(vmr.gr, cr.gr))
+  return(list(VMRs = vmr.gr, CRs = cr.gr))
 }
 
 
 
 
 #' Auxiliary function as user interface for vmrseq optimization. Typically only
-#' used when calling vmrseq function with the option `control`.
+#' used when calling vmrseq function with the option \code{control}.
 #'
 #' @param inits vector of numeric values between 0 and 1 representing initial
-#' values of \pi_1 shall be taken in optimization algorithm.
+#' values of pi_1 shall be taken in optimization algorithm.
 #' @param epsilon numeric value representing the convergence upper bound for
 #' the algorithm.
 #' @param backtrack logical value indicating whether to use backtracking line
 #' search to automatically adjust learning rate. Default is TRUE.
 #' @param eta a numeric value representing the learning rate in optimization.
-#' Default is `ifelse(backtrack, 0.05, 0.005)`.
+#' Default is \code{ifelse(backtrack, 0.05, 0.005)}.
 #' @param maxIter positive integer value representing the maximum number of
 #' iterations in optimization algorithm.
 #' @return
 #' @export
 #'
-optimize.control <- function(
+vmrseq.control <- function(
     inits = c(.2, .5, .8),
     epsilon = 1e-4,
     backtrack = T,

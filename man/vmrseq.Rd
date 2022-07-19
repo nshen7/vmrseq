@@ -16,8 +16,8 @@ vmrseq(
   minInSpan = 10,
   tp = NULL,
   maxNumMerge = 1,
-  minNumLong = 20,
-  control = optimize.control(),
+  minNumLong = 10,
+  control = vmrseq.control(),
   verbose = TRUE,
   BPPARAM = bpparam()
 )
@@ -25,12 +25,12 @@ vmrseq(
 \arguments{
 \item{gr}{GRanges object containing the chromosome position and methylation
 values. Should contain two element metadata columns that can be extracted
-using `values(gr)`: `meth` and `total`, indicating number of methylated cells
-and total number of cells.}
+using \code{values(gr)}: `meth` and `total`, indicating number of methylated
+cells and total number of cells.}
 
 \item{minCov}{integer scalar value that represents minimum across-cell
-coverage in QC step. Sites with coverage lower than `minCov` are removed.
-Default value is 5.}
+coverage in QC step. Sites with coverage lower than \code{minCov} are
+removed. Default value is 5.}
 
 \item{cutoff}{positive scalar value that represents the cutoff value of
 variance that is used to discover candidate regions. Default value is 0.10.}
@@ -42,10 +42,23 @@ between neighboring CpGs to be included in the same VMR.}
 CpGs to consider for an VMR as well as a candidate region. Default value is
 5. Minimum value is 3.}
 
+\item{smooth}{logical value that indicates whether or not to smooth the CpG
+level signal when discovering candidate regions. Defaults to TRUE.}
+
+\item{maxGapSmooth}{integer value representing maximum number of base pairs
+in between neighboring CpGs to be included in the same cluster when
+performing smoothing (should generally be larger than \code{maxGap})}
+
+\item{bpSpan}{a positive integer that represents the length in base pairs of
+the smoothing span window if \code{smooth} is TRUE. Default value is 1000.}
+
+\item{minInSpan}{positive integer that represents the minimum number of CpGs
+in a smoothing span window if \code{smooth} is TRUE. Default value is 10.}
+
 \item{tp}{transitProbs object that contains estimated transition
 probabilities. Can be obtained by the 'estimTransitProbs' function. If
-`tp==NULL`, internal transition probabilities in `vmrseq` is used. Default is
-NULL.}
+\code{tp==NULL}, internal transition probabilities in \code{vmrseq} is used.
+Default is NULL.}
 
 \item{maxNumMerge}{positive integer that represents the maximum number of
 CpGs between two VMRs that can be tolerated when merging VMRs in the same
@@ -54,14 +67,21 @@ candidate region.Default is 1.}
 \item{minNumLong}{positive integer that represents the minimum number of
 CpGs to consider for a *long* candidate region. For fast computation use.
 Default is 20. Long regions will be performed a more thorough search of
-optimized prevalence value. Minimum value is the `minNumRegion`.}
+optimized prevalence value. Minimum value is the \code{minNumRegion}.}
+
+\item{control}{this sets the control parameters of the outer iterations
+algorithm. The default setting is the \code{vmrseq.control} function.}
+
+\item{verbose}{logical value that indicates whether progress messages should
+be printed to stdout. Defaults value is TRUE.}
 
 \item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
 backend. The default option is \code{BiocParallel::bpparam()} which will
 automatically creates a cluster appropriate for the operating system.}
 }
 \value{
-a \code{GRanges} object that contains the results of the inference.
+a list of two \code{GRanges} object that contains the results of the
+inference.
 }
 \description{
 Performs a two-step approach that (1) detects candidate regions,
