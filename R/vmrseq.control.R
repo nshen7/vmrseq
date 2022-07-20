@@ -1,5 +1,7 @@
-#' Auxiliary function as user interface for vmrseq optimization. Typically only
-#' used when calling vmrseq function with the option \code{control}.
+#' @title Auxiliary function as user interface for vmrseq optimization.
+#'
+#' @description Typically only used when calling vmrseq function with the
+#' option \code{control}.
 #'
 #' @param inits vector of numeric values between 0 and 1 representing initial
 #' values of pi_1 shall be taken in optimization algorithm.
@@ -11,7 +13,9 @@
 #' Default is \code{ifelse(backtrack, 0.05, 0.005)}.
 #' @param maxIter positive integer value representing the maximum number of
 #' iterations in optimization algorithm.
+#'
 #' @return
+#'
 #' @export
 #'
 vmrseq.control <- function(

@@ -161,7 +161,7 @@ searchVMR <- function(gr,
                       tp = NULL,
                       maxNumMerge = 1,
                       minNumLong = 10,
-                      control = optimize.control(),
+                      control = vmrseq.control(),
                       verbose = TRUE,
                       parallel = FALSE) {
 
