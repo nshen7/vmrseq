@@ -268,7 +268,7 @@ indexToGranges <- function(gr, index, type) {
       ranges = IRanges(start = start(gr)[index$start_ind],
                        end = end(gr)[index$end_ind])
     )
-    values(vmr.gr) <- DataFrame(VMRI[,-(1:2)])
+    values(vmr.gr) <- DataFrame(index[,-(1:2)])
     return(vmr.gr)
   } else {
     start_inds <- sapply(index, function(ix) ix[1])
