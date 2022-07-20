@@ -39,7 +39,7 @@
   stopifnot("`med_cov` should be a positive integer." = med_cov > 0 & round(med_cov)==med_cov)
 
   if (type == 'u') {
-    pars <- vmrseq::params_u
+    pars <- params_u
     max_mc <- max(pars$med_cov)
     if (med_cov > max_mc) {
       return(c(nu = pars$nu[max_mc], mu = pars$mu[max_mc], sigma = pars$sigma[max_mc]))
@@ -47,7 +47,7 @@
       return(c(nu = pars$nu[med_cov], mu = pars$mu[med_cov], sigma = pars$sigma[med_cov]))
     }
   } else {
-    pars <- vmrseq::params_m
+    pars <- params_m
     return(c(mu = pars$mu[1], sigma = pars$sigma[1]))
   }
 }
@@ -62,9 +62,9 @@
   UNMETHARRAY <- matrix(data = 0, nrow = max_cov+1, ncol = max_cov+1)
   for (n in 1:(max_cov+1)) {
     for (k in 1:n) {
-      UNMETHARRAY[n,k] <- dZIBB(x = k-1, mu = par_u['mu'], sigma = par_u['sigma'],
+      UNMETHARRAY[n,k] <- gamlss.dist::dZIBB(x = k-1, mu = par_u['mu'], sigma = par_u['sigma'],
                                 nu = par_u['nu'], bd = n-1)
-      METHARRAY[n,k] <- dBB(x = k-1, mu = par_m['mu'], sigma = par_m['sigma'],
+      METHARRAY[n,k] <- gamlss.dist::dBB(x = k-1, mu = par_m['mu'], sigma = par_m['sigma'],
                             bd = n-1)
     }
   }

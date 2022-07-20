@@ -106,12 +106,12 @@ smoother <- function(x, y, weights, chr,
       stop("cluster is missing")
 
     if (length(idx) >= minNumRegion) {
-      sdata <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
+      df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
       # balance minInSpan and bpSpan
       nn <- minInSpan / length(idx)
       fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan),
-                    data = sdata, weights = weightsi, family = "gaussian",
+                    data = df, weights = weightsi, family = "gaussian",
                     maxk = 10000)
       yi <- fitted(fit)
       smoothed <- TRUE
@@ -166,7 +166,7 @@ searchVMR <- function(gr,
                       parallel = FALSE) {
 
   # If no `tp` provided, use internal `tp0`
-  if (is.null(tp)) tp <- vmrseq:::tp0
+  if (is.null(tp)) tp <- tp0
 
   # t1 <- proc.time()
 

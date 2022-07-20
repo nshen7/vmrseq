@@ -20,4 +20,6 @@ Imports:
     ggplot2,
     methods,
     purrr,
-    tidyr
+    tidyr,
+    locfit,
+    gamlss.dist

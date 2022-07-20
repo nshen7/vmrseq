@@ -2,7 +2,8 @@
 % Please edit documentation in R/vmrseq.R
 \name{vmrseq}
 \alias{vmrseq}
-\title{Main function for detecting and evaluating significance of DMRs.}
+\title{Main function for detecting and evaluating significance of VMRs in
+single-cell bisulfite sequencing data.}
 \usage{
 vmrseq(
   gr,
