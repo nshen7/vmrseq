@@ -36,7 +36,8 @@
   # `type` should be 'u' or 'm' indicating grouping type.
 
   stopifnot("`type` should be either 'u' or 'm'." = type %in% c('u','m'))
-  stopifnot("`med_cov` should be a positive integer." = med_cov > 0 & round(med_cov)==med_cov)
+  # stopifnot("`med_cov` should be a positive integer." = med_cov > 0 & round(med_cov)==med_cov)
+  med_cov <- round(med_cov)
 
   if (type == 'u') {
     pars <- params_u
@@ -143,7 +144,7 @@
 
 
 # Function for loading transition probabilities from tp
-.loadTransitProbs <- function(pos, all_probs)
+.loadTransitProbs <- function(pos, all_probs = tp0@transit_probs)
   # `probs` should be a data.frame of 4 columns [P(0|0),P(0|1),P(1|0),P(1|1)], while row number represents CpG-CpG distance
   # `pos` is an atomic vector of genomic positions which shall be used to compute CpG-CpG distances and load transition probs
   all_probs[pmin(nrow(all_probs), diff(pos)), ]
