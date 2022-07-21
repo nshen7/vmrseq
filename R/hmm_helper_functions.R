@@ -37,7 +37,7 @@
 
   stopifnot("`type` should be either 'u' or 'm'." = type %in% c('u','m'))
   # stopifnot("`med_cov` should be a positive integer." = med_cov > 0 & round(med_cov)==med_cov)
-  med_cov <- round(med_cov)
+  med_cov <- round(med_cov) %>% max(1)
 
   if (type == 'u') {
     pars <- params_u
