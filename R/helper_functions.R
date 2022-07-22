@@ -177,6 +177,7 @@ smoother <- function(x, y, weights, chr,
 
 searchVMR <- function(gr,
                       CRI,
+                      penalty = 2,
                       maxGap = 1000, minNumRegion = 5,
                       tp = NULL,
                       maxNumMerge = 1,
@@ -229,7 +230,7 @@ searchVMR <- function(gr,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     }
 
-    if (res_2g$loglik > res_1g$loglik) {
+    if (res_2g$loglik > res_1g$loglik + penalty) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumRegion,
@@ -240,8 +241,7 @@ searchVMR <- function(gr,
                              cr_name = i,
                              num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              optim_pi = res_2g$optim_pi_1,
-                             loglik_1g = res_1g$loglik,
-                             loglik_2g = res_2g$loglik,
+                             n_iter = res_2g$n_iter,
                              loglik_diff = res_2g$loglik - res_1g$loglik))
     } else {
       return(NULL)

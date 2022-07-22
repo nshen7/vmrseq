@@ -14,6 +14,7 @@
 #' removed. Default value is 5.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
+#' @param penalize
 #' @param maxGap integer value representing maximum number of basepairs in
 #' between neighboring CpGs to be included in the same VMR.
 #' @param minNumRegion positive integer that represents the minimum number of
@@ -67,6 +68,7 @@
 vmrseq <- function(gr,
                    minCov = 5,
                    cutoff = 0.05, # param for CR calling
+                   penalize = TRUE, # params for VMR calling
                    maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 1000, minInSpan = 10, # params for smoother
@@ -103,9 +105,17 @@ vmrseq <- function(gr,
   }
 
   # QC: remove low-coverage sites
-  if (minCov > 0 & min(gr$total) < minCov) {
+  if (minCov > 0) {
+    pct_rm <- round(sum(gr$total<minCov)/length(gr)*100, 1)
+    if (pct_rm >= 15 & pct_rm < 30) {
+      message("WARNING:
+  Consider lowering 'minCov' value since ", pct_rm, "% sites will be removed due to QC.")
+      warning("Consider lowering 'minCov' value since ", pct_rm, "% sites are removed due to QC.")
+    } else if (pct_rm >= 30) {
+      stop("'minCov' value should be lowered since ", pct_rm, "% sites will be removed due to QC.")
+    }
     gr <- subset(gr, gr$total >= minCov)
-    message("Removed sites with coverage lower than ", minCov, ".")
+    message("QC: Removed ", pct_rm, "% of sites with coverage lower than ", minCov, ".")
   }
 
   # Register the parallel backend
@@ -114,20 +124,20 @@ vmrseq <- function(gr,
 
   if (bpparam()$workers == 1) {
     if (verbose) {
-      mes <- "Using a single core (backend: %s)."
+      mes <- "Parallel: Using a single core (backend: %s)."
       message(sprintf(mes, backend))
     }
     parallel <- FALSE
   } else {
     if (verbose) {
-      mes <- paste0("Parallelizing using %s workers/cores ",
+      mes <- paste0("Parallel: Parallelizing using %s workers/cores ",
                     "(backend: %s).")
       message(sprintf(mes, bpparam()$workers, backend))
     }
     parallel <- TRUE
   }
 
-  message("Detecting candidate regions with smoothed variance larger than ",
+  message("Step 1: Detecting candidate regions with (smoothed) variance larger than ",
           cutoff, "...")
   # Bumphunt candidate regions. Outputs list of index vectors.
   # Each list element is one CR.
@@ -143,22 +153,36 @@ vmrseq <- function(gr,
     parallel = parallel
   )
 
+  # Percentage of sites in CRs
+  pct_incr <- round(sum(lengths(CRI))/length(gr)*100, 2)
+
   if (length(CRI) == 0) {
-    message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
+    message("...No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
   } else {
-    message("Finished calling candidate regions - found ", length(CRI),
-            " candidate regions in total.")
-    message("(", round(sum(lengths(CRI))/length(gr)*100, 2),
-            "% sites are called to be in candidate regions.)")
+    message("...Finished calling candidate regions - found ", length(CRI),
+            " candidate regions in total.
+  ...", pct_incr,
+            "% QC-passed sites are called to be in candidate regions.")
   }
 
-  message("Detecting VMRs...")
+  if (pct_incr <= 30) {
+    message("WARNING:
+  Consider lowering 'cutoff' since only ", pct_incr,
+            "% QC-passed sites are called to be in candidate region.
+    ...if not, might induce low statistical power.")
+    warning("Consider lowering 'cutoff' since only ", pct_incr,
+            "% QC-passed sites are called to be in candidate region.")
+  }
+
+  message("Step 2: Detecting VMRs", ifelse(penalize, " with", " with no"), " penalty...")
   t1 <- proc.time()
+
   # Outputs a GRanges objects with VMR ranges and summary information
   VMRI <- searchVMR(
     gr = gr,
     CRI = CRI,
+    penalty = ifelse(penalize, 2, 0),
     maxGap = maxGap, minNumRegion = minNumRegion,
     tp = tp,
     maxNumMerge = maxNumMerge,
@@ -169,15 +193,17 @@ vmrseq <- function(gr,
   )
 
   t2 <- proc.time()
+
   if (length(VMRI) == 0) {
     message("No VMR detected.")
     return(NULL)
   } else {
-    message("Finished detecting VMRs - took ",
+    message("...finished detecting VMRs - took ",
             round((t2 - t1)[3]/60, 2), " min and ",
-            nrow(VMRI), " VMRs found in total.")
-    message(round(sum(VMRI$end_ind-VMRI$start_ind+1) / length(gr) * 100, 2),
-            "% sites are called to be in VMRs.")
+            nrow(VMRI), " VMRs found in total.
+  ...",
+            round(sum(VMRI$end_ind-VMRI$start_ind+1) / length(gr) * 100, 2),
+            "% QC-passed sites are called to be in VMRs.")
   }
 
   vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")

@@ -383,7 +383,7 @@
       if(loglik > old_loglik - alpha*eta*grad^2) eta <- beta*eta
     }
 
-    if(t == max_iter) print("Max iteration achieved.")
+    # if(t == max_iter) print("Max iteration achieved.")
     if(abs(loglik - old_loglik) < epsilon & abs(old_pi_1 - pi_1) < epsilon) break
   }
 
