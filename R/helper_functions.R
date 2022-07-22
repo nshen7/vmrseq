@@ -1,11 +1,12 @@
 callCandidRegion <- function(gr,
-                            cutoff = 0.1,
-                            maxGap = 1000, minNumRegion = 5,
-                            smooth = T,
-                            maxGapSmooth = 2500,
-                            minInSpan = 10, bpSpan = 1000,
-                            verbose = TRUE,
-                            parallel = FALSE) {
+                             cutoff = 0.05,
+                             maxGap = 1000, minNumRegion = 5,
+                             smooth = T,
+                             maxGapSmooth = 2500,
+                             minInSpan = 10, bpSpan = 1000,
+                             maxNumMerge = 1,
+                             verbose = TRUE,
+                             parallel = FALSE) {
 
   # Compute variance for individual sites
   gr$MF <- gr$meth / gr$total
@@ -62,6 +63,7 @@ callCandidRegion <- function(gr,
     gr$var <- fit$fitted
   }
 
+
   # Call candidate regions
   cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
                                       pos = start(gr),
@@ -73,7 +75,24 @@ callCandidRegion <- function(gr,
                                      verbose = FALSE)
 
   upIndex <- Indexes$upIndex
+
+  # Merge CRs if they are closer than `maxNumMerge` bp
+  if (maxNumMerge > 0) {
+    for (i in 1:(length(upIndex)-1)) {
+      fr <- upIndex[[i]]
+      bh <- upIndex[[i+1]]
+      if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
+        combined <- (fr[1]):(bh[length(bh)])
+        upIndex[[i]] <- NA
+        upIndex[[i+1]] <- combined
+      }
+    }
+    upIndex <- upIndex[!is.na(upIndex)]
+  }
+
+  # Only keep candidate regions with more than `minNumRegion` CpGs
   CRI <- upIndex[lengths(upIndex) >= minNumRegion]
+
   return(CRI)
 } # end of function `callCandidRegion`
 
@@ -144,9 +163,10 @@ smoother <- function(x, y, weights, chr,
 
   if (verbose) {
     t2 <- proc.time()
-    message("Smoothed (",
-            round((t2 - t1)[3]/60, 2), " min). ",
-            appendLF = FALSE)
+    message("Smoothed (", round((t2 - t1)[3]/60, 2), " min). ")
+    # message("Smoothed (",
+    #         round((t2 - t1)[3]/60, 2), " min). ",
+    #         appendLF = FALSE)
   }
 
   return(ret) # data.frame with columns: 'fitted' (numeric), 'smoothed' (logical)
@@ -211,7 +231,7 @@ searchVMR <- function(gr,
 
     if (res_2g$loglik > res_1g$loglik) {
       vmr_inds <- .callVMR(
-        state_seq = res_2g$vit_path[, 1:2],
+        state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumRegion,
         max_n_merge = maxNumMerge
       )
@@ -239,16 +259,6 @@ searchVMR <- function(gr,
       lapply(1:length(CRI), function(i) searchVMRbyRegion(i))
     )
   }
-
-  # t2 <- proc.time()
-  # if (length(VMRI) == 0) {
-  #   message("No VMR detected.")
-  #   return(NULL)
-  # } else {
-  #   message("Finished detecting VMRs (took ",
-  #           round((t2 - t1)[3]/60, 2), " min and ",
-  #           nrow(VMRI), " VMRs found in total).")
-  # }
 
   # return  a data.frame with columns:
   # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_name' (name of CR)

@@ -437,9 +437,11 @@
 
 
 # functions for detect VMRs in predicted state sequence
-.callVMR <- function(state_seq, min_n, max_n_merge){
+.callVMR <- function(state_seq_2g, min_n, max_n_merge){
 
-  is_vml <- as.logical(abs(state_seq[[1]] - state_seq[[2]]))
+  state_seq_2g <- as.data.frame(state_seq_2g) # Formatting
+
+  is_vml <- as.logical(abs(state_seq_2g[[1]] - state_seq_2g[[2]]))
   len <- length(is_vml)
 
   i <- j <- 1; start_ind <- end_ind <- NULL

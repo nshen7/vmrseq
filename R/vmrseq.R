@@ -66,7 +66,7 @@
 #'
 vmrseq <- function(gr,
                    minCov = 5,
-                   cutoff = 0.1, # param for CR calling
+                   cutoff = 0.05, # param for CR calling
                    maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 1000, minInSpan = 10, # params for smoother
@@ -105,7 +105,7 @@ vmrseq <- function(gr,
   # QC: remove low-coverage sites
   if (minCov > 0 & min(gr$total) < minCov) {
     gr <- subset(gr, gr$total >= minCov)
-    message("Removed sites with coverage lower than ", minCov)
+    message("Removed sites with coverage lower than ", minCov, ".")
   }
 
   # Register the parallel backend
@@ -138,6 +138,7 @@ vmrseq <- function(gr,
     smooth = smooth,
     maxGapSmooth = maxGapSmooth,
     minInSpan = minInSpan, bpSpan = bpSpan,
+    maxNumMerge = maxNumMerge,
     verbose = verbose,
     parallel = parallel
   )
@@ -146,8 +147,10 @@ vmrseq <- function(gr,
     message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
   } else {
-    message("Finished calling candidate regions (found ", length(CRI),
-            " candidate regions in total).")
+    message("Finished calling candidate regions - found ", length(CRI),
+            " candidate regions in total.")
+    message("(", round(sum(lengths(CRI))/length(gr)*100, 2),
+            "% sites are called to be in candidate regions.)")
   }
 
   message("Detecting VMRs...")
@@ -170,9 +173,11 @@ vmrseq <- function(gr,
     message("No VMR detected.")
     return(NULL)
   } else {
-    message("Finished detecting VMRs (took ",
+    message("Finished detecting VMRs - took ",
             round((t2 - t1)[3]/60, 2), " min and ",
-            nrow(VMRI), " VMRs found in total).")
+            nrow(VMRI), " VMRs found in total.")
+    message(round(sum(VMRI$end_ind-VMRI$start_ind+1) / length(gr) * 100, 2),
+            "% sites are called to be in VMRs.")
   }
 
   vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")
