@@ -170,7 +170,7 @@ vmrseq <- function(gr,
     message("WARNING:
   Consider lowering 'cutoff' since only ", pct_incr,
             "% QC-passed sites are called to be in candidate region.
-    ...if not, might induce low statistical power.")
+    ...If not, might induce low statistical power.")
     warning("Consider lowering 'cutoff' since only ", pct_incr,
             "% QC-passed sites are called to be in candidate region.")
   }
@@ -198,11 +198,10 @@ vmrseq <- function(gr,
     message("No VMR detected.")
     return(NULL)
   } else {
-    message("...finished detecting VMRs - took ",
+    message("...Finished detecting VMRs - took ",
             round((t2 - t1)[3]/60, 2), " min and ",
             nrow(VMRI), " VMRs found in total.
-  ...",
-            round(sum(VMRI$end_ind-VMRI$start_ind+1) / length(gr) * 100, 2),
+  ...", round(sum(VMRI$end_ind-VMRI$start_ind+1) / length(gr) * 100, 2),
             "% QC-passed sites are called to be in VMRs.")
   }
 
