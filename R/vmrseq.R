@@ -66,10 +66,10 @@
 #'
 #'
 vmrseq <- function(gr,
-                   minCov = 5,
+                   minCov = 3,
                    cutoff = 0.05, # param for CR calling
-                   penalize = TRUE, # params for VMR calling
-                   maxGap = 1000, minNumRegion = 5, # params for VMR calling
+                   penalize = "BIC", # params for VMR calling
+                   maxGap = 1000, minNumRegion = 3, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 1000, minInSpan = 10, # params for smoother
                    tp = NULL,
@@ -79,6 +79,8 @@ vmrseq <- function(gr,
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
     stop("'cutoff' has to be a postive scalar value.")
+  if (!penalize %in% c("None", "AIC", "BIC"))
+    stop("'penalize' has to be 'None' or 'AIC' or 'BIC'.")
   if (minNumRegion < 3)
     stop("'minNumRegion' must be at least 3.")
   if (minNumLong < minNumRegion)
@@ -107,7 +109,7 @@ vmrseq <- function(gr,
   # QC: remove low-coverage sites
   if (minCov > 0) {
     pct_rm <- round(sum(gr$total<minCov)/length(gr)*100, 1)
-    if (pct_rm >= 15 & pct_rm < 30) {
+    if (pct_rm >= 10 & pct_rm < 30) {
       message("WARNING:
   Consider lowering 'minCov' value since ", pct_rm, "% sites will be removed due to QC.")
       warning("Consider lowering 'minCov' value since ", pct_rm, "% sites are removed due to QC.")
@@ -175,14 +177,14 @@ vmrseq <- function(gr,
             "% QC-passed sites are called to be in candidate region.")
   }
 
-  message("Step 2: Detecting VMRs", ifelse(penalize, " with", " with no"), " penalty...")
+  message("Step 2: Detecting VMRs", ifelse(penalize=="None", " without", " with"), " penalty...")
   t1 <- proc.time()
 
   # Outputs a GRanges objects with VMR ranges and summary information
   VMRI <- searchVMR(
     gr = gr,
     CRI = CRI,
-    penalty = ifelse(penalize, 2, 0),
+    penalize = penalize,
     maxGap = maxGap, minNumRegion = minNumRegion,
     tp = tp,
     maxNumMerge = maxNumMerge,

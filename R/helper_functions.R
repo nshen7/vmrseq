@@ -1,6 +1,6 @@
 callCandidRegion <- function(gr,
                              cutoff = 0.05,
-                             maxGap = 1000, minNumRegion = 5,
+                             maxGap = 1000, minNumRegion = 3,
                              smooth = T,
                              maxGapSmooth = 2500,
                              minInSpan = 10, bpSpan = 1000,
@@ -99,7 +99,7 @@ callCandidRegion <- function(gr,
 
 
 smoother <- function(x, y, weights, chr,
-                     maxGap = 1000, minNumRegion = 5,
+                     maxGap = 1000, minNumRegion = 3,
                      maxGapSmooth = 2500,
                      minInSpan = 10, bpSpan = 1000,
                      verbose = TRUE,
@@ -177,8 +177,8 @@ smoother <- function(x, y, weights, chr,
 
 searchVMR <- function(gr,
                       CRI,
-                      penalty = 2,
-                      maxGap = 1000, minNumRegion = 5,
+                      penalize = "BIC",
+                      maxGap = 1000, minNumRegion = 3,
                       tp = NULL,
                       maxNumMerge = 1,
                       minNumLong = 10,
@@ -230,6 +230,14 @@ searchVMR <- function(gr,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     }
 
+    if (penalize == "AIC") {
+      penalty <- 1
+    } else if (penalize == "BIC") {
+      penalty <- log(length(ix))/2
+    } else {
+      penalty <- 0
+    }
+
     if (res_2g$loglik > res_1g$loglik + penalty) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
@@ -242,7 +250,7 @@ searchVMR <- function(gr,
                              num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              optim_pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
-                             loglik_diff = res_2g$loglik - res_1g$loglik))
+                             loglik_diff = res_2g$loglik - res_1g$loglik - penalty))
     } else {
       return(NULL)
     }
