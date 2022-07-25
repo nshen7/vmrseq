@@ -68,10 +68,10 @@
 vmrseq <- function(gr,
                    minCov = 3,
                    cutoff = 0.05, # param for CR calling
-                   penalize = "BIC", # params for VMR calling
-                   maxGap = 1000, minNumRegion = 3, # params for VMR calling
+                   penalize = "None", # params for VMR calling
+                   maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
-                   bpSpan = 1000, minInSpan = 10, # params for smoother
+                   bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
                    tp = NULL,
                    maxNumMerge = 1, minNumLong = 10,
                    control = vmrseq.control(),
@@ -143,7 +143,7 @@ vmrseq <- function(gr,
           cutoff, "...")
   # Bumphunt candidate regions. Outputs list of index vectors.
   # Each list element is one CR.
-  CRI <- callCandidRegion(
+  res_cr <- callCandidRegion(
     gr = gr,
     cutoff = cutoff,
     maxGap = maxGap, minNumRegion = minNumRegion,
@@ -154,6 +154,15 @@ vmrseq <- function(gr,
     verbose = verbose,
     parallel = parallel
   )
+
+  # Indexes of candidate regions
+  CRI <- res_cr$CRI
+
+  # Add summary stats (smoothed var, index of CR) into output
+  cr_index <- rep(NA, length(gr))
+  cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
+  values(gr) <- cbind(values(gr), res_cr$smooth_fit, cr_index)
+
 
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(gr)*100, 2)
@@ -210,7 +219,13 @@ vmrseq <- function(gr,
   vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")
   cr.gr <- indexToGranges(gr = gr, index = CRI, type = "CR")
 
-  return(list(VMRs = vmr.gr, CRs = cr.gr))
+  # Add summary stats into output
+  vmr_index <- rep(NA, length(gr))
+  hits_vmr <- findOverlaps(gr, vmr.gr) %>% as.data.frame()
+  vmr_index[hits_vmr$queryHits] <- hits_vmr$subjectHits
+  values(gr)$vmr_index <- vmr_index
+
+  return(list(gr_qced = gr, VMRs = vmr.gr, CRs = cr.gr))
 }
 
 

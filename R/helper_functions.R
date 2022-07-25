@@ -1,9 +1,9 @@
 callCandidRegion <- function(gr,
                              cutoff = 0.05,
-                             maxGap = 1000, minNumRegion = 3,
+                             maxGap = 1000, minNumRegion = 5,
                              smooth = T,
                              maxGapSmooth = 2500,
-                             minInSpan = 10, bpSpan = 1000,
+                             minInSpan = 10, bpSpan = 10*median(diff(start(gr))),
                              maxNumMerge = 1,
                              verbose = TRUE,
                              parallel = FALSE) {
@@ -42,26 +42,18 @@ callCandidRegion <- function(gr,
                           verbose = verbose,
                           parallel = parallel)
     } else {
-      fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), smoothed = FALSE)
+      fit_chr <- data.frame(fitted_var = rep(NA, length(gr_chr)), is_smooth = FALSE)
     }
 
     # Keep the raw var if not smoothed
-    ind <- which(!fit_chr$smoothed)
-    if (length(ind) > 0) {
-      fit_chr$fitted[ind] <- gr_chr$var_raw[ind]
-    } else {
-      fit_chr$fitted <- gr_chr$var_raw
-    }
+    ind <- which(!fit_chr$is_smooth)
+    if (length(ind) > 0) fit_chr$fitted_var[ind] <- gr_chr$var_raw[ind]
 
     # Concatenate fit_chr from all chromosomes
     fit <- rbind(fit, fit_chr)
   }
 
-  if (nrow(fit) != length(gr)) {
-    stop("nrow(fit) does not match with length(gr).")
-  } else {
-    gr$var <- fit$fitted
-  }
+  # if (nrow(fit) != length(gr)) stop("nrow(fit) does not match with length(gr).")
 
 
   # Call candidate regions
@@ -69,7 +61,7 @@ callCandidRegion <- function(gr,
                                       pos = start(gr),
                                       maxGap = maxGap,
                                       assumeSorted = TRUE)
-  Indexes <- bumphunter::getSegments(x = gr$var, f = cluster,
+  Indexes <- bumphunter::getSegments(x = fit$fitted_var, f = cluster,
                                      cutoff = cutoff,
                                      assumeSorted = TRUE,
                                      verbose = FALSE)
@@ -93,15 +85,15 @@ callCandidRegion <- function(gr,
   # Only keep candidate regions with more than `minNumRegion` CpGs
   CRI <- upIndex[lengths(upIndex) >= minNumRegion]
 
-  return(CRI)
+  return(list(CRI = CRI, smooth_fit = fit))
 } # end of function `callCandidRegion`
 
 
 
 smoother <- function(x, y, weights, chr,
-                     maxGap = 1000, minNumRegion = 3,
-                     maxGapSmooth = 2500,
-                     minInSpan = 10, bpSpan = 1000,
+                     maxGap, minNumRegion,
+                     maxGapSmooth,
+                     minInSpan, bpSpan,
                      verbose = TRUE,
                      parallel = FALSE) {
 
@@ -133,12 +125,12 @@ smoother <- function(x, y, weights, chr,
                     data = df, weights = weightsi, family = "gaussian",
                     maxk = 10000)
       yi <- fitted(fit)
-      smoothed <- TRUE
+      is_smooth <- TRUE
     } else {
       yi <- rep(NA, length(yi))
-      smoothed <- FALSE
+      is_smooth <- FALSE
     }
-    return(data.frame(fitted = as.vector(yi), smoothed = smoothed))
+    return(data.frame(fitted_var = as.vector(yi), is_smooth = is_smooth))
   } # end of function `locfitByCluster`
 
 
@@ -169,7 +161,7 @@ smoother <- function(x, y, weights, chr,
     #         appendLF = FALSE)
   }
 
-  return(ret) # data.frame with columns: 'fitted' (numeric), 'smoothed' (logical)
+  return(ret) # data.frame with columns: 'fitted_var' (numeric), 'is_smooth' (logical)
 
 } # end of function `smoother`
 
@@ -178,7 +170,7 @@ smoother <- function(x, y, weights, chr,
 searchVMR <- function(gr,
                       CRI,
                       penalize = "BIC",
-                      maxGap = 1000, minNumRegion = 3,
+                      maxGap = 1000, minNumRegion = 5,
                       tp = NULL,
                       maxNumMerge = 1,
                       minNumLong = 10,
