@@ -169,7 +169,7 @@ smoother <- function(x, y, weights, chr,
 
 searchVMR <- function(gr,
                       CRI,
-                      penalize = "BIC",
+                      penalize = TRUE,
                       maxGap = 1000, minNumRegion = 5,
                       tp = NULL,
                       maxNumMerge = 1,
@@ -222,13 +222,7 @@ searchVMR <- function(gr,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     }
 
-    if (penalize == "AIC") {
-      penalty <- 1
-    } else if (penalize == "BIC") {
-      penalty <- log(length(ix))/2
-    } else {
-      penalty <- 0
-    }
+    penalty <- ifelse(penalize, 1, 0) # AIC penalty on 2-grouping log-likelihood
 
     if (res_2g$loglik > res_1g$loglik + penalty) {
       vmr_inds <- .callVMR(

@@ -67,8 +67,8 @@
 #'
 vmrseq <- function(gr,
                    minCov = 3,
-                   cutoff = 0.05, # param for CR calling
-                   penalize = "None", # params for VMR calling
+                   cutoff = 0.1, # param for CR calling
+                   penalize = TRUE, # params for VMR calling
                    maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
@@ -79,8 +79,8 @@ vmrseq <- function(gr,
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
     stop("'cutoff' has to be a postive scalar value.")
-  if (!penalize %in% c("None", "AIC", "BIC"))
-    stop("'penalize' has to be 'None' or 'AIC' or 'BIC'.")
+  if (is.logical(penalize))
+    stop("'penalize' has to be logical value (TRUE or FALSE).")
   if (minNumRegion < 3)
     stop("'minNumRegion' must be at least 3.")
   if (minNumLong < minNumRegion)
@@ -177,7 +177,7 @@ vmrseq <- function(gr,
             "% QC-passed sites are called to be in candidate regions.")
   }
 
-  if (pct_incr <= 30) {
+  if (pct_incr <= 10) {
     message("WARNING:
   Consider lowering 'cutoff' since only ", pct_incr,
             "% QC-passed sites are called to be in candidate region.
@@ -186,7 +186,7 @@ vmrseq <- function(gr,
             "% QC-passed sites are called to be in candidate region.")
   }
 
-  message("Step 2: Detecting VMRs", ifelse(penalize=="None", " without", " with"), " penalty...")
+  message("Step 2: Detecting VMRs", ifelse(penalize, yes = " with", no = " without"), " penalty...")
   t1 <- proc.time()
 
   # Outputs a GRanges objects with VMR ranges and summary information
