@@ -14,7 +14,7 @@
 #' removed. Default value is 5.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
-#' @param penalize
+#' @param penalty
 #' @param maxGap integer value representing maximum number of basepairs in
 #' between neighboring CpGs to be included in the same VMR.
 #' @param minNumRegion positive integer that represents the minimum number of
@@ -68,7 +68,7 @@
 vmrseq <- function(gr,
                    minCov = 3,
                    cutoff = 0.1, # param for CR calling
-                   penalize = TRUE, # params for VMR calling
+                   penalty = 4, # params for VMR calling
                    maxGap = 1000, minNumRegion = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
@@ -79,8 +79,8 @@ vmrseq <- function(gr,
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
     stop("'cutoff' has to be a postive scalar value.")
-  if (is.logical(penalize))
-    stop("'penalize' has to be logical value (TRUE or FALSE).")
+  if (length(penalty)!=1 | penalty < 0)
+    stop("'penalty' has to be a non-negative scalar value.")
   if (minNumRegion < 3)
     stop("'minNumRegion' must be at least 3.")
   if (minNumLong < minNumRegion)
@@ -139,8 +139,10 @@ vmrseq <- function(gr,
     parallel <- TRUE
   }
 
-  message("Step 1: Detecting candidate regions with (smoothed) variance larger than ",
-          cutoff, "...")
+  message(
+    "Step 1: Detecting candidate regions with (smoothed) variance larger than ",
+    cutoff, "..."
+  )
   # Bumphunt candidate regions. Outputs list of index vectors.
   # Each list element is one CR.
   res_cr <- callCandidRegion(
@@ -186,14 +188,20 @@ vmrseq <- function(gr,
             "% QC-passed sites are called to be in candidate region.")
   }
 
-  message("Step 2: Detecting VMRs", ifelse(penalize, yes = " with", no = " without"), " penalty...")
+  message(
+    "Step 2: Detecting VMRs",
+    ifelse(penalty > 0, yes = " with", no = " without"),
+    " penalty",
+    ifelse(penalty>0, yes = paste0("=", penalty), no = ""),
+    "..."
+  )
   t1 <- proc.time()
 
   # Outputs a GRanges objects with VMR ranges and summary information
   VMRI <- searchVMR(
     gr = gr,
     CRI = CRI,
-    penalize = penalize,
+    penalty = penalty,
     maxGap = maxGap, minNumRegion = minNumRegion,
     tp = tp,
     maxNumMerge = maxNumMerge,

@@ -117,12 +117,13 @@
 
   max_cov <- nrow(CHOICEARRAY) - 1
   p <- .translateMethFrac2Grp(state_2g, pi1)
+  # cat("state =", state_2g, "pi1 =", pi1, "p =", p, "\n") ## DEBUG
   prob <- 0
   for (i in 0:total) {
     for (j in 0:meth) {
       if (j <= i & meth-j <= total-i) {
-        if (p < 0.01 & i == 0) log_lik_1 <- 0
-        else if (p > 0.99 & i == total) log_lik_1 <- 0
+        if (p < 0.0001 & i == 0) log_lik_1 <- 0
+        else if (p > 0.9999 & i == total) log_lik_1 <- 0
         else log_lik_1 <- CHOICEARRAY[total+1, i+1] + i*log(p) + (total-i)*log(1-p)
         log_lik_2 <- log(METHARRAY[i+1, j+1]) + log(UNMETHARRAY[total-i+1, meth-j+1])
         log_lik_i_j <- log_lik_1 + log_lik_2
@@ -345,7 +346,7 @@
 }
 
 .prevOptimSnglInit <- function(pos, totals, meths, pi1_init, tp,
-                               epsilon = 1e-4, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
+                               epsilon = 1e-3, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
                                CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # `tp` is an transitProbs object, which stores the transition probability distribution
   # `pi1_init` is the set initial value of \pi_1
@@ -367,8 +368,11 @@
     old_pi_1 <- pi_1
 
     ## EG update (Experimented with unit test: slower when momentum is added)
+    if (pi_1 > 0.9999) pi_1 <- 0.9999
+    if (pi_1 < 0.0001) pi_1 <- 0.0001
     pi_2 <- 1 - pi_1
     grad <- .loglikGrad(pi_1, state_path, totals, meths, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+    # cat("grad =", grad, "\n") # DEBUG
     pi_1 <- pi_1 * exp(-eta*grad)
     pi_1 <- pi_1 / (pi_1 + pi_2)
 
@@ -376,6 +380,7 @@
     vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     old_loglik <- loglik
     loglik <- vit$loglik_path[nrow(init_vit)]
+    state_path <- vit$state_path
 
     # backtracking line search
     if(backtrack) {
@@ -394,16 +399,16 @@
 # totals = sample(1:20, 10)
 # meths = round(totals*runif(length(pos), 0.5, 0.6))
 # .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
-#                    epsilon = 1e-4, backtrack = F, eta = 0.005, max_iter = 100,
+#                    epsilon = 1e-3, backtrack = F, eta = 0.005, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 # .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
-#                    epsilon = 1e-4, backtrack = T, eta = 0.05, max_iter = 100,
+#                    epsilon = 1e-3, backtrack = T, eta = 0.05, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 # .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
-#                    epsilon = 1e-4, backtrack = F, eta = 0.005, max_iter = 100,
+#                    epsilon = 1e-3, backtrack = F, eta = 0.005, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 # .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
-#                    epsilon = 1e-4, backtrack = T, eta = 0.05, max_iter = 100,
+#                    epsilon = 1e-3, backtrack = T, eta = 0.05, max_iter = 100,
 #                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
 
@@ -417,12 +422,13 @@
 }
 
 .optim2Grp <- function(pos, totals, meths, inits, tp,
-                       epsilon = 1e-4, backtrack = T,
+                       epsilon = 1e-3, backtrack = T,
                        eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
                        CHOICEARRAY, METHARRAY, UNMETHARRAY){
   loglik <- -Inf; optim_pi_1 <- -1
   for (i in 1:length(inits)) {
     pi1_init <- inits[i]
+    # print(paste("pi1_init =", pi1_init)) # DEBUG
     res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, tp,
                                    epsilon, backtrack, eta, max_iter,
                                    CHOICEARRAY, METHARRAY, UNMETHARRAY)
