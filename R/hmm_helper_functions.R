@@ -368,15 +368,24 @@
     old_pi_1 <- pi_1
 
     ## EG update (Experimented with unit test: slower when momentum is added)
-    if (pi_1 > 0.9999) pi_1 <- 0.9999
-    if (pi_1 < 0.0001) pi_1 <- 0.0001
+    # if (pi_1 > 0.9999) pi_1 <- 0.9999
+    # if (pi_1 < 0.0001) pi_1 <- 0.0001
     pi_2 <- 1 - pi_1
     grad <- .loglikGrad(pi_1, state_path, totals, meths, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     # cat("grad =", grad, "\n") # DEBUG
-    pi_1 <- pi_1 * exp(-eta*grad)
-    pi_1 <- pi_1 / (pi_1 + pi_2)
 
-    # viterbi update
+    # Decrease learning rate (eta) if updated pi_1 goes to 0 or 1
+    try_pi_1 <- pi_1 * exp(-eta*grad)
+    try_pi_1 <- try_pi_1 / (try_pi_1 + pi_2)
+    while (try_pi_1 < 0.01 | try_pi_1 > 0.99) {
+      eta <- 0.1 * eta
+      try_pi_1 <- pi_1 * exp(-eta*grad)
+      try_pi_1 <- try_pi_1 / (try_pi_1 + pi_2)
+    }
+    pi_1 <- try_pi_1
+
+
+    # Viterbi update
     vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
     old_loglik <- loglik
     loglik <- vit$loglik_path[nrow(init_vit)]
@@ -394,22 +403,6 @@
 
   return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:6], loglik = loglik, n_iter = t))
 }
-# Tests:
-# pos = cumsum(sample(100:2000, 10))
-# totals = sample(1:20, 10)
-# meths = round(totals*runif(length(pos), 0.5, 0.6))
-# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
-#                    epsilon = 1e-3, backtrack = F, eta = 0.005, max_iter = 100,
-#                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.75,
-#                    epsilon = 1e-3, backtrack = T, eta = 0.05, max_iter = 100,
-#                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
-#                    epsilon = 1e-3, backtrack = F, eta = 0.005, max_iter = 100,
-#                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-# .prevOptimSnglInit(pos, totals, meths, tp, pi1_init = 0.25,
-#                    epsilon = 1e-3, backtrack = T, eta = 0.05, max_iter = 100,
-#                    CHOICEARRAY = CHOICEARRAY, METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
 
 
@@ -440,6 +433,22 @@
   }
   return(res)
 }
+
+# Tests:
+# pos = cumsum(sample(2:500, 100))
+# totals = sample(5:20, 100, replace = T)
+# meths = round(totals*runif(length(pos), 0.1, 0.9))
+# REFARRAY <- .calRefArray(max_cov = max(totals))
+# CHOICEARRAY <- .calChoiceArray(REFARRAY)
+# list <- .calMethArray(par_u = .priorParams(med_cov = round(median(totals)), type = "u"),
+#                       par_m = .priorParams(med_cov = round(median(totals)), type = "m"),
+#                       max_cov = N)
+# METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
+# .optim1Grp(pos, totals, meths, tp0, METHARRAY, UNMETHARRAY)
+# .optim2Grp(pos, totals, meths, inits = c(.2,.5,.8), tp0,
+#            epsilon = 1e-3, backtrack = T,
+#            eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
+#            CHOICEARRAY, METHARRAY, UNMETHARRAY)
 
 
 # functions for detect VMRs in predicted state sequence

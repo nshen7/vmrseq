@@ -181,8 +181,6 @@ searchVMR <- function(gr,
   # If no `tp` provided, use internal `tp0`
   if (is.null(tp)) tp <- tp0
 
-  # t1 <- proc.time()
-
   # Pre-computation to ease computational burden
   max_cov <- max(gr$total)
   med_cov <- median(gr$total)
@@ -230,8 +228,8 @@ searchVMR <- function(gr,
       )
       if (is.null(vmr_inds)) return(NULL)
       else return(data.frame(vmr_inds + ix[1] - 1,
-                             cr_name = i,
-                             num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
+                             cr_index = i,
+                             vmr_num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              optim_pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
                              loglik_diff = res_2g$loglik - res_1g$loglik - penalty))
@@ -253,7 +251,7 @@ searchVMR <- function(gr,
   }
 
   # return  a data.frame with columns:
-  # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_name' (name of CR)
+  # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_index' (name of CR)
   return(VMRI)
 
 } # end of function `searchVMR`
@@ -281,7 +279,7 @@ indexToGranges <- function(gr, index, type) {
       ranges = IRanges(start = start(gr)[start_inds],
                        end = end(gr)[end_inds])
     )
-    values(cr.gr) <- DataFrame(cr_name = 1:length(index),
+    values(cr.gr) <- DataFrame(cr_index = 1:length(index),
                                num_cpg = num_cpg)
     return(cr.gr)
   }

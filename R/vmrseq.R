@@ -160,10 +160,8 @@ vmrseq <- function(gr,
   # Indexes of candidate regions
   CRI <- res_cr$CRI
 
-  # Add summary stats (smoothed var, index of CR) into output
-  cr_index <- rep(NA, length(gr))
-  cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
-  values(gr) <- cbind(values(gr), res_cr$smooth_fit, cr_index)
+  # Add summary stats (smoothed var) into output
+  values(gr) <- cbind(values(gr), res_cr$smooth_fit)
 
 
   # Percentage of sites in CRs
@@ -192,7 +190,7 @@ vmrseq <- function(gr,
     "Step 2: Detecting VMRs",
     ifelse(penalty > 0, yes = " with", no = " without"),
     " penalty",
-    ifelse(penalty>0, yes = paste0("=", penalty), no = ""),
+    ifelse(penalty > 0, yes = paste0("=", penalty), no = ""),
     "..."
   )
   t1 <- proc.time()
@@ -227,11 +225,19 @@ vmrseq <- function(gr,
   vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")
   cr.gr <- indexToGranges(gr = gr, index = CRI, type = "CR")
 
-  # Add summary stats into output
+  # # Add summary stats into output
+  # hits_vmr <- findOverlaps(gr, vmr.gr) %>% as.data.frame()
+  #
+  # vmr_index <- rep(NA, length(gr))
+  # vmr_index[hits_vmr$queryHits] <- hits_vmr$subjectHits
+  # loglik_diff <- rep(NA, length(gr))
+  # loglik_diff[hits_vmr$queryHits] <- vmr.gr$loglik_diff[hits_vmr$subjectHits]
+  # values(gr) <- cbind(values(gr), vmr_index, loglik_diff)
+
+  VMRI2 <- lapply(1:nrow(VMRI), function(i) VMRI$start_ind[i]:VMRI$end_ind[i]) # list of indices
   vmr_index <- rep(NA, length(gr))
-  hits_vmr <- findOverlaps(gr, vmr.gr) %>% as.data.frame()
-  vmr_index[hits_vmr$queryHits] <- hits_vmr$subjectHits
-  values(gr)$vmr_index <- vmr_index
+  vmr_index[unlist(VMRI2)] <- rep.int(1:length(VMRI2), lengths(VMRI2))
+  values(gr) <- cbind(values(gr), vmr_index, values(vmr.gr)[vmr_index,])
 
   return(list(gr_qced = gr, VMRs = vmr.gr, CRs = cr.gr))
 }
