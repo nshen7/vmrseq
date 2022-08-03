@@ -67,25 +67,29 @@ callCandidRegion <- function(gr,
                                      verbose = FALSE)
 
   upIndex <- Indexes$upIndex
+  if (length(upIndex) == 0) upIndex <- NULL
 
   # Merge CRs if they are closer than `maxNumMerge` bp
-  if (maxNumMerge > 0) {
-    for (i in 1:(length(upIndex)-1)) {
-      fr <- upIndex[[i]]
-      bh <- upIndex[[i+1]]
-      if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
-        combined <- (fr[1]):(bh[length(bh)])
-        upIndex[[i]] <- NA
-        upIndex[[i+1]] <- combined
+  if (!is.null(upIndex)) {
+    if (maxNumMerge > 0) {
+      for (i in 1:(length(upIndex)-1)) {
+        fr <- upIndex[[i]]
+        bh <- upIndex[[i+1]]
+        if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
+          combined <- (fr[1]):(bh[length(bh)])
+          upIndex[[i]] <- NA
+          upIndex[[i+1]] <- combined
+        }
       }
+      upIndex <- upIndex[!is.na(upIndex)]
     }
-    upIndex <- upIndex[!is.na(upIndex)]
+    # Only keep candidate regions with more than `minNumRegion` CpGs
+    CRI <- upIndex[lengths(upIndex) >= minNumRegion]
+    return(list(CRI = CRI, smooth_fit = fit))
+  } else {
+    return(list(CRI = NULL, smooth_fit = fit))
   }
 
-  # Only keep candidate regions with more than `minNumRegion` CpGs
-  CRI <- upIndex[lengths(upIndex) >= minNumRegion]
-
-  return(list(CRI = CRI, smooth_fit = fit))
 } # end of function `callCandidRegion`
 
 

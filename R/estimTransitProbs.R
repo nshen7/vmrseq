@@ -5,10 +5,10 @@
 #' individual cells are smoothed over CpG-CpG distance using `loess`
 #' with inverse-variance fitting.
 #'
-#' @param list_cells a list of data.frame objects. Each data.frame
-#' contains information of 1 cell and should have 3 columns in strict
-#' order of: (chr), (pos), (binary methyl value). Column names are not
-#' necessary.
+#' @param list a list of data.frame objects. Each data.frame
+#' contains information of 1 unit of training data (can be a cell or a
+#' subtype) and should have 3 columns in strict rder of: (chr), (pos),
+#' (binary methyl value). Column names are not necessary.
 #' @param max_dist_bp positive integer value indicating the maximum
 #' CpG-CpG distance in base pairs before the transition probabilities
 #' reach constant value. Default value is 2000.
@@ -33,7 +33,7 @@
 #'
 #' @examples
 #'
-estimTransitProbs <- function(list_cells,
+estimTransitProbs <- function(list,
                               max_dist_bp = 2000,
                               buffer_bp = 3000,
                               degree = 2, span = 0.02,
@@ -44,9 +44,9 @@ estimTransitProbs <- function(list_cells,
   BiocParallel::register(BPPARAM)
   backend <- paste0("BiocParallel:", class(bpparam())[1])
 
-  for (i in length(list_cells)) {
-    list_cells[[i]] <- list_cells[[i]] %>% na.omit()
-    if(!all(list_cells[[i]][,3] %in% 0:1))
+  for (i in length(list)) {
+    list[[i]] <- list[[i]] %>% na.omit()
+    if(!all(list[[i]][,3] %in% 0:1))
       stop("Methylation value should be either integer 0 or 1.")
   }
 
@@ -67,14 +67,14 @@ estimTransitProbs <- function(list_cells,
   if (parallel) {
     smr_cells <- do.call(
       rbind,
-      list_cells %>% BiocParallel::bplapply(.computeProb1Cell,
+      list %>% BiocParallel::bplapply(.computeProb1Cell,
                                             max_dist_bp = max_dist_bp,
                                             buffer_bp = buffer_bp)
     )
   } else {
     smr_cells <- do.call(
       rbind,
-      list_cells %>% lapply(.computeProb1Cell,
+      list %>% lapply(.computeProb1Cell,
                             max_dist_bp = max_dist_bp,
                             buffer_bp = buffer_bp)
     )
@@ -136,7 +136,8 @@ estimTransitProbs <- function(list_cells,
     add_row(dist_bp = 1,
             pbar_00 = NA, pbar_01 = NA, pbar_10 = NA, pbar_11 = NA,
             var_00 = NA, var_01 = NA, var_10 = NA, var_11 = NA,
-            .before = 1)
+            .before = 1) %>%
+    right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp")
 
   message("Loess smoothing over probs.")
   x <- 1:(max_dist_bp+buffer_bp) # starting from 1 so that row number equal to distance

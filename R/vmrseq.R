@@ -163,11 +163,10 @@ vmrseq <- function(gr,
   # Add summary stats (smoothed var) into output
   values(gr) <- cbind(values(gr), res_cr$smooth_fit)
 
-
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(gr)*100, 2)
 
-  if (length(CRI) == 0) {
+  if (is.null(CRI)) {
     message("...No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
   } else {
