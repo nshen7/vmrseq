@@ -61,18 +61,18 @@ estimTransitProbs <- function(list,
     parallel <- TRUE
   }
 
-  message("Computing transition probs within cells.")
+  message("Computing transition probs within training unit.")
   # Proportions of sites in categories 00, 01, 10, 11 conditioning on
   # CpG distance
   if (parallel) {
-    smr_cells <- do.call(
+    smr_units <- do.call(
       rbind,
       list %>% BiocParallel::bplapply(.computeProb1Cell,
                                             max_dist_bp = max_dist_bp,
                                             buffer_bp = buffer_bp)
     )
   } else {
-    smr_cells <- do.call(
+    smr_units <- do.call(
       rbind,
       list %>% lapply(.computeProb1Cell,
                             max_dist_bp = max_dist_bp,
@@ -82,7 +82,7 @@ estimTransitProbs <- function(list,
 
   return(
     .estimTransitProbsFromSummary(
-      smr_cells = smr_cells,
+      smr_units = smr_units,
       max_dist_bp = max_dist_bp, buffer_bp = buffer_bp,
       degree = degree, span = span,
       parallel = parallel, ...
@@ -110,19 +110,20 @@ estimTransitProbs <- function(list,
     mutate(p_10 = 1 - p_00, # P(X_i = 1 | X_{i-1} = 0)
            p_11 = 1 - p_01 # P(X_i = 1 | X_{i-1} = 1)
     ) %>%
-    dplyr::select(-c(N_00, N_10, N_01, N_11))
+    dplyr::select(-c(N_00, N_10, N_01, N_11)) %>%
+    right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp")
 
   return(smr_df)
 }
 
 # loess fitting from cell-level summary data
-.estimTransitProbsFromSummary <- function(smr_cells, max_dist_bp, buffer_bp, degree, span, ...){
+.estimTransitProbsFromSummary <- function(smr_units, max_dist_bp, buffer_bp, degree, span, ...){
 
-  stopifnot("max(smr_cells$dist_bp) not equal to max_dist_bp + buffer_bp." =
-              max(smr_cells$dist_bp) == max_dist_bp + buffer_bp)
+  stopifnot("max(smr_units$dist_bp) not equal to max_dist_bp + buffer_bp." =
+              max(smr_units$dist_bp) == max_dist_bp + buffer_bp)
 
   message("Computing mean and var of the probs across cells.")
-  train_data <- smr_cells %>%
+  train_data <- smr_units %>%
     dplyr::filter(dist_bp > 0) %>%
     group_by(dist_bp) %>%
     summarise(pbar_00 = mean(p_00, na.rm = T),
@@ -133,10 +134,10 @@ estimTransitProbs <- function(list,
               var_01 = var(p_01, na.rm = T),
               var_10 = var(p_10, na.rm = T),
               var_11 = var(p_11, na.rm = T)) %>%
-    add_row(dist_bp = 1,
-            pbar_00 = NA, pbar_01 = NA, pbar_10 = NA, pbar_11 = NA,
-            var_00 = NA, var_01 = NA, var_10 = NA, var_11 = NA,
-            .before = 1) %>%
+    # add_row(dist_bp = 1,
+    #         pbar_00 = NA, pbar_01 = NA, pbar_10 = NA, pbar_11 = NA,
+    #         var_00 = NA, var_01 = NA, var_10 = NA, var_11 = NA,
+    #         .before = 1) %>%
     right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp")
 
   message("Loess smoothing over probs.")
