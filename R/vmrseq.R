@@ -189,7 +189,7 @@ vmrseq <- function(gr,
     "Step 2: Detecting VMRs",
     ifelse(penalty > 0, yes = " with", no = " without"),
     " penalty",
-    ifelse(penalty > 0, yes = paste0("=", penalty), no = ""),
+    ifelse(penalty > 0, yes = paste0("=", round(penalty, 2)), no = ""),
     "..."
   )
   t1 <- proc.time()
