@@ -32,10 +32,18 @@ plotTransitProbs <- function(tp,
   if(nrow(tp@transit_probs) + nrow(tp@buffer_probs) != nrow(tp@train))
     stop("Number of rows in `transit_probs` and `buffer_probs` not adding up to number of rows in `train`.")
 
-  plot_df <- data.frame(dist_bp = 1:nrow(tp@train), rbind(tp@transit_probs, tp@buffer_probs), tp@train) %>%
-    dplyr::select(-starts_with("var")) %>%
-    tidyr::pivot_longer(cols = -1, names_to = c(".value", "type"),
-                 names_pattern = "(.*)_(.*)")
+  plot_df <-
+    data.frame(
+      dist_bp = 1:nrow(tp@train),
+      rbind(tp@transit_probs, tp@buffer_probs),
+      tp@train
+    ) %>%
+    # dplyr::select(-starts_with("var")) %>%
+    tidyr::pivot_longer(
+      cols = -1,
+      names_to = c(".value", "type"),
+      names_pattern = "(.*)_(.*)"
+    )
 
   type_labs <- c("P(0|0)","P(0|1)","P(1|0)","P(1|1)")
   names(type_labs) <- c("00","01","10","11")
@@ -43,6 +51,8 @@ plotTransitProbs <- function(tp,
   if (plot_train) {
     plot_df %>%
       ggplot() +
+      geom_ribbon(aes(dist_bp, ymin = pbar-sqrt(var), ymax = pbar+sqrt(var)),
+                  fill = "lightblue", size = point_size, alpha = 0.4) +
       geom_point(aes(dist_bp, pbar), color = "grey", size = point_size) +
       geom_vline(xintercept = tp@max_dist_bp, color = "light blue", linetype = "dashed") +
       geom_path(aes(dist_bp, phat), color = "red", size = line_size) +

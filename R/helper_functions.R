@@ -1,10 +1,10 @@
 callCandidRegion <- function(gr,
-                             cutoff = 0.05,
+                             cutoff = 0.1,
                              maxGap = 1000, minNumRegion = 5,
                              smooth = T,
                              maxGapSmooth = 2500,
                              minInSpan = 10, bpSpan = 10*median(diff(start(gr))),
-                             maxNumMerge = 1,
+                             maxNumMerge = 0,
                              verbose = TRUE,
                              parallel = FALSE) {
 
