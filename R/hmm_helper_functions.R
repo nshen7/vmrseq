@@ -345,7 +345,7 @@
   return(grad1)
 }
 
-.prevOptimSnglInit <- function(pos, totals, meths, pi1_init, tp,
+.prevOptimSnglInit <- function(pos, totals, meths, pi1_init, trans_probs,
                                epsilon = 1e-3, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
                                CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # `tp` is an transitProbs object, which stores the transition probability distribution
@@ -356,8 +356,6 @@
   # `max_iter` is the maximum number of iteration
   # `eta` is the learning rate
   max_cov <- nrow(CHOICEARRAY) - 1
-
-  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
 
   pi_1 <- pi1_init; pi_2 <- 1 - pi_1
   init_vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
@@ -401,34 +399,55 @@
     if(abs(loglik - old_loglik) < epsilon & abs(old_pi_1 - pi_1) < epsilon) break
   }
 
-  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, 2:6], loglik = loglik, n_iter = t))
+  return(list(pi1_init = pi1_init, optim_pi_1 = pi_1, vit_path = vit[, -1], loglik = loglik, n_iter = t))
 }
 
 
 
 ###### wrapper for 1- and 2-group optimization ======
 
-.optim1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY) {
+.solve1Grp <- function(pos, totals, meths, tp, METHARRAY, UNMETHARRAY) {
   trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
   vit <- .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
   return(list(vit_path = vit, loglik = vit[nrow(vit), 'loglik_path']))
 }
 
-.optim2Grp <- function(pos, totals, meths, inits, tp,
-                       epsilon = 1e-3, backtrack = T,
-                       eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
+.solve2Grp <- function(gradient,
+                       pos, totals, meths, inits, tp,
+                       epsilon, backtrack,
+                       eta, max_iter,
                        CHOICEARRAY, METHARRAY, UNMETHARRAY){
-  loglik <- -Inf; optim_pi_1 <- -1
-  for (i in 1:length(inits)) {
-    pi1_init <- inits[i]
-    # print(paste("pi1_init =", pi1_init)) # DEBUG
-    res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, tp,
-                                   epsilon, backtrack, eta, max_iter,
-                                   CHOICEARRAY, METHARRAY, UNMETHARRAY)
-    if (res_temp$loglik > loglik) {
-      loglik <- res_temp$loglik
-      res <- res_temp
-      optim_pi_1 <- res$optim_pi_1
+
+  trans_probs <- .loadTransitProbs(pos = pos, all_probs = tp@transit_probs)
+
+  if (gradient) {
+    loglik <- -Inf; optim_pi_1 <- -1
+    for (i in 1:length(inits)) {
+      pi1_init <- inits[i]
+      # print(paste("pi1_init =", pi1_init)) # DEBUG
+      res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, trans_probs,
+                                     epsilon, backtrack, eta, max_iter,
+                                     CHOICEARRAY, METHARRAY, UNMETHARRAY)
+      if (res_temp$loglik > loglik) {
+        loglik <- res_temp$loglik
+        res <- res_temp
+        optim_pi_1 <- res$optim_pi_1
+      }
+    }
+  } else {
+    loglik <- -Inf
+    for (i in 1:length(inits)) {
+      pi1 <- inits[i]
+      vit <- .Viterbi2Grp(totals, meths, trans_probs, pi1,
+                          CHOICEARRAY, METHARRAY, UNMETHARRAY)
+      if (vit$loglik_path[nrow(vit)] > loglik) {
+        loglik <- vit$loglik_path[nrow(vit)]
+        res <- list("pi1_init" = pi1,
+                    "optim_pi_1" = pi1,
+                    "vit_path" = vit[, -1],
+                    "loglik" = vit$loglik_path[nrow(vit)],
+                    "n_iter" = 0)
+      }
     }
   }
   return(res)
@@ -444,8 +463,8 @@
 #                       par_m = .priorParams(med_cov = round(median(totals)), type = "m"),
 #                       max_cov = N)
 # METHARRAY <- list$METHARRAY; UNMETHARRAY <- list$UNMETHARRAY
-# .optim1Grp(pos, totals, meths, tp0, METHARRAY, UNMETHARRAY)
-# .optim2Grp(pos, totals, meths, inits = c(.2,.5,.8), tp0,
+# .solve1Grp(pos, totals, meths, tp0, METHARRAY, UNMETHARRAY)
+# .solve2Grp(pos, totals, meths, inits = c(.2,.5,.8), tp0,
 #            epsilon = 1e-3, backtrack = T,
 #            eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
 #            CHOICEARRAY, METHARRAY, UNMETHARRAY)

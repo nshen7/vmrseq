@@ -35,11 +35,14 @@
 #' Default is NULL.
 #' @param maxNumMerge positive integer that represents the maximum number of
 #' CpGs between two VMRs that can be tolerated when merging VMRs in the same
-#' candidate region.Default is 1.
+#' candidate region. Default is 0.
 #' @param minNumLong positive integer that represents the minimum number of
 #' CpGs to consider for a *long* candidate region. For fast computation use.
 #' Default is 20. Long regions will be performed a more thorough search of
 #' optimized prevalence value. Minimum value is the \code{minNumRegion}.
+#' @param gradient should gradient descent be applied to optimize pi? If
+#' set to FALSE, \code{vmrseq.control()$inits} will be used as candidate values
+#' for pi, but no gradient descent will be performed.
 #' @param control this sets the control parameters of the outer iterations
 #' algorithm. The default setting is the \code{vmrseq.control} function.
 #' @param verbose logical value that indicates whether progress messages should
@@ -73,7 +76,8 @@ vmrseq <- function(gr,
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
                    tp = NULL,
-                   maxNumMerge = 1, minNumLong = 10,
+                   maxNumMerge = 0, minNumLong = 10,
+                   gradient = TRUE,
                    control = vmrseq.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
 
@@ -85,6 +89,8 @@ vmrseq <- function(gr,
     stop("'minNumRegion' must be at least 3.")
   if (minNumLong < minNumRegion)
     stop("'minNumLong' must be greater or equal to `minNumRegion`.")
+  if (!is.logical(gradient))
+    stop("'gradient' must be a logical value (TRUE or FALSE).")
   if (class(gr)[1] != "GRanges")
     stop("'gr' must be a GRanges object.")
   if (is.null(gr$total) | all(gr$total != round(gr$total)))
@@ -203,6 +209,7 @@ vmrseq <- function(gr,
     tp = tp,
     maxNumMerge = maxNumMerge,
     minNumLong = minNumLong,
+    gradient = gradient,
     control = control,
     verbose = verbose,
     parallel = parallel

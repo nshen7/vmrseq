@@ -178,6 +178,7 @@ searchVMR <- function(gr,
                       tp = NULL,
                       maxNumMerge = 1,
                       minNumLong = 10,
+                      gradient = TRUE,
                       control = vmrseq.control(),
                       verbose = TRUE,
                       parallel = FALSE) {
@@ -202,12 +203,13 @@ searchVMR <- function(gr,
     meths <- gr$meth[ix]
     pos <- start(gr[ix])
 
-    res_1g <- .optim1Grp(pos = pos, totals = totals, meths = meths,
+    res_1g <- .solve1Grp(pos = pos, totals = totals, meths = meths,
                          tp = tp,
                          METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
     if (length(ix) >= minNumLong) { # long region
-      res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
+      res_2g <- .solve2Grp(gradient = gradient,
+                           pos = pos, totals = totals, meths = meths,
                            tp = tp,
                            inits = control$inits, epsilon = control$epsilon,
                            backtrack = control$backtrack,
@@ -215,7 +217,8 @@ searchVMR <- function(gr,
                            CHOICEARRAY = CHOICEARRAY,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     } else { # short region
-      res_2g <- .optim2Grp(pos = pos, totals = totals, meths = meths,
+      res_2g <- .solve2Grp(gradient = gradient,
+                           pos = pos, totals = totals, meths = meths,
                            tp = tp,
                            inits = mean(meths/totals), epsilon = control$epsilon,
                            backtrack = control$backtrack,
@@ -234,7 +237,7 @@ searchVMR <- function(gr,
       else return(data.frame(vmr_inds + ix[1] - 1,
                              cr_index = i,
                              vmr_num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
-                             optim_pi = res_2g$optim_pi_1,
+                             pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
                              loglik_diff = res_2g$loglik - res_1g$loglik - penalty))
     } else {
