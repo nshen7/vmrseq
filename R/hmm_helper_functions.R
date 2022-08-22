@@ -360,41 +360,46 @@
   pi_1 <- pi1_init; pi_2 <- 1 - pi_1
   init_vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
   state_path <- init_vit$state_path
-  loglik <- init_vit$loglik_path[nrow(init_vit)]
+  old_loglik <- loglik <- init_vit$loglik_path[nrow(init_vit)]
 
   for (t in 1:max_iter) {
+    # print(t) # DEBUG
     old_pi_1 <- pi_1
 
     ## EG update (Experimented with unit test: slower when momentum is added)
-    # if (pi_1 > 0.9999) pi_1 <- 0.9999
-    # if (pi_1 < 0.0001) pi_1 <- 0.0001
     pi_2 <- 1 - pi_1
     grad <- .loglikGrad(pi_1, state_path, totals, meths, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-    # cat("grad =", grad, "\n") # DEBUG
 
     # Decrease learning rate (eta) if updated pi_1 goes to 0 or 1
     try_pi_1 <- pi_1 * exp(-eta*grad)
     try_pi_1 <- try_pi_1 / (try_pi_1 + pi_2)
+    # print(try_pi_1) # DEBUG
     while (try_pi_1 < 0.01 | try_pi_1 > 0.99) {
       eta <- 0.1 * eta
       try_pi_1 <- pi_1 * exp(-eta*grad)
       try_pi_1 <- try_pi_1 / (try_pi_1 + pi_2)
+      # print(try_pi_1) # DEBUG
     }
-    pi_1 <- try_pi_1
-
 
     # Viterbi update
-    vit <- .Viterbi2Grp(totals, meths, trans_probs, pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
-    old_loglik <- loglik
-    loglik <- vit$loglik_path[nrow(init_vit)]
-    state_path <- vit$state_path
-
-    # backtracking line search
-    if(backtrack) {
-      alpha <- 0.5; beta <- 0.7
-      if(loglik > old_loglik - alpha*eta*grad^2) eta <- beta*eta
+    vit <- .Viterbi2Grp(totals, meths, trans_probs, try_pi_1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
+    if (vit$loglik_path[nrow(init_vit)] <= loglik) { # decrease learning rate if likelihood does NOT increase
+      eta <- 0.5 * eta
+      try_pi_1 <- pi_1 * exp(-eta*grad)
+      try_pi_1 <- try_pi_1 / (try_pi_1 + pi_2)
+      pi_1 <- try_pi_1
+    } else { # only adopt updated pi if likelihood increases
+      old_loglik <- loglik
+      loglik <- vit$loglik_path[nrow(init_vit)]
+      state_path <- vit$state_path
+      pi_1 <- try_pi_1
+      if(backtrack) { # backtracking line search
+        alpha <- 0.5; beta <- 0.7
+        if(loglik > old_loglik - alpha*eta*grad^2) eta <- beta*eta
+      }
     }
 
+    # cat(pi_1, loglik, "\n") # DEBUG
     # if(t == max_iter) print("Max iteration achieved.")
     if(abs(loglik - old_loglik) < epsilon & abs(old_pi_1 - pi_1) < epsilon) break
   }
@@ -413,8 +418,8 @@
 }
 
 .solve2Grp <- function(gradient,
-                       pos, totals, meths, inits, tp,
-                       epsilon, backtrack,
+                       pos, totals, meths, tp,
+                       inits, epsilon, backtrack,
                        eta, max_iter,
                        CHOICEARRAY, METHARRAY, UNMETHARRAY){
 
@@ -423,8 +428,8 @@
   if (gradient) {
     loglik <- -Inf; optim_pi_1 <- -1
     for (i in 1:length(inits)) {
+      # cat(i, "\n") # DEBUG
       pi1_init <- inits[i]
-      # print(paste("pi1_init =", pi1_init)) # DEBUG
       res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, trans_probs,
                                      epsilon, backtrack, eta, max_iter,
                                      CHOICEARRAY, METHARRAY, UNMETHARRAY)

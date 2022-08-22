@@ -72,11 +72,11 @@ vmrseq <- function(gr,
                    minCov = 3,
                    cutoff = 0.1, # param for CR calling
                    penalty = 4, # params for VMR calling
-                   maxGap = 1000, minNumRegion = 5, # params for VMR calling
+                   maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
                    tp = NULL,
-                   maxNumMerge = 0, minNumLong = 10,
+                   maxNumMerge = 0, minNumLong = 20,
                    gradient = TRUE,
                    control = vmrseq.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
@@ -85,10 +85,10 @@ vmrseq <- function(gr,
     stop("'cutoff' has to be a postive scalar value.")
   if (length(penalty)!=1 | penalty < 0)
     stop("'penalty' has to be a non-negative scalar value.")
-  if (minNumRegion < 3)
-    stop("'minNumRegion' must be at least 3.")
-  if (minNumLong < minNumRegion)
-    stop("'minNumLong' must be greater or equal to `minNumRegion`.")
+  # if (minNumRegion < 3)
+  #   stop("'minNumRegion' must be at least 3.")
+  # if (minNumLong < minNumRegion)
+  #   stop("'minNumLong' must be greater or equal to `minNumRegion`.")
   if (!is.logical(gradient))
     stop("'gradient' must be a logical value (TRUE or FALSE).")
   if (class(gr)[1] != "GRanges")
@@ -154,7 +154,7 @@ vmrseq <- function(gr,
   res_cr <- callCandidRegion(
     gr = gr,
     cutoff = cutoff,
-    maxGap = maxGap, minNumRegion = minNumRegion,
+    maxGap = maxGap, minNumCR = minNumCR,
     smooth = smooth,
     maxGapSmooth = maxGapSmooth,
     minInSpan = minInSpan, bpSpan = bpSpan,
@@ -166,12 +166,14 @@ vmrseq <- function(gr,
   # Indexes of candidate regions
   CRI <- res_cr$CRI
 
-  # Add summary stats (smoothed var) into output
-  values(gr) <- cbind(values(gr), res_cr$smooth_fit)
+  cr_index <- rep(NA, length(gr))
+  cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
+
+  # Add summary stats (smoothed var and CR index) into output
+  values(gr) <- cbind(values(gr), res_cr$smooth_fit, cr_index)
 
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(gr)*100, 2)
-
   if (is.null(CRI)) {
     message("...No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     return(NULL)
@@ -205,7 +207,7 @@ vmrseq <- function(gr,
     gr = gr,
     CRI = CRI,
     penalty = penalty,
-    maxGap = maxGap, minNumRegion = minNumRegion,
+    maxGap = maxGap, minNumVMR = minNumVMR,
     tp = tp,
     maxNumMerge = maxNumMerge,
     minNumLong = minNumLong,

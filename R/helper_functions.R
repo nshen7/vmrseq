@@ -1,12 +1,12 @@
 callCandidRegion <- function(gr,
-                             cutoff = 0.1,
-                             maxGap = 1000, minNumRegion = 5,
-                             smooth = T,
-                             maxGapSmooth = 2500,
-                             minInSpan = 10, bpSpan = 10*median(diff(start(gr))),
-                             maxNumMerge = 0,
-                             verbose = TRUE,
-                             parallel = FALSE) {
+                             cutoff,
+                             maxGap, minNumCR,
+                             smooth,
+                             maxGapSmooth,
+                             minInSpan, bpSpan,
+                             maxNumMerge,
+                             verbose,
+                             parallel) {
 
   # Compute variance for individual sites
   gr$MF <- gr$meth / gr$total
@@ -23,8 +23,8 @@ callCandidRegion <- function(gr,
     # Subset one chromosome from gr
     gr_chr <- subset(gr, seqnames(gr) == chromosome)
 
-    # Skip chromosomes that have fewer than minNumRegion loci
-    if (length(gr_chr) < minNumRegion){
+    # Skip chromosomes that have fewer than minNumCR loci
+    if (length(gr_chr) < minNumCR){
       message("No candidates found.")
       next
     }
@@ -36,7 +36,7 @@ callCandidRegion <- function(gr,
       fit_chr <- smoother(x = start(gr_chr), y = gr_chr$var_raw,
                           chr = chromosome,
                           weights = weights,
-                          maxGap = maxGap, minNumRegion = minNumRegion,
+                          maxGap = maxGap, minNumCR = minNumCR,
                           maxGapSmooth = maxGapSmooth,
                           minInSpan = minInSpan, bpSpan = bpSpan,
                           verbose = verbose,
@@ -69,22 +69,22 @@ callCandidRegion <- function(gr,
   upIndex <- Indexes$upIndex
   if (length(upIndex) == 0) upIndex <- NULL
 
-  # Merge CRs if they are closer than `maxNumMerge` bp
   if (!is.null(upIndex)) {
-    if (maxNumMerge > 0) {
-      for (i in 1:(length(upIndex)-1)) {
-        fr <- upIndex[[i]]
-        bh <- upIndex[[i+1]]
-        if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
-          combined <- (fr[1]):(bh[length(bh)])
-          upIndex[[i]] <- NA
-          upIndex[[i+1]] <- combined
-        }
-      }
-      upIndex <- upIndex[!is.na(upIndex)]
-    }
-    # Only keep candidate regions with more than `minNumRegion` CpGs
-    CRI <- upIndex[lengths(upIndex) >= minNumRegion]
+    # # Merge CRs if they are closer than `maxNumMerge` bp
+    # if (maxNumMerge > 0) {
+    #   for (i in 1:(length(upIndex)-1)) {
+    #     fr <- upIndex[[i]]
+    #     bh <- upIndex[[i+1]]
+    #     if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
+    #       combined <- (fr[1]):(bh[length(bh)])
+    #       upIndex[[i]] <- NA
+    #       upIndex[[i+1]] <- combined
+    #     }
+    #   }
+    #   upIndex <- upIndex[!is.na(upIndex)]
+    # }
+    # Only keep candidate regions with more than `minNumCR` CpGs
+    CRI <- upIndex[lengths(upIndex) >= minNumCR]
     return(list(CRI = CRI, smooth_fit = fit))
   } else {
     return(list(CRI = NULL, smooth_fit = fit))
@@ -95,7 +95,7 @@ callCandidRegion <- function(gr,
 
 
 smoother <- function(x, y, weights, chr,
-                     maxGap, minNumRegion,
+                     maxGap, minNumCR,
                      maxGapSmooth,
                      minInSpan, bpSpan,
                      verbose = TRUE,
@@ -120,7 +120,7 @@ smoother <- function(x, y, weights, chr,
     if (is.null(clusteri))
       stop("cluster is missing")
 
-    if (length(idx) >= minNumRegion) {
+    if (length(idx) >= minNumCR) {
       df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
       # balance minInSpan and bpSpan
@@ -174,7 +174,7 @@ smoother <- function(x, y, weights, chr,
 searchVMR <- function(gr,
                       CRI,
                       penalty = penalty,
-                      maxGap = 1000, minNumRegion = 5,
+                      maxGap = 1000, minNumVMR = 5,
                       tp = NULL,
                       maxNumMerge = 1,
                       minNumLong = 10,
@@ -230,12 +230,12 @@ searchVMR <- function(gr,
     if (res_2g$loglik > res_1g$loglik + penalty) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
-        min_n = minNumRegion,
+        min_n = minNumVMR,
         max_n_merge = maxNumMerge
       )
       if (is.null(vmr_inds)) return(NULL)
       else return(data.frame(vmr_inds + ix[1] - 1,
-                             cr_index = i,
+                             # cr_index = i,
                              vmr_num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
@@ -258,7 +258,6 @@ searchVMR <- function(gr,
   }
 
   # return  a data.frame with columns:
-  # 'start_ind' (start index of VMR), 'end_ind' (end index of VMR), 'cr_index' (name of CR)
   return(VMRI)
 
 } # end of function `searchVMR`
