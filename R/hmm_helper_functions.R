@@ -212,6 +212,27 @@
   return(data.frame(state_path, loglik_path, P))
 }
 
+
+.calTransProb2Grp <- function(i, trans_probs) {
+  # Compute 2-group transition probability matrix for one CpG pair
+  # All possible states in 2-group: (0,0), (1,0), (1,1)
+  # Hence row/cols of prob mat for first grouping: 0, 1, 1; for second grouping: 0, 0, 1
+
+  state1g_mat_grp1 <- matrix(c(0, 1, 1), nrow = 3, ncol = 3)
+  state2g_mat_grp1 <- state1g_mat_grp1 + 2*t(state1g_mat_grp1) + 1
+
+  state1g_mat_grp2 <- matrix(c(0, 0, 1), nrow = 3, ncol = 3)
+  state2g_mat_grp2 <- state1g_mat_grp2 + 2*t(state1g_mat_grp2) + 1
+
+  # Transition prob mat (rows = 'from', cols = 'to')
+  prob_mat <- apply(state2g_mat_grp1, 1:2, function(j) trans_probs[i, j]) *
+    apply(state2g_mat_grp2, 1:2, function(j) trans_probs[i, j])
+  prob_mat <- prob_mat / rowSums(prob_mat) # Scale to normalized probs (each row adds up to 1)
+
+  return(prob_mat)
+}
+
+
 .Viterbi2Grp <- function(totals, meths, trans_probs, pi1,
                          CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # should be applied on 1 region
@@ -233,6 +254,10 @@
 
   # Distribution of initial state is set to uniform (proportional to 1)
   for (i in 1:num_cpg) {
+
+    # Compute transition prob matrix for 3-state model
+    if(i > 1) tp_i_mat <- .calTransProb2Grp(i-1, trans_probs)
+
     for (j in state_nums+1) {
       log_em_prob <- log(.calEmissionProb2Grp(state_2g = j-1, total = totals[i], meth = meths[i],
                                               pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY))
@@ -242,18 +267,19 @@
         P[i, 'transition'] <- NA
       } else {
         best_prior_state <- 0
-        sum_tr_prob <- 0
         for (j_prior in state_nums+1) {
-          log_tr_prob <- 0
-          for (k in 1:num_group) {
-            j_prior_bin <- .translateState2Grp(j_prior-1)[k]
-            j_bin <- .translateState2Grp(j-1)[k]
-            log_tr_prob <- log_tr_prob + log(trans_probs[i-1, j_prior_bin+2*j_bin+1])
-            # cat("k = ", k, "; log_tr_prob = ", log_tr_prob, "\n")
-          }
+
+          # log_tr_prob <- 0
+          # for (k in 1:num_group) {
+          #   j_prior_bin <- .translateState2Grp(j_prior-1)[k]
+          #   j_bin <- .translateState2Grp(j-1)[k]
+          #   log_tr_prob <- log_tr_prob + log(trans_probs[i-1, j_prior_bin+2*j_bin+1])
+          #   # cat("k = ", k, "; log_tr_prob = ", log_tr_prob, "\n")
+          # }
+
+          log_tr_prob <- log(tp_i_mat[j_prior, j])
           # cat(i, j, j_prior, exp(log_tr_prob), "\n") # DEBUG
-          # 'scale_factor' used to store sum of transition probabilities to three possible states of next site
-          sum_tr_prob <- sum_tr_prob + exp(log_tr_prob)
+
           oldVal <- V[i,j]
           newVal <- log_em_prob + log_tr_prob + V[i-1, j_prior]
           if (oldVal < newVal){
@@ -267,11 +293,7 @@
           }
         }
         traceback[i,j] <- best_prior_state
-        # cat(i,j,best_prior_state,"\n") # DEBUG
-
-        # Add in scale factor of transition probs
-        P[i, 'transition'] <- P[i, 'transition'] - log(sum_tr_prob)
-        V[i, ] <- V[i, ] - log(sum_tr_prob)
+        # cat(i, j, best_prior_state,"\n") # DEBUG
       }
     }
   }
@@ -301,7 +323,7 @@
 # pos = cumsum(sample(100:2000, 10))
 # totals = sample(1:N, 10)
 # trans_probs = .loadTransitProbs(pos = pos, all_probs = vmrseq:::tp0@transit_probs)
-# meths = totals
+# meths = round(totals*0.3)
 # REFARRAY <- .calRefArray(max_cov = N)
 # CHOICEARRAY <- .calChoiceArray(REFARRAY)
 # list <- .calMethArray(par_u = .priorParams(med_cov = round(median(totals)), type = "u"),
