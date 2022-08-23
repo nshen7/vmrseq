@@ -242,15 +242,18 @@
         P[i, 'transition'] <- NA
       } else {
         best_prior_state <- 0
+        sum_tr_prob <- 0
         for (j_prior in state_nums+1) {
-          log_tr_prob = 0
+          log_tr_prob <- 0
           for (k in 1:num_group) {
             j_prior_bin <- .translateState2Grp(j_prior-1)[k]
             j_bin <- .translateState2Grp(j-1)[k]
             log_tr_prob <- log_tr_prob + log(trans_probs[i-1, j_prior_bin+2*j_bin+1])
             # cat("k = ", k, "; log_tr_prob = ", log_tr_prob, "\n")
           }
-          # cat(i, j, j_prior, log_em_prob, log_tr_prob, V[i-1, j_prior], "\n") # for debug
+          # cat(i, j, j_prior, exp(log_tr_prob), "\n") # DEBUG
+          # 'scale_factor' used to store sum of transition probabilities to three possible states of next site
+          sum_tr_prob <- sum_tr_prob + exp(log_tr_prob)
           oldVal <- V[i,j]
           newVal <- log_em_prob + log_tr_prob + V[i-1, j_prior]
           if (oldVal < newVal){
@@ -264,7 +267,11 @@
           }
         }
         traceback[i,j] <- best_prior_state
-        # cat(i,j,best_prior_state,"\n")
+        # cat(i,j,best_prior_state,"\n") # DEBUG
+
+        # Add in scale factor of transition probs
+        P[i, 'transition'] <- P[i, 'transition'] - log(sum_tr_prob)
+        V[i, ] <- V[i, ] - log(sum_tr_prob)
       }
     }
   }

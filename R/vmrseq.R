@@ -76,7 +76,7 @@ vmrseq <- function(gr,
                    smooth = TRUE, maxGapSmooth = 2500, # params for smoother
                    bpSpan = 10*median(diff(start(gr))), minInSpan = 10, # params for smoother
                    tp = NULL,
-                   maxNumMerge = 0, minNumLong = 20,
+                   maxNumMerge = 0, minNumLong = 0,
                    gradient = TRUE,
                    control = vmrseq.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
