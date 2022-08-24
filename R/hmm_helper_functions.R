@@ -319,11 +319,11 @@
   return(data.frame(state_path, bin_state_path, loglik_path, P))
 }
 # Tests:
-# pi1 = 0.3; N = 10
+# pi1 = 0.5; N = 20
 # pos = cumsum(sample(100:2000, 10))
 # totals = sample(1:N, 10)
 # trans_probs = .loadTransitProbs(pos = pos, all_probs = vmrseq:::tp0@transit_probs)
-# meths = round(totals*0.3)
+# meths = round(totals*0.5)
 # REFARRAY <- .calRefArray(max_cov = N)
 # CHOICEARRAY <- .calChoiceArray(REFARRAY)
 # list <- .calMethArray(par_u = .priorParams(med_cov = round(median(totals)), type = "u"),
@@ -333,7 +333,6 @@
 # .Viterbi2Grp(totals, meths, trans_probs,
 #              pi1, CHOICEARRAY, METHARRAY, UNMETHARRAY)
 # .Viterbi1Grp(totals, meths, trans_probs, METHARRAY, UNMETHARRAY)
-
 
 
 ###### functions for prevalence optimization in 2-grouping case ====
