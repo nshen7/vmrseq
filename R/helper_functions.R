@@ -33,7 +33,7 @@ callCandidRegion <- function(SE,
       message("No candidates found.")
       next
     }
-    M_chr <- subset(M, seqnames(gr) == chromosome)
+    M_chr <- M[seqnames(gr) == chromosome, ]
 
     ## Locfit smooth on fractional methylation
     weights <- gr_chr$total
@@ -55,7 +55,9 @@ callCandidRegion <- function(SE,
 
 
     ## Compute variance relative to smoothed MF
-    var_chr <- computeWindowVar(gr_chr, M_chr, fit_chr)
+    var_chr <- computeWindowVar(gr_chr, M_chr, fit_chr,
+                                bpWindow,
+                                parallel)
     # Concatenate fit_chr from all chromosomes
     var <- c(var, var_chr)
 
@@ -166,17 +168,23 @@ smoother <- function(x, y, weights, chr,
 } # end of function `smoother`
 
 
-computeWindowVar <- function(gr_chr, M_chr, fit_chr) {
+computeWindowVar <- function(gr_chr, M_chr, fit_chr,
+                             bpWindow,
+                             parallel) {
 
   varByCluster <- function(idx) {
 
     gr_i <- gr_chr[idx, ]
-    M_i <- M_chr[idx, ]
     fit_i <- fit_chr[idx, ]
+    if (length(idx) > 1) {
+      M_i <- M_chr[idx, ]
+    } else {
+      M_i <- t(M_chr[idx, ])
+    }
 
     # Obtain window ranges of each site
     wds_i <- GRanges(
-      seqnames = chromosome,
+      seqnames = seqnames(gr_i),
       ranges = IRanges(start = start(gr_i) - round(bpWindow/2),
                        end = end(gr_i) + round(bpWindow/2))
     )
@@ -193,6 +201,7 @@ computeWindowVar <- function(gr_chr, M_chr, fit_chr) {
         wd_mfs <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
       } else {
         wd_mfs <- rel_M_i[ind, ]
+        print(gr_i[ind]); print(var(wd_mfs, na.rm = TRUE)) # DEBUG
       }
       wd_var <- var(wd_mfs, na.rm = TRUE)
       return(wd_var)
@@ -209,9 +218,9 @@ computeWindowVar <- function(gr_chr, M_chr, fit_chr) {
   Indexes <- split(seq(along = clusterC), clusterC)
 
   if (parallel) {
-    var_chr <- do.call(c, bplapply(Indexes, varByCluster))
+    var_chr <- do.call(c, bplapply(Indexes, varByCluster)) %>% unname
   } else {
-    var_chr <- do.call(c, lapply(Indexes, varByCluster))
+    var_chr <- do.call(c, lapply(Indexes, varByCluster)) %>% unname
   }
 
   return(var_chr)

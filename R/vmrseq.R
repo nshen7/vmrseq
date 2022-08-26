@@ -57,6 +57,7 @@
 #' @importFrom stats fitted median
 #' @importFrom gamlss.dist dZIBB dBB
 #' @importFrom locfit locfit lp
+#' @importFrom DelayedArray rowSums colSums rowMeans colMeans
 #' @import dplyr
 #' @import GenomicRanges
 #'
@@ -69,7 +70,7 @@
 vmrseq <- function(SE,
                    minCov = 3,
                    cutoff = 0.1, # param for CR calling
-                   penalty = 4, # params for VMR calling
+                   penalty = 0, # params for VMR calling
                    maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
                    bpWindow = 20*median(diff(start(SE))), # param for var computation
                    maxGapSmooth = 2500, # params for MF smoother
@@ -153,6 +154,7 @@ vmrseq <- function(SE,
     SE = SE,
     cutoff = cutoff,
     maxGap = maxGap, minNumCR = minNumCR,
+    bpWindow = bpWindow,
     maxGapSmooth = maxGapSmooth,
     minInSpan = minInSpan, bpSpan = bpSpan,
     maxNumMerge = maxNumMerge,
@@ -167,7 +169,7 @@ vmrseq <- function(SE,
   cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
 
   # Add summary stats (smoothed var and CR index) into output
-  values(SE) <- cbind(values(SE), res_cr$smooth_fit, cr_index)
+  values(SE) <- cbind(values(SE), res_cr$mf_smooth, res_cr$var, cr_index)
 
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(SE)*100, 2)
@@ -227,15 +229,15 @@ vmrseq <- function(SE,
             "% QC-passed sites are called to be in VMRs.")
   }
 
-  vmr.gr <- indexToGranges(gr = gr, index = VMRI, type = "VMR")
-  cr.gr <- indexToGranges(gr = gr, index = CRI, type = "CR")
+  vmr.gr <- indexToGranges(gr = granges(SE), index = VMRI, type = "VMR")
+  cr.gr <- indexToGranges(gr = granges(SE), index = CRI, type = "CR")
 
   VMRI2 <- lapply(1:nrow(VMRI), function(i) VMRI$start_ind[i]:VMRI$end_ind[i]) # list of indices
   vmr_index <- rep(NA, length(SE))
   vmr_index[unlist(VMRI2)] <- rep.int(1:length(VMRI2), lengths(VMRI2))
   values(SE) <- cbind(values(SE), vmr_index, values(vmr.gr)[vmr_index,])
 
-  return(list(gr_qced = gr, VMRs = vmr.gr, CRs = cr.gr))
+  return(list(gr_qced = granges(SE), VMRs = vmr.gr, CRs = cr.gr))
 }
 
 
