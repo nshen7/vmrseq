@@ -2,7 +2,6 @@ callCandidRegion <- function(SE,
                              cutoff,
                              maxGap, minNumCR,
                              bpWindow,
-                             maxGapSmooth,
                              bpSpan, minInSpan,
                              maxNumMerge,
                              verbose,
@@ -41,7 +40,6 @@ callCandidRegion <- function(SE,
                         chr = chromosome,
                         weights = weights,
                         maxGap = maxGap, minNumCR = minNumCR,
-                        maxGapSmooth = maxGapSmooth,
                         minInSpan = minInSpan, bpSpan = bpSpan,
                         verbose = verbose,
                         parallel = parallel)
@@ -108,7 +106,6 @@ callCandidRegion <- function(SE,
 
 smoother <- function(x, y, weights, chr,
                      maxGap, minNumCR,
-                     maxGapSmooth,
                      minInSpan, bpSpan,
                      verbose,
                      parallel) {
@@ -153,7 +150,7 @@ smoother <- function(x, y, weights, chr,
   clusterC <- bumphunter::clusterMaker(factor(chr_len, levels=unique(chr_len)),
                                        x,
                                        assumeSorted = TRUE,
-                                       maxGap = maxGapSmooth)
+                                       maxGap = 2*bpSpan)
 
   Indexes <- split(seq(along = clusterC), clusterC)
 
@@ -201,7 +198,6 @@ computeWindowVar <- function(gr_chr, M_chr, fit_chr,
         wd_mfs <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
       } else {
         wd_mfs <- rel_M_i[ind, ]
-        print(gr_i[ind]); print(var(wd_mfs, na.rm = TRUE)) # DEBUG
       }
       wd_var <- var(wd_mfs, na.rm = TRUE)
       return(wd_var)
@@ -283,7 +279,8 @@ searchVMR <- function(gr,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     }
 
-    if (res_2g$loglik > res_1g$loglik + penalty) {
+    # if (res_2g$loglik > res_1g$loglik + penalty) {
+    if (TRUE) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumVMR,
@@ -295,7 +292,7 @@ searchVMR <- function(gr,
                              vmr_num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
-                             loglik_diff = res_2g$loglik - res_1g$loglik - penalty))
+                             loglik_diff = res_2g$loglik - res_1g$loglik))
     } else {
       return(NULL)
     }

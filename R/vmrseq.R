@@ -9,9 +9,6 @@
 #' contains *binary* methylation status of CpG sites in individual cells. We
 #' recommend using HDF5-based SummarizedExperiment object to prevent running
 #' out of memory.
-#' @param minCov integer scalar value that represents minimum across-cell
-#' coverage in QC step. Sites with coverage lower than \code{minCov} are
-#' removed. Default value is 5.
 #' @param cutoff positive scalar value that represents the cutoff value of
 #' variance that is used to discover candidate regions. Default value is 0.10.
 #' @param penalty
@@ -21,9 +18,6 @@
 #' the smoothing span window if \code{smooth} is TRUE. Default value is 1000.
 #' @param minInSpan positive integer that represents the minimum number of CpGs
 #' in a smoothing span window if \code{smooth} is TRUE. Default value is 10.
-#' @param maxGapSmooth integer value representing maximum number of base pairs
-#' in between neighboring CpGs to be included in the same cluster when
-#' performing smoothing (should generally be larger than \code{maxGap})
 #' @param tp transitProbs object that contains estimated transition
 #' probabilities. Can be obtained by the 'estimTransitProbs' function. If
 #' \code{tp==NULL}, internal transition probabilities in \code{vmrseq} is used.
@@ -68,13 +62,11 @@
 #'
 #'
 vmrseq <- function(SE,
-                   minCov = 3,
                    cutoff = 0.1, # param for CR calling
                    penalty = 0, # params for VMR calling
-                   maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
-                   bpWindow = 20*median(diff(start(SE))), # param for var computation
-                   maxGapSmooth = 2500, # params for MF smoother
-                   bpSpan = 10*median(diff(start(SE))), minInSpan = 10, # params for MF smoother
+                   maxGap = 2000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
+                   bpWindow = 2000, # param for individual-cell smoother
+                   bpSpan = 1000, minInSpan = 10, # params for across-cell smoother
                    tp = NULL,
                    maxNumMerge = 0, minNumLong = 0,
                    gradient = TRUE,
@@ -83,8 +75,8 @@ vmrseq <- function(SE,
 
   if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
     stop("'cutoff' has to be a postive scalar value.")
-  if (length(penalty)!=1 | penalty < 0)
-    stop("'penalty' has to be a non-negative scalar value.")
+  # if (length(penalty)!=1 | penalty < 0)
+  #   stop("'penalty' has to be a non-negative scalar value.")
   # if (minNumRegion < 3)
   #   stop("'minNumRegion' must be at least 3.")
   # if (minNumLong < minNumRegion)
@@ -111,19 +103,8 @@ vmrseq <- function(SE,
   values(SE)$meth <- rowSums(assays(SE)[[1]], na.rm = T)
   values(SE)$total <- rowSums(assays(SE)[[1]]>=0, na.rm = T)
 
-  # QC: remove low-coverage sites
-  if (minCov > 0) {
-    pct_rm <- round(sum(values(SE)$total<minCov)/length(SE)*100, 1)
-    if (pct_rm >= 10 & pct_rm < 30) {
-      message("WARNING:
-  Consider lowering 'minCov' value since ", pct_rm, "% sites will be removed due to QC.")
-      warning("Consider lowering 'minCov' value since ", pct_rm, "% sites are removed due to QC.")
-    } else if (pct_rm >= 30) {
-      stop("'minCov' value should be lowered since ", pct_rm, "% sites will be removed due to QC.")
-    }
-    SE <- subset(SE, values(SE)$total >= minCov)
-    message("QC: Removed ", pct_rm, "% of sites with coverage lower than ", minCov, ".")
-  }
+  if (values(SE)$total < 3)
+    message("We suggest removing CpG sites with across-cell coverage lower than 3.")
 
   # Register the parallel backend
   BiocParallel::register(BPPARAM)
@@ -155,7 +136,6 @@ vmrseq <- function(SE,
     cutoff = cutoff,
     maxGap = maxGap, minNumCR = minNumCR,
     bpWindow = bpWindow,
-    maxGapSmooth = maxGapSmooth,
     minInSpan = minInSpan, bpSpan = bpSpan,
     maxNumMerge = maxNumMerge,
     verbose = verbose,
@@ -169,7 +149,7 @@ vmrseq <- function(SE,
   cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
 
   # Add summary stats (smoothed var and CR index) into output
-  values(SE) <- cbind(values(SE), res_cr$mf_smooth, res_cr$var, cr_index)
+  values(SE) <- cbind(values(SE), res_cr$mf_smooth, data.frame(var = res_cr$var), cr_index)
 
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(SE)*100, 2)
