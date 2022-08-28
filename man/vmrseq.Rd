@@ -6,28 +6,31 @@
 single-cell bisulfite sequencing data.}
 \usage{
 vmrseq(
-  gr,
-  minCov = 5,
+  SE,
+  minCov = 3,
   cutoff = 0.1,
+  penalty = 0,
   maxGap = 1000,
-  minNumRegion = 5,
-  smooth = TRUE,
+  minNumCR = 5,
+  minNumVMR = 5,
+  bpWindow = 20 * median(diff(start(SE))),
   maxGapSmooth = 2500,
-  bpSpan = 1000,
+  bpSpan = 10 * median(diff(start(SE))),
   minInSpan = 10,
   tp = NULL,
-  maxNumMerge = 1,
-  minNumLong = 10,
+  maxNumMerge = 0,
+  minNumLong = 0,
+  gradient = TRUE,
   control = vmrseq.control(),
   verbose = TRUE,
   BPPARAM = bpparam()
 )
 }
 \arguments{
-\item{gr}{GRanges object containing the chromosome position and methylation
-values. Should contain two element metadata columns that can be extracted
-using \code{values(gr)}: `meth` and `total`, indicating number of methylated
-cells and total number of cells.}
+\item{SE}{SummarizedExperiment object with one and *only* one assay that
+contains *binary* methylation status of CpG sites in individual cells. We
+recommend using HDF5-based SummarizedExperiment object to prevent running
+out of memory.}
 
 \item{minCov}{integer scalar value that represents minimum across-cell
 coverage in QC step. Sites with coverage lower than \code{minCov} are
@@ -39,12 +42,7 @@ variance that is used to discover candidate regions. Default value is 0.10.}
 \item{maxGap}{integer value representing maximum number of basepairs in
 between neighboring CpGs to be included in the same VMR.}
 
-\item{minNumRegion}{positive integer that represents the minimum number of
-CpGs to consider for an VMR as well as a candidate region. Default value is
-5. Minimum value is 3.}
-
-\item{smooth}{logical value that indicates whether or not to smooth the CpG
-level signal when discovering candidate regions. Defaults to TRUE.}
+\item{bpWindow}{}
 
 \item{maxGapSmooth}{integer value representing maximum number of base pairs
 in between neighboring CpGs to be included in the same cluster when
@@ -63,12 +61,16 @@ Default is NULL.}
 
 \item{maxNumMerge}{positive integer that represents the maximum number of
 CpGs between two VMRs that can be tolerated when merging VMRs in the same
-candidate region.Default is 1.}
+candidate region. Default is 0.}
 
 \item{minNumLong}{positive integer that represents the minimum number of
 CpGs to consider for a *long* candidate region. For fast computation use.
 Default is 20. Long regions will be performed a more thorough search of
 optimized prevalence value. Minimum value is the \code{minNumRegion}.}
+
+\item{gradient}{should gradient descent be applied to optimize pi? If
+set to FALSE, \code{vmrseq.control()$inits} will be used as candidate values
+for pi, but no gradient descent will be performed.}
 
 \item{control}{this sets the control parameters of the outer iterations
 algorithm. The default setting is the \code{vmrseq.control} function.}

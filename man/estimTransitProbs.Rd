@@ -5,20 +5,21 @@
 \title{Estimate transition probilities conditioning on CpG-CpG distance}
 \usage{
 estimTransitProbs(
-  list_cells,
+  list,
   max_dist_bp = 2000,
   buffer_bp = 3000,
+  lags = 1:10,
+  BPPARAM = bpparam(),
   degree = 2,
   span = 0.02,
-  BPPARAM = bpparam(),
   ...
 )
 }
 \arguments{
-\item{list_cells}{a list of data.frame objects. Each data.frame
-contains information of 1 cell and should have 3 columns in strict
-order of: (chr), (pos), (binary methyl value). Column names are not
-necessary.}
+\item{list}{a list of data.frame objects. Each data.frame
+contains information of 1 unit of training data (can be a cell or a
+subtype) and should have 3 columns in strict rder of: (chr), (pos),
+(binary methyl value). Column names are not necessary.}
 
 \item{max_dist_bp}{positive integer value indicating the maximum
 CpG-CpG distance in base pairs before the transition probabilities
@@ -27,13 +28,16 @@ reach constant value. Default value is 2000.}
 \item{buffer_bp}{length of buffer in base pairs used to fit smoothing
 curve near maximum distance and plot diagnostics. Default is 3000.}
 
-\item{degree}{'degree' argument for `loess` function}
-
-\item{span}{'span' argument for `loess` function}
+\item{lags}{a vector indicating possible number of lagged CpGs for
+estimation of transition probabilities.}
 
 \item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
 backend. The default option is \code{BiocParallel::bpparam()} which will
 automatically creates a cluster appropriate for the operating system.}
+
+\item{degree}{'degree' argument for `loess` function}
+
+\item{span}{'span' argument for `loess` function}
 
 \item{...}{additional arguments passed into the `loess` function.}
 }

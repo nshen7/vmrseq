@@ -2,12 +2,11 @@
 % Please edit documentation in R/vmrseq.control.R
 \name{vmrseq.control}
 \alias{vmrseq.control}
-\title{Auxiliary function as user interface for vmrseq optimization. Typically only
-used when calling vmrseq function with the option \code{control}.}
+\title{Auxiliary function as user interface for vmrseq optimization.}
 \usage{
 vmrseq.control(
   inits = c(0.2, 0.5, 0.8),
-  epsilon = 1e-04,
+  epsilon = 0.001,
   backtrack = T,
   eta = ifelse(backtrack, 0.05, 0.005),
   maxIter = 100
@@ -30,6 +29,6 @@ Default is \code{ifelse(backtrack, 0.05, 0.005)}.}
 iterations in optimization algorithm.}
 }
 \description{
-Auxiliary function as user interface for vmrseq optimization. Typically only
-used when calling vmrseq function with the option \code{control}.
+Typically only used when calling vmrseq function with the
+option \code{control}.
 }

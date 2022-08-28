@@ -1,67 +1,77 @@
-callCandidRegion <- function(gr,
+callCandidRegion <- function(SE,
                              cutoff,
                              maxGap, minNumCR,
-                             smooth,
-                             maxGapSmooth,
-                             minInSpan, bpSpan,
+                             bpWindow,
+                             bpSpan, minInSpan,
                              maxNumMerge,
                              verbose,
                              parallel) {
 
-  # Compute variance for individual sites
-  gr$MF <- gr$meth / gr$total
-  gr$var_raw <- gr$MF * (1-gr$MF)
+  gr <- granges(SE)
+  M <- assays(SE)[[1]]
 
-  # Apply smoother on each chromosome serially
+  # Compute methylated fraction of cells for individual sites
+  gr$mf <- gr$meth / gr$total
+
+  # Apply smoother and compute variance on each chromosome serially
   chrs <- as.character(unique(seqnames(gr)))
-
-  fit <- NULL
+  fit <- NULL; var <- NULL
   for (chromosome in chrs) {
 
-    if (verbose) message("...Chromosome ", paste(chromosome, collapse = ", "), ": ", appendLF = FALSE)
+    if (verbose) message(
+      "...Chromosome ",
+      paste(chromosome, collapse = ", "), ": ",
+      appendLF = FALSE
+    )
 
-    # Subset one chromosome from gr
+    t1 <- proc.time()
+
+    # Subset one chromosome from gr and M
     gr_chr <- subset(gr, seqnames(gr) == chromosome)
-
-    # Skip chromosomes that have fewer than minNumCR loci
     if (length(gr_chr) < minNumCR){
       message("No candidates found.")
       next
     }
+    M_chr <- M[seqnames(gr) == chromosome, ]
 
-    # Locfit smooth on var
-    if (smooth) {
-      weights <- gr_chr$total
-      # smooth on one chromosome
-      fit_chr <- smoother(x = start(gr_chr), y = gr_chr$var_raw,
-                          chr = chromosome,
-                          weights = weights,
-                          maxGap = maxGap, minNumCR = minNumCR,
-                          maxGapSmooth = maxGapSmooth,
-                          minInSpan = minInSpan, bpSpan = bpSpan,
-                          verbose = verbose,
-                          parallel = parallel)
-    } else {
-      fit_chr <- data.frame(fitted_var = rep(NA, length(gr_chr)), is_smooth = FALSE)
-    }
-
-    # Keep the raw var if not smoothed
+    ## Locfit smooth on fractional methylation
+    weights <- gr_chr$total
+    fit_chr <- smoother(x = start(gr_chr), y = gr_chr$mf,
+                        chr = chromosome,
+                        weights = weights,
+                        maxGap = maxGap, minNumCR = minNumCR,
+                        minInSpan = minInSpan, bpSpan = bpSpan,
+                        verbose = verbose,
+                        parallel = parallel)
+    fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
+    # Keep the raw mf if not smoothed
     ind <- which(!fit_chr$is_smooth)
-    if (length(ind) > 0) fit_chr$fitted_var[ind] <- gr_chr$var_raw[ind]
-
+    if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
     # Concatenate fit_chr from all chromosomes
     fit <- rbind(fit, fit_chr)
+    if (verbose) message("Smoothed. ", appendLF = FALSE)
+
+
+    ## Compute variance relative to smoothed MF
+    var_chr <- computeWindowVar(gr_chr, M_chr, fit_chr,
+                                bpWindow,
+                                parallel)
+    # Concatenate fit_chr from all chromosomes
+    var <- c(var, var_chr)
+
+    if (verbose) {
+      t2 <- proc.time()
+      message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
+    }
   }
-
-  # if (nrow(fit) != length(gr)) stop("nrow(fit) does not match with length(gr).")
-
+  colnames(fit) <- c("smoothed_mf", "is_smooth")
 
   # Call candidate regions
   cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
                                       pos = start(gr),
                                       maxGap = maxGap,
                                       assumeSorted = TRUE)
-  Indexes <- bumphunter::getSegments(x = fit$fitted_var, f = cluster,
+  Indexes <- bumphunter::getSegments(x = var, f = cluster,
                                      cutoff = cutoff,
                                      assumeSorted = TRUE,
                                      verbose = FALSE)
@@ -85,9 +95,9 @@ callCandidRegion <- function(gr,
     # }
     # Only keep candidate regions with more than `minNumCR` CpGs
     CRI <- upIndex[lengths(upIndex) >= minNumCR]
-    return(list(CRI = CRI, smooth_fit = fit))
+    return(list(CRI = CRI, mf_smooth = fit, var = var))
   } else {
-    return(list(CRI = NULL, smooth_fit = fit))
+    return(list(CRI = NULL, mf_smooth = fit, var = var))
   }
 
 } # end of function `callCandidRegion`
@@ -96,10 +106,9 @@ callCandidRegion <- function(gr,
 
 smoother <- function(x, y, weights, chr,
                      maxGap, minNumCR,
-                     maxGapSmooth,
                      minInSpan, bpSpan,
-                     verbose = TRUE,
-                     parallel = FALSE) {
+                     verbose,
+                     parallel) {
 
 
   locfitByCluster <- function(idx) {
@@ -114,7 +123,7 @@ smoother <- function(x, y, weights, chr,
     clusteri <- clusterC[idx]
 
     if (is.null((yi)))
-      stop("y (var_raw) is missing")
+      stop("y (mf) is missing")
     if (is.null(xi))
       stop("x (pos) is missing")
     if (is.null(clusteri))
@@ -134,54 +143,97 @@ smoother <- function(x, y, weights, chr,
       yi <- rep(NA, length(yi))
       is_smooth <- FALSE
     }
-    return(data.frame(fitted_var = as.vector(yi), is_smooth = is_smooth))
+    return(data.frame(fitted = as.vector(yi), is_smooth = is_smooth))
   } # end of function `locfitByCluster`
 
-
-  # if (!is.null(weights) && is.null(dim(weights)))
-  #   weights <- matrix(weights, ncol = 1)
-
-  t1 <- proc.time()
   chr_len <- rep(chr, each = length(x))
   clusterC <- bumphunter::clusterMaker(factor(chr_len, levels=unique(chr_len)),
                                        x,
                                        assumeSorted = TRUE,
-                                       maxGap = maxGapSmooth)
+                                       maxGap = 2*bpSpan)
 
   Indexes <- split(seq(along = clusterC), clusterC)
 
   if (parallel) {
     ret <- do.call(rbind, bplapply(Indexes, function(idx) locfitByCluster(idx)))
-    # ret <- do.call(rbind, parallel::mclapply(Indexes, function(idx) locfitByCluster(idx), mc.cores = 6))
   } else {
     ret <- do.call(rbind, lapply(Indexes, function(idx) locfitByCluster(idx)))
   }
 
-  if (verbose) {
-    t2 <- proc.time()
-    message("Smoothed (", round((t2 - t1)[3]/60, 2), " min). ")
-    # message("Smoothed (",
-    #         round((t2 - t1)[3]/60, 2), " min). ",
-    #         appendLF = FALSE)
-  }
-
-  return(ret) # data.frame with columns: 'fitted_var' (numeric), 'is_smooth' (logical)
+  return(ret) # data.frame with columns: 'fitted' (numeric), 'is_smooth' (logical)
 
 } # end of function `smoother`
 
 
+computeWindowVar <- function(gr_chr, M_chr, fit_chr,
+                             bpWindow,
+                             parallel) {
+
+  varByCluster <- function(idx) {
+
+    gr_i <- gr_chr[idx, ]
+    fit_i <- fit_chr[idx, ]
+    if (length(idx) > 1) {
+      M_i <- M_chr[idx, ]
+    } else {
+      M_i <- t(M_chr[idx, ])
+    }
+
+    # Obtain window ranges of each site
+    wds_i <- GRanges(
+      seqnames = seqnames(gr_i),
+      ranges = IRanges(start = start(gr_i) - round(bpWindow/2),
+                       end = end(gr_i) + round(bpWindow/2))
+    )
+    # Find indices in gr for each window
+    hits <- findOverlaps(wds_i, gr_i)
+    wds_inds <- split(subjectHits(hits), queryHits(hits))
+
+    # Matrix of 'relative methylation' or 'methylation residuals'
+    rel_M_i <- as.matrix(M_i - fit_i$fitted)
+
+    varByWindow <- function(j) {
+      ind <- wds_inds[[j]]
+      if (length(ind) > 1) {
+        wd_mfs <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
+      } else {
+        wd_mfs <- rel_M_i[ind, ]
+      }
+      wd_var <- var(wd_mfs, na.rm = TRUE)
+      return(wd_var)
+    }
+
+    var_i <- do.call(c, lapply(1:length(wds_inds), function(j) varByWindow(j)))
+    return(var_i)
+  } # end of function 'varByCluster'
+
+  clusterC <- bumphunter::clusterMaker(seqnames(gr_chr),
+                                       start(gr_chr),
+                                       assumeSorted = TRUE,
+                                       maxGap = bpWindow + 1)
+  Indexes <- split(seq(along = clusterC), clusterC)
+
+  if (parallel) {
+    var_chr <- do.call(c, bplapply(Indexes, varByCluster)) %>% unname
+  } else {
+    var_chr <- do.call(c, lapply(Indexes, varByCluster)) %>% unname
+  }
+
+  return(var_chr)
+} # end of function 'computeWindowVar'
+
 
 searchVMR <- function(gr,
                       CRI,
-                      penalty = penalty,
-                      maxGap = 1000, minNumVMR = 5,
-                      tp = NULL,
-                      maxNumMerge = 1,
-                      minNumLong = 10,
-                      gradient = TRUE,
-                      control = vmrseq.control(),
-                      verbose = TRUE,
-                      parallel = FALSE) {
+                      penalty,
+                      maxGap, minNumVMR,
+                      tp,
+                      maxNumMerge,
+                      minNumLong,
+                      gradient,
+                      control,
+                      verbose,
+                      parallel) {
 
   # If no `tp` provided, use internal `tp0`
   if (is.null(tp)) tp <- tp0
@@ -227,7 +279,8 @@ searchVMR <- function(gr,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
     }
 
-    if (res_2g$loglik > res_1g$loglik + penalty) {
+    # if (res_2g$loglik > res_1g$loglik + penalty) {
+    if (TRUE) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumVMR,
@@ -239,7 +292,7 @@ searchVMR <- function(gr,
                              vmr_num_cpg = vmr_inds$end_ind - vmr_inds$start_ind + 1,
                              pi = res_2g$optim_pi_1,
                              n_iter = res_2g$n_iter,
-                             loglik_diff = res_2g$loglik - res_1g$loglik - penalty))
+                             loglik_diff = res_2g$loglik - res_1g$loglik))
     } else {
       return(NULL)
     }
