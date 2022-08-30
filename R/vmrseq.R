@@ -64,7 +64,7 @@
 vmrseq <- function(SE,
                    cutoff = 0.1, # param for CR calling
                    penalty = 0, # params for VMR calling
-                   maxGap = 2000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
+                   maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
                    bpWindow = 2000, # param for individual-cell smoother
                    bpSpan = 1000, minInSpan = 10, # params for across-cell smoother
                    tp = NULL,
@@ -103,7 +103,7 @@ vmrseq <- function(SE,
   values(SE)$meth <- rowSums(assays(SE)[[1]], na.rm = T)
   values(SE)$total <- rowSums(assays(SE)[[1]]>=0, na.rm = T)
 
-  if (values(SE)$total < 3)
+  if (min(values(SE)$total) < 3)
     message("We suggest removing CpG sites with across-cell coverage lower than 3.")
 
   # Register the parallel backend
@@ -164,8 +164,7 @@ vmrseq <- function(SE,
   }
 
   if (pct_incr <= 10) {
-    message("WARNING:
-  Consider lowering 'cutoff' since only ", pct_incr,
+    message("WARNING: Consider lowering 'cutoff' since only ", pct_incr,
             "% QC-passed sites are called to be in candidate region.
     ...If not, might induce low statistical power.")
     warning("Consider lowering 'cutoff' since only ", pct_incr,
