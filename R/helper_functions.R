@@ -49,7 +49,7 @@ callCandidRegion <- function(SE,
     if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
     # Concatenate fit_chr from all chromosomes
     fit <- rbind(fit, fit_chr)
-    if (verbose) message("Smoothed. ", appendLF = FALSE)
+    if (verbose) message("Smoothed, ", appendLF = FALSE)
 
 
     ## Compute variance relative to smoothed MF
@@ -61,7 +61,7 @@ callCandidRegion <- function(SE,
 
     if (verbose) {
       t2 <- proc.time()
-      message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
+      message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
     }
   }
   colnames(fit) <- c("smoothed_mf", "is_smooth")
