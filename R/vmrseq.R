@@ -9,8 +9,9 @@
 #' contains *binary* methylation status of CpG sites in individual cells. We
 #' recommend using HDF5-based SummarizedExperiment object to prevent running
 #' out of memory.
-#' @param cutoff positive scalar value that represents the cutoff value of
-#' variance that is used to discover candidate regions. Default value is 0.10.
+#' @param qVar positive scalar value between 0 and 1 that represents the
+#' variance threshold. Default value is 0.10, which means the top 10% quantile
+#' value of methylation variance is used as cutoff to detect candidate regions.
 #' @param penalty
 #' @param maxGap integer value representing maximum number of basepairs in
 #' between neighboring CpGs to be included in the same VMR.
@@ -62,7 +63,7 @@
 #'
 #'
 vmrseq <- function(SE,
-                   cutoff = 0.1, # param for CR calling
+                   qVar = 0.1, # param for CR calling
                    penalty = 0, # params for VMR calling
                    maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
                    bpWindow = 2000, # param for individual-cell smoother
@@ -73,8 +74,10 @@ vmrseq <- function(SE,
                    control = vmrseq.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
 
-  if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
-    stop("'cutoff' has to be a postive scalar value.")
+  # TODO: maxGap has to be larger than bpWindow/2
+
+  # if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
+  #   stop("'cutoff' has to be a postive scalar value.")
   # if (length(penalty)!=1 | penalty < 0)
   #   stop("'penalty' has to be a non-negative scalar value.")
   # if (minNumRegion < 3)
@@ -127,13 +130,12 @@ vmrseq <- function(SE,
 
   # Bumphunt candidate regions
   message(
-    "Step 1: Detecting candidate regions with (smoothed) variance larger than ",
-    cutoff, "..."
+    "Step 1: Detecting candidate regions..."
   )
   # Outputs list of index vectors. Each list element is one CR.
   res_cr <- callCandidRegion(
     SE = SE,
-    cutoff = cutoff,
+    qVar = qVar,
     maxGap = maxGap, minNumCR = minNumCR,
     bpWindow = bpWindow,
     minInSpan = minInSpan, bpSpan = bpSpan,
@@ -154,7 +156,7 @@ vmrseq <- function(SE,
   # Percentage of sites in CRs
   pct_incr <- round(sum(lengths(CRI))/length(SE)*100, 2)
   if (is.null(CRI)) {
-    message("...No candidate regions pass the cutoff of ", unique(abs(cutoff)))
+    message("...No candidate regions pass the cutoff")
     return(NULL)
   } else {
     message("...Finished calling candidate regions - found ", length(CRI),
@@ -163,13 +165,13 @@ vmrseq <- function(SE,
             "% QC-passed sites are called to be in candidate regions.")
   }
 
-  if (pct_incr <= 10) {
-    message("WARNING: Consider lowering 'cutoff' since only ", pct_incr,
-            "% QC-passed sites are called to be in candidate region.
-    ...If not, might induce low statistical power.")
-    warning("Consider lowering 'cutoff' since only ", pct_incr,
-            "% QC-passed sites are called to be in candidate region.")
-  }
+  # if (pct_incr <= 10) {
+  #   message("WARNING: Consider lowering 'cutoff' since only ", pct_incr,
+  #           "% QC-passed sites are called to be in candidate region.
+  #   ...If not, might induce low statistical power.")
+  #   warning("Consider lowering 'cutoff' since only ", pct_incr,
+  #           "% QC-passed sites are called to be in candidate region.")
+  # }
 
   message(
     "Step 2: Detecting VMRs",

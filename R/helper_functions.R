@@ -1,5 +1,5 @@
 callCandidRegion <- function(SE,
-                             cutoff,
+                             qVar,
                              maxGap, minNumCR,
                              bpWindow,
                              bpSpan, minInSpan,
@@ -66,18 +66,33 @@ callCandidRegion <- function(SE,
   }
   colnames(fit) <- c("smoothed_mf", "is_smooth")
 
-  # Call candidate regions
-  cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
-                                      pos = start(gr),
-                                      maxGap = maxGap,
-                                      assumeSorted = TRUE)
-  Indexes <- bumphunter::getSegments(x = var, f = cluster,
-                                     cutoff = cutoff,
-                                     assumeSorted = TRUE,
-                                     verbose = FALSE)
+  # Compute cutoff based on qVar
+  cutoff <- quantile(var, prob = 1-qVar)
+  mes <- "...Calling candidate regions with cutoff of %.2f on variance."
+  message(sprintf(mes, cutoff))
 
-  upIndex <- Indexes$upIndex
-  if (length(upIndex) == 0) upIndex <- NULL
+  # (New) Call candidate regions
+  hv_index <- which(var >= cutoff)
+  hv_wds <- GRanges(
+    seqnames = seqnames(gr[hv_index]),
+    ranges = IRanges(start = start(gr[hv_index]) - round(bpWindow/2),
+                     end = end(gr[hv_index]) + round(bpWindow/2))
+  ) %>% reduce()
+  hv_hits <- findOverlaps(gr, hv_wds)
+  upIndex <- split(queryHits(hv_hits), subjectHits(hv_hits))
+
+  # # (Old) Call candidate regions
+  # cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
+  #                                     pos = start(gr),
+  #                                     maxGap = maxGap,
+  #                                     assumeSorted = TRUE)
+  # Indexes <- bumphunter::getSegments(x = var, f = cluster,
+  #                                    cutoff = cutoff,
+  #                                    assumeSorted = TRUE,
+  #                                    verbose = FALSE)
+  #
+  # upIndex <- Indexes$upIndex
+  # if (length(upIndex) == 0) upIndex <- NULL
 
   if (!is.null(upIndex)) {
     # # Merge CRs if they are closer than `maxNumMerge` bp
