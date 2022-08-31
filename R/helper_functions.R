@@ -71,7 +71,7 @@ callCandidRegion <- function(SE,
   mes <- "...Calling candidate regions with cutoff of %.2f on variance."
   message(sprintf(mes, cutoff))
 
-  # (Old) Call candidate regions
+  # Call candidate regions
   cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
                                       pos = start(gr),
                                       maxGap = maxGap,
