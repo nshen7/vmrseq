@@ -139,21 +139,16 @@ smoothMF <- function(x, y, weights, chr,
     if (is.null(clusteri))
       stop("cluster is missing")
 
-    if (length(idx) >= minInSpan) {
-      df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
+    # if (length(idx) >= minInSpan) {
+    df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
-      # balance minInSpan and bpSpan
-      nn <- minInSpan / length(idx)
-      fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan),
-                    data = df, weights = weightsi, family = "gaussian",
-                    maxk = 10000)
-      yi <- fitted(fit)
-      is_smooth <- TRUE
-    } else {
-      yi <- rep(NA, length(yi))
-      is_smooth <- FALSE
-    }
-    return(data.frame(fitted = as.vector(yi), is_smooth = is_smooth))
+    # balance minInSpan and bpSpan
+    nn <- minInSpan / length(idx)
+    fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan),
+                  data = df, weights = weightsi, family = "gaussian",
+                  maxk = 10000)
+    yi <- fitted(fit)
+    return(as.vector(yi))
   } # end of function `locfitByCluster`
 
   chr_len <- rep(chr, each = length(x))
@@ -165,9 +160,9 @@ smoothMF <- function(x, y, weights, chr,
   Indexes <- split(seq(along = clusterC), clusterC)
 
   if (parallel) {
-    ret <- do.call(rbind, bplapply(Indexes, function(idx) locfitByCluster(idx)))
+    ret <- do.call(c, bplapply(Indexes, function(idx) locfitByCluster(idx)))
   } else {
-    ret <- do.call(rbind, lapply(Indexes, function(idx) locfitByCluster(idx)))
+    ret <- do.call(c, lapply(Indexes, function(idx) locfitByCluster(idx)))
   }
 
   return(ret) # data.frame with columns: 'fitted' (numeric), 'is_smooth' (logical)

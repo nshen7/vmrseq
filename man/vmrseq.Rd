@@ -21,7 +21,7 @@ vmrseq(
   maxNumMerge = 0,
   minNumLong = 0,
   gradient = TRUE,
-  control = vmrseq.control(),
+  control = vmrseq.optim.control(),
   verbose = TRUE,
   BPPARAM = bpparam()
 )
@@ -62,11 +62,11 @@ Default is 20. Long regions will be performed a more thorough search of
 optimized prevalence value. Minimum value is the \code{minNumRegion}.}
 
 \item{gradient}{should gradient descent be applied to optimize pi? If
-set to FALSE, \code{vmrseq.control()$inits} will be used as candidate values
+set to FALSE, \code{vmrseq.optim.control()$inits} will be used as candidate values
 for pi, but no gradient descent will be performed.}
 
 \item{control}{this sets the control parameters of the outer iterations
-algorithm. The default setting is the \code{vmrseq.control} function.}
+algorithm. The default setting is the \code{vmrseq.optim.control} function.}
 
 \item{verbose}{logical value that indicates whether progress messages should
 be printed to stdout. Defaults value is TRUE.}

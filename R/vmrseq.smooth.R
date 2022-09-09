@@ -82,15 +82,15 @@ vmrseq.smooth <- function(
                           minInSpan = minInSpan, bpSpan = bpSpan,
                           verbose = verbose,
                           parallel = parallel)
-      mean_meth_chr <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
-      # Keep the raw mean_meth if not smoothed
-      ind <- which(!fit_chr$is_smooth)
-      if (length(ind) > 0) mean_meth_chr[ind] <- origin_mean_chr[ind]
-      if (verbose) message("MF smoothed. ", appendLF = FALSE)
+      mean_meth_chr <- fit_chr %>% pmax(0) %>% pmin(1)
+      # mean_meth_chr <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
+      # # Keep the raw mean_meth if not smoothed
+      # ind <- which(!fit_chr$is_smooth)
+      # if (length(ind) > 0) mean_meth_chr[ind] <- origin_mean_chr[ind]
+      if (verbose) message("Mean methylation smoothed. ", appendLF = FALSE)
     } else {
       mean_meth_chr <- origin_mean_chr
     }
-    mean_meth <- c(mean_meth, mean_meth_chr)
 
     # Compute variance relative to mean_meth
     var_chr <- computeVar(gr = gr_chr,
@@ -98,10 +98,11 @@ vmrseq.smooth <- function(
                           mean_meth = mean_meth_chr,
                           bpWindow = bpWindow,
                           parallel = parallel)
-    var <- c(var, var_chr)
-
     t2 <- proc.time()
     if (verbose) message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
+
+    mean_meth <- c(mean_meth, mean_meth_chr)
+    var <- c(var, var_chr)
   } # end looping chromosome
 
   if (meanSmooth) values(gr)$smoothed_mean <- mean_meth
