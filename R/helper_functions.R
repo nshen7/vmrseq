@@ -199,7 +199,7 @@ computeVar <- function(gr,
   varByCluster <- function(idx) {
 
     gr_i <- gr[idx, ]
-    mean_meth_i <- mean_meth[idx, ]
+    mean_meth_i <- mean_meth[idx]
     if (length(idx) > 1) {
       M_i <- M[idx, ]
     } else {

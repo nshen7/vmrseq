@@ -15,7 +15,8 @@
 vmrseq.smooth <- function(
     SE,
     residSmooth = TRUE, bpWindow = 2000, # param for individual-cell methylation residual smoother
-    meanSmooth = FALSE, bpSpan = 0, minInSpan = 0 # params for across-cell mean methylation smoother
+    meanSmooth = FALSE, bpSpan = 0, minInSpan = 0, # params for across-cell mean methylation smoother
+    verbose = TRUE, BPPARAM = bpparam()
 ) {
 
   # TODO: all the other sanity checks
@@ -34,10 +35,9 @@ vmrseq.smooth <- function(
 
   values(gr)$meth <- rowSums(M, na.rm = T)
   values(gr)$total <- rowSums(M>=0, na.rm = T)
-  values(gr)$mean_meth <- gr$meth / gr$total
 
   if (min(values(gr)$total) < 3)
-    warning("We suggest removing CpG sites with across-cell coverage lower than 3.")
+    warning("We suggest removing CpG sites with across-cell coverage lower than 3 before running vmrseq.")
 
   # Register the parallel backend
   BiocParallel::register(BPPARAM)
@@ -61,7 +61,7 @@ vmrseq.smooth <- function(
   message("Smoothing in progress...")
 
   # Apply smoother and compute variance on each chromosome serially
-  fit <- NULL; var <- NULL
+  mean_meth <- NULL; var <- NULL
   chrs <- as.character(unique(seqnames(gr)))
   for (chromosome in chrs) {
     if (verbose) message("...Chromosome ",
@@ -74,8 +74,9 @@ vmrseq.smooth <- function(
     if (length(gr_chr) < minNumCR) {message("No candidates found."); next}
 
     # Locfit smooth on fractional methylation if meanSmooth==TRUE
+    origin_mean_chr <- gr_chr$meth / gr_chr$total
     if (meanSmooth) {
-      fit_chr <- smoothMF(x = start(gr_chr), y = gr_chr$mean_meth,
+      fit_chr <- smoothMF(x = start(gr_chr), y = origin_mean_chr,
                           chr = chromosome,
                           weights = gr_chr$total, # across-cell coverage as weights
                           minInSpan = minInSpan, bpSpan = bpSpan,
@@ -84,10 +85,10 @@ vmrseq.smooth <- function(
       mean_meth_chr <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
       # Keep the raw mean_meth if not smoothed
       ind <- which(!fit_chr$is_smooth)
-      if (length(ind) > 0) mean_meth_chr[ind] <- gr_chr$mean_meth[ind]
+      if (length(ind) > 0) mean_meth_chr[ind] <- origin_mean_chr[ind]
       if (verbose) message("MF smoothed. ", appendLF = FALSE)
     } else {
-      mean_meth_chr <- gr_chr$mean_meth
+      mean_meth_chr <- origin_mean_chr
     }
     mean_meth <- c(mean_meth, mean_meth_chr)
 
@@ -101,7 +102,7 @@ vmrseq.smooth <- function(
 
     t2 <- proc.time()
     if (verbose) message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
-  } # end of loop over chromosomes
+  } # end looping chromosome
 
   if (meanSmooth) values(gr)$smoothed_mean <- mean_meth
   values(gr)$var <- var
