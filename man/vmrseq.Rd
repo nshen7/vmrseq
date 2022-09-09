@@ -7,16 +7,16 @@ single-cell bisulfite sequencing data.}
 \usage{
 vmrseq(
   SE,
-  minCov = 3,
-  cutoff = 0.1,
+  qVar = 0.1,
   penalty = 0,
   maxGap = 1000,
   minNumCR = 5,
   minNumVMR = 5,
-  bpWindow = 20 * median(diff(start(SE))),
-  maxGapSmooth = 2500,
-  bpSpan = 10 * median(diff(start(SE))),
-  minInSpan = 10,
+  indvSmooth = TRUE,
+  bpWindow = 2000,
+  acrsSmooth = TRUE,
+  bpSpan = 500,
+  minInSpan = 5,
   tp = NULL,
   maxNumMerge = 0,
   minNumLong = 0,
@@ -32,21 +32,14 @@ contains *binary* methylation status of CpG sites in individual cells. We
 recommend using HDF5-based SummarizedExperiment object to prevent running
 out of memory.}
 
-\item{minCov}{integer scalar value that represents minimum across-cell
-coverage in QC step. Sites with coverage lower than \code{minCov} are
-removed. Default value is 5.}
-
-\item{cutoff}{positive scalar value that represents the cutoff value of
-variance that is used to discover candidate regions. Default value is 0.10.}
+\item{qVar}{positive scalar value between 0 and 1 that represents the
+variance threshold. Default value is 0.10, which means the top 10% quantile
+value of methylation variance is used as cutoff to detect candidate regions.}
 
 \item{maxGap}{integer value representing maximum number of basepairs in
 between neighboring CpGs to be included in the same VMR.}
 
 \item{bpWindow}{}
-
-\item{maxGapSmooth}{integer value representing maximum number of base pairs
-in between neighboring CpGs to be included in the same cluster when
-performing smoothing (should generally be larger than \code{maxGap})}
 
 \item{bpSpan}{a positive integer that represents the length in base pairs of
 the smoothing span window if \code{smooth} is TRUE. Default value is 1000.}

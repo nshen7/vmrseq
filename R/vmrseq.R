@@ -31,10 +31,10 @@
 #' Default is 20. Long regions will be performed a more thorough search of
 #' optimized prevalence value. Minimum value is the \code{minNumRegion}.
 #' @param gradient should gradient descent be applied to optimize pi? If
-#' set to FALSE, \code{vmrseq.control()$inits} will be used as candidate values
+#' set to FALSE, \code{vmrseq.optim.control()$inits} will be used as candidate values
 #' for pi, but no gradient descent will be performed.
 #' @param control this sets the control parameters of the outer iterations
-#' algorithm. The default setting is the \code{vmrseq.control} function.
+#' algorithm. The default setting is the \code{vmrseq.optim.control} function.
 #' @param verbose logical value that indicates whether progress messages should
 #' be printed to stdout. Defaults value is TRUE.
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
@@ -66,15 +66,16 @@ vmrseq <- function(SE,
                    qVar = 0.1, # param for CR calling
                    penalty = 0, # params for VMR calling
                    maxGap = 1000, minNumCR = 5, minNumVMR = 5, # params for VMR calling
-                   bpWindow = 2000, # param for individual-cell smoother
-                   bpSpan = 1000, minInSpan = 10, # params for across-cell smoother
+                   indvSmooth = TRUE, bpWindow = 2000, # param for individual-cell smoother
+                   acrsSmooth = TRUE, bpSpan = 500, minInSpan = 5, # params for across-cell smoother
                    tp = NULL,
                    maxNumMerge = 0, minNumLong = 0,
                    gradient = TRUE,
-                   control = vmrseq.control(),
+                   control = vmrseq.optim.control(),
                    verbose = TRUE, BPPARAM = bpparam()) {
 
-  # TODO: maxGap has to be larger than bpWindow/2
+  # TODO: maxGap has to be equal or larger than bpWindow/2
+  # TODO: add in option of indvSmooth
 
   # if (is.null(cutoff) | length(cutoff) != 1 | cutoff <= 0)
   #   stop("'cutoff' has to be a postive scalar value.")
@@ -138,7 +139,7 @@ vmrseq <- function(SE,
     qVar = qVar,
     maxGap = maxGap, minNumCR = minNumCR,
     bpWindow = bpWindow,
-    minInSpan = minInSpan, bpSpan = bpSpan,
+    acrsSmooth = acrsSmooth, minInSpan = minInSpan, bpSpan = bpSpan,
     maxNumMerge = maxNumMerge,
     verbose = verbose,
     parallel = parallel

@@ -18,7 +18,7 @@
 #'
 #' @export
 #'
-vmrseq.control <- function(
+vmrseq.optim.control <- function(
     inits = c(.2, .5, .8),
     epsilon = 1e-3,
     backtrack = T,

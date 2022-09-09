@@ -2,69 +2,73 @@ callCandidRegion <- function(SE,
                              qVar,
                              maxGap, minNumCR,
                              bpWindow,
-                             bpSpan, minInSpan,
+                             acrsSmooth, bpSpan, minInSpan,
                              maxNumMerge,
                              verbose,
                              parallel) {
 
-  gr <- granges(SE)
-  M <- assays(SE)[[1]]
-
-  # Compute methylated fraction of cells for individual sites
-  gr$mf <- gr$meth / gr$total
-
-  # Apply smoother and compute variance on each chromosome serially
-  chrs <- as.character(unique(seqnames(gr)))
-  fit <- NULL; var <- NULL
-  for (chromosome in chrs) {
-
-    if (verbose) message(
-      "...Chromosome ",
-      paste(chromosome, collapse = ", "), ": ",
-      appendLF = FALSE
-    )
-
-    t1 <- proc.time()
-
-    # Subset one chromosome from gr and M
-    gr_chr <- subset(gr, seqnames(gr) == chromosome)
-    if (length(gr_chr) < minNumCR){
-      message("No candidates found.")
-      next
-    }
-    M_chr <- M[seqnames(gr) == chromosome, ]
-
-    ## Locfit smooth on fractional methylation
-    weights <- gr_chr$total
-    fit_chr <- smoother(x = start(gr_chr), y = gr_chr$mf,
-                        chr = chromosome,
-                        weights = weights,
-                        maxGap = maxGap, minNumCR = minNumCR,
-                        minInSpan = minInSpan, bpSpan = bpSpan,
-                        verbose = verbose,
-                        parallel = parallel)
-    fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
-    # Keep the raw mf if not smoothed
-    ind <- which(!fit_chr$is_smooth)
-    if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
-    # Concatenate fit_chr from all chromosomes
-    fit <- rbind(fit, fit_chr)
-    if (verbose) message("Smoothed, ", appendLF = FALSE)
-
-
-    ## Compute variance relative to smoothed MF
-    var_chr <- computeWindowVar(gr_chr, M_chr, fit_chr,
-                                bpWindow,
-                                parallel)
-    # Concatenate fit_chr from all chromosomes
-    var <- c(var, var_chr)
-
-    if (verbose) {
-      t2 <- proc.time()
-      message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
-    }
-  }
-  colnames(fit) <- c("smoothed_mf", "is_smooth")
+  # gr <- granges(SE)
+  # M <- assays(SE)[[1]]
+  #
+  # # Compute methylated fraction of cells for individual sites
+  # gr$mean_meth <- gr$meth / gr$total
+  #
+  # # Apply smoother and compute variance on each chromosome serially
+  # chrs <- as.character(unique(seqnames(gr)))
+  # fit <- NULL; var <- NULL
+  # for (chromosome in chrs) {
+  #
+  #   if (verbose) message(
+  #     "...Chromosome ",
+  #     paste(chromosome, collapse = ", "), ": ",
+  #     appendLF = FALSE
+  #   )
+  #
+  #   t1 <- proc.time()
+  #
+  #   # Subset one chromosome from gr and M
+  #   gr_chr <- subset(gr, seqnames(gr) == chromosome)
+  #   if (length(gr_chr) < minNumCR){
+  #     message("No candidates found.")
+  #     next
+  #   }
+  #   M_chr <- M[seqnames(gr) == chromosome, ]
+  #
+  #   ## Locfit smooth on fractional methylation
+  #   if (acrsSmooth) {
+  #     weights <- gr_chr$total
+  #     fit_chr <- smoothMF(x = start(gr_chr), y = gr_chr$mf,
+  #                         chr = chromosome,
+  #                         weights = weights,
+  #                         maxGap = maxGap, minNumCR = minNumCR,
+  #                         minInSpan = minInSpan, bpSpan = bpSpan,
+  #                         verbose = verbose,
+  #                         parallel = parallel)
+  #     fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
+  #   } else {
+  #     fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), is_smooth = FALSE)
+  #   }
+  #   # Keep the raw mf if not smoothed
+  #   ind <- which(!fit_chr$is_smooth)
+  #   if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
+  #   # Concatenate fit_chr from all chromosomes
+  #   fit <- rbind(fit, fit_chr)
+  #   if (verbose) message("Smoothed, ", appendLF = FALSE)
+  #
+  #
+  #   ## Compute variance relative to smoothed MF
+  #   var_chr <- computeVar(gr_chr, M_chr, fit_chr,
+  #                               bpWindow,
+  #                               parallel)
+  #   # Concatenate fit_chr from all chromosomes
+  #   var <- c(var, var_chr)
+  #
+  #   if (verbose) {
+  #     t2 <- proc.time()
+  #     message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
+  #   }
+  # }
+  # colnames(fit) <- c("smoothed_mf", "is_smooth")
 
   # Compute cutoff based on qVar
   cutoff <- quantile(var, prob = 1-qVar)
@@ -85,32 +89,33 @@ callCandidRegion <- function(SE,
   if (length(upIndex) == 0) upIndex <- NULL
 
   if (!is.null(upIndex)) {
-    # # Merge CRs if they are closer than `maxNumMerge` bp
-    # if (maxNumMerge > 0) {
-    #   for (i in 1:(length(upIndex)-1)) {
-    #     fr <- upIndex[[i]]
-    #     bh <- upIndex[[i+1]]
-    #     if (bh[1] - fr[length(fr)] <= maxNumMerge + 1) {
-    #       combined <- (fr[1]):(bh[length(bh)])
-    #       upIndex[[i]] <- NA
-    #       upIndex[[i+1]] <- combined
-    #     }
-    #   }
-    #   upIndex <- upIndex[!is.na(upIndex)]
-    # }
     # Only keep candidate regions with more than `minNumCR` CpGs
     CRI <- upIndex[lengths(upIndex) >= minNumCR]
-    return(list(CRI = CRI, mf_smooth = fit, var = var))
+    return(list(CRI = CRI, mean_meth_smooth = fit, var = var))
   } else {
-    return(list(CRI = NULL, mf_smooth = fit, var = var))
+    return(list(CRI = NULL, mean_meth_smooth = fit, var = var))
   }
 
 } # end of function `callCandidRegion`
 
 
 
-smoother <- function(x, y, weights, chr,
-                     maxGap, minNumCR,
+#' Title
+#'
+#' @param x
+#' @param y
+#' @param weights
+#' @param chr
+#' @param minInSpan
+#' @param bpSpan
+#' @param verbose
+#' @param parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+smoothMF <- function(x, y, weights, chr,
                      minInSpan, bpSpan,
                      verbose,
                      parallel) {
@@ -128,13 +133,13 @@ smoother <- function(x, y, weights, chr,
     clusteri <- clusterC[idx]
 
     if (is.null((yi)))
-      stop("y (mf) is missing")
+      stop("y (mean_meth) is missing")
     if (is.null(xi))
       stop("x (pos) is missing")
     if (is.null(clusteri))
       stop("cluster is missing")
 
-    if (length(idx) >= minNumCR) {
+    if (length(idx) >= minInSpan) {
       df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
       # balance minInSpan and bpSpan
@@ -167,21 +172,38 @@ smoother <- function(x, y, weights, chr,
 
   return(ret) # data.frame with columns: 'fitted' (numeric), 'is_smooth' (logical)
 
-} # end of function `smoother`
+} # end of function `smoothMF`
 
 
-computeWindowVar <- function(gr_chr, M_chr, fit_chr,
-                             bpWindow,
-                             parallel) {
+#' Title
+#'
+#' @param gr
+#' @param M numeric matrix of binary single-cell methylation status. Row number
+#' should be equal to the number of CpG sites and column number should be equal
+#' to the number of cells.
+#' @param mean_meth numeric vector of across-cell mean methylation. Length should
+#' be equal to the number of CpG sites.
+#' @param bpWindow
+#' @param parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+computeVar <- function(gr,
+                       M,
+                       mean_meth,
+                       bpWindow,
+                       parallel) {
 
   varByCluster <- function(idx) {
 
-    gr_i <- gr_chr[idx, ]
-    fit_i <- fit_chr[idx, ]
+    gr_i <- gr[idx, ]
+    mean_meth_i <- mean_meth[idx, ]
     if (length(idx) > 1) {
-      M_i <- M_chr[idx, ]
+      M_i <- M[idx, ]
     } else {
-      M_i <- t(M_chr[idx, ])
+      M_i <- t(M[idx, ])
     }
 
     # Obtain window ranges of each site
@@ -195,37 +217,50 @@ computeWindowVar <- function(gr_chr, M_chr, fit_chr,
     wds_inds <- split(subjectHits(hits), queryHits(hits))
 
     # Matrix of 'relative methylation' or 'methylation residuals'
-    rel_M_i <- as.matrix(M_i - fit_i$fitted)
+    rel_M_i <- as.matrix(M_i - mean_meth_i)
 
     varByWindow <- function(j) {
       ind <- wds_inds[[j]]
       if (length(ind) > 1) {
-        wd_mfs <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
+        # # local constant smoothing with Gaussian kernel
+        # rel_M_i_j <- rel_M_i[ind, ]
+        # gr_i_j <- gr_i[ind]
+        # d <- (start(gr_i_j) - start(gr_i[j])) / (bpWindow/2)
+        # # w <- (1 - abs(d)^3)^3 # tricube kernel
+        # w <- exp(-(2.5*d)^2/2) # gaussian kernel
+        # w_mat <- matrix(w, nrow = length(d), ncol = ncol(rel_M_i), byrow = FALSE)
+        # w_mat[which(is.na(rel_M_i_j))] <- NA
+        # wd_mean_meths <- colSums(rel_M_i_j*w_mat, na.rm = TRUE)/colSums(w_mat, na.rm = TRUE)
+
+        # local constant smoothing with box kernel
+        wd_mean_meths <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
       } else {
-        wd_mfs <- rel_M_i[ind, ]
+        wd_mean_meths <- rel_M_i[ind, ]
       }
-      wd_var <- var(wd_mfs, na.rm = TRUE)
+      wd_var <- var(wd_mean_meths, na.rm = TRUE)
       return(wd_var)
     }
 
     var_i <- do.call(c, lapply(1:length(wds_inds), function(j) varByWindow(j)))
+    # mean_meth_sm_i <- rowMeans(rel_M_i, na.rm = TRUE)
+
     return(var_i)
   } # end of function 'varByCluster'
 
-  clusterC <- bumphunter::clusterMaker(seqnames(gr_chr),
-                                       start(gr_chr),
+  clusterC <- bumphunter::clusterMaker(seqnames(gr),
+                                       start(gr),
                                        assumeSorted = TRUE,
                                        maxGap = bpWindow + 1)
   Indexes <- split(seq(along = clusterC), clusterC)
 
   if (parallel) {
-    var_chr <- do.call(c, bplapply(Indexes, varByCluster)) %>% unname
+    var <- do.call(c, bplapply(Indexes, varByCluster)) %>% unname
   } else {
-    var_chr <- do.call(c, lapply(Indexes, varByCluster)) %>% unname
+    var <- do.call(c, lapply(Indexes, varByCluster)) %>% unname
   }
 
-  return(var_chr)
-} # end of function 'computeWindowVar'
+  return(var)
+} # end of function 'computeVar'
 
 
 searchVMR <- function(gr,
