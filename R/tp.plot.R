@@ -19,7 +19,7 @@
 #'
 #' @examples
 #'
-plot.tp <- function(tp,
+tp.plot <- function(tp,
                     line_size = 0.2,
                     plot_train = T,
                     point_size = 0.2) {
