@@ -18,9 +18,6 @@ vmrseq.fit(
   BPPARAM = bpparam()
 )
 }
-\arguments{
-\item{BPPARAM}{}
-}
 \description{
 Title
 }

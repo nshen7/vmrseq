@@ -15,9 +15,6 @@ vmrseq.smooth(
   BPPARAM = bpparam()
 )
 }
-\arguments{
-\item{minInSpan}{}
-}
 \description{
 Title
 }

@@ -6,6 +6,14 @@
 #' @param meanSmooth
 #' @param bpSpan
 #' @param minInSpan
+
+#' @importFrom BiocParallel bplapply register MulticoreParam bpparam
+#' @importFrom stats fitted median
+#' @importFrom gamlss.dist dZIBB dBB
+#' @importFrom locfit locfit lp
+#' @importFrom DelayedArray rowSums colSums rowMeans colMeans
+#' @import dplyr
+#' @import GenomicRanges
 #'
 #' @return
 #' @export
@@ -20,7 +28,6 @@ vmrseq.smooth <- function(
 ) {
 
   # TODO: all the other sanity checks
-
   if (meanSmooth & bpSpan<=0 & minInSpan<=0)
     stop("If mean methylation need to be smoothed, at least one of 'bpSpan' and 'minInSpan' should be positive (integer) number.")
 
@@ -29,6 +36,8 @@ vmrseq.smooth <- function(
     if (min(diff(start(SE_chr))) < 2)
       stop("There exists at least 2 rows with position difference less than 2 bp.")
   }
+
+  # TODO: report data dimensions
 
   gr <- granges(SE)
   M <- assays(SE)[[1]]
@@ -83,10 +92,6 @@ vmrseq.smooth <- function(
                           verbose = verbose,
                           parallel = parallel)
       mean_meth_chr <- fit_chr %>% pmax(0) %>% pmin(1)
-      # mean_meth_chr <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
-      # # Keep the raw mean_meth if not smoothed
-      # ind <- which(!fit_chr$is_smooth)
-      # if (length(ind) > 0) mean_meth_chr[ind] <- origin_mean_chr[ind]
       if (verbose) message("Mean methylation smoothed. ", appendLF = FALSE)
     } else {
       mean_meth_chr <- origin_mean_chr

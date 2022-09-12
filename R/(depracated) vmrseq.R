@@ -57,11 +57,6 @@
 #' @import GenomicRanges
 #'
 #'
-#' @export
-#'
-#' @examples
-#'
-#'
 vmrseq <- function(SE,
                    qVar = 0.1, # param for CR calling
                    penalty = 0, # params for VMR calling

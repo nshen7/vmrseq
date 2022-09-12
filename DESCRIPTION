@@ -16,6 +16,7 @@ Imports:
     bumphunter,
     BiocParallel,
     dplyr,
+    DelayedArray,
     GenomicRanges,
     ggplot2,
     methods,

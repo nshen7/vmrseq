@@ -1,105 +1,3 @@
-callCandidRegion <- function(SE,
-                             qVar,
-                             maxGap, minNumCR,
-                             bpWindow,
-                             acrsSmooth, bpSpan, minInSpan,
-                             maxNumMerge,
-                             verbose,
-                             parallel) {
-
-  # gr <- granges(SE)
-  # M <- assays(SE)[[1]]
-  #
-  # # Compute methylated fraction of cells for individual sites
-  # gr$mean_meth <- gr$meth / gr$total
-  #
-  # # Apply smoother and compute variance on each chromosome serially
-  # chrs <- as.character(unique(seqnames(gr)))
-  # fit <- NULL; var <- NULL
-  # for (chromosome in chrs) {
-  #
-  #   if (verbose) message(
-  #     "...Chromosome ",
-  #     paste(chromosome, collapse = ", "), ": ",
-  #     appendLF = FALSE
-  #   )
-  #
-  #   t1 <- proc.time()
-  #
-  #   # Subset one chromosome from gr and M
-  #   gr_chr <- subset(gr, seqnames(gr) == chromosome)
-  #   if (length(gr_chr) < minNumCR){
-  #     message("No candidates found.")
-  #     next
-  #   }
-  #   M_chr <- M[seqnames(gr) == chromosome, ]
-  #
-  #   ## Locfit smooth on fractional methylation
-  #   if (acrsSmooth) {
-  #     weights <- gr_chr$total
-  #     fit_chr <- smoothMF(x = start(gr_chr), y = gr_chr$mf,
-  #                         chr = chromosome,
-  #                         weights = weights,
-  #                         maxGap = maxGap, minNumCR = minNumCR,
-  #                         minInSpan = minInSpan, bpSpan = bpSpan,
-  #                         verbose = verbose,
-  #                         parallel = parallel)
-  #     fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
-  #   } else {
-  #     fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), is_smooth = FALSE)
-  #   }
-  #   # Keep the raw mf if not smoothed
-  #   ind <- which(!fit_chr$is_smooth)
-  #   if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
-  #   # Concatenate fit_chr from all chromosomes
-  #   fit <- rbind(fit, fit_chr)
-  #   if (verbose) message("Smoothed, ", appendLF = FALSE)
-  #
-  #
-  #   ## Compute variance relative to smoothed MF
-  #   var_chr <- computeVar(gr_chr, M_chr, fit_chr,
-  #                               bpWindow,
-  #                               parallel)
-  #   # Concatenate fit_chr from all chromosomes
-  #   var <- c(var, var_chr)
-  #
-  #   if (verbose) {
-  #     t2 <- proc.time()
-  #     message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
-  #   }
-  # }
-  # colnames(fit) <- c("smoothed_mf", "is_smooth")
-
-  # Compute cutoff based on qVar
-  cutoff <- quantile(var, prob = 1-qVar)
-  mes <- "...Calling candidate regions with cutoff of %.2f on variance."
-  message(sprintf(mes, cutoff))
-
-  # Call candidate regions
-  cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
-                                      pos = start(gr),
-                                      maxGap = maxGap,
-                                      assumeSorted = TRUE)
-  Indexes <- bumphunter::getSegments(x = var, f = cluster,
-                                     cutoff = cutoff,
-                                     assumeSorted = TRUE,
-                                     verbose = FALSE)
-
-  upIndex <- Indexes$upIndex
-  if (length(upIndex) == 0) upIndex <- NULL
-
-  if (!is.null(upIndex)) {
-    # Only keep candidate regions with more than `minNumCR` CpGs
-    CRI <- upIndex[lengths(upIndex) >= minNumCR]
-    return(list(CRI = CRI, mean_meth_smooth = fit, var = var))
-  } else {
-    return(list(CRI = NULL, mean_meth_smooth = fit, var = var))
-  }
-
-} # end of function `callCandidRegion`
-
-
-
 #' Title
 #'
 #' @param x
@@ -257,14 +155,157 @@ computeVar <- function(gr,
   return(var)
 } # end of function 'computeVar'
 
+#' Title
+#'
+#' @param gr
+#' @param cutoff
+#' @param maxGap
+#' @param minNumCR
+#' @param bpWindow
+#' @param verbose
+#' @param parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+callCandidRegion <- function(gr,
+                             cutoff,
+                             maxGap,
+                             minNumCR,
+                             bpWindow,
+                             verbose,
+                             parallel
+) {
+  # callCandidRegion <- function(SE,
+  #                              qVar,
+  #                              maxGap, minNumCR,
+  #                              bpWindow,
+  #                              acrsSmooth, bpSpan, minInSpan,
+  #                              maxNumMerge,
+  #                              verbose,
+  #                              parallel) {
+  #
+  # gr <- granges(SE)
+  # M <- assays(SE)[[1]]
+  #
+  # # Compute methylated fraction of cells for individual sites
+  # gr$mean_meth <- gr$meth / gr$total
+  #
+  # # Apply smoother and compute variance on each chromosome serially
+  # chrs <- as.character(unique(seqnames(gr)))
+  # fit <- NULL; var <- NULL
+  # for (chromosome in chrs) {
+  #
+  #   if (verbose) message(
+  #     "...Chromosome ",
+  #     paste(chromosome, collapse = ", "), ": ",
+  #     appendLF = FALSE
+  #   )
+  #
+  #   t1 <- proc.time()
+  #
+  #   # Subset one chromosome from gr and M
+  #   gr_chr <- subset(gr, seqnames(gr) == chromosome)
+  #   if (length(gr_chr) < minNumCR){
+  #     message("No candidates found.")
+  #     next
+  #   }
+  #   M_chr <- M[seqnames(gr) == chromosome, ]
+  #
+  #   ## Locfit smooth on fractional methylation
+  #   if (acrsSmooth) {
+  #     weights <- gr_chr$total
+  #     fit_chr <- smoothMF(x = start(gr_chr), y = gr_chr$mf,
+  #                         chr = chromosome,
+  #                         weights = weights,
+  #                         maxGap = maxGap, minNumCR = minNumCR,
+  #                         minInSpan = minInSpan, bpSpan = bpSpan,
+  #                         verbose = verbose,
+  #                         parallel = parallel)
+  #     fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
+  #   } else {
+  #     fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), is_smooth = FALSE)
+  #   }
+  #   # Keep the raw mf if not smoothed
+  #   ind <- which(!fit_chr$is_smooth)
+  #   if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
+  #   # Concatenate fit_chr from all chromosomes
+  #   fit <- rbind(fit, fit_chr)
+  #   if (verbose) message("Smoothed, ", appendLF = FALSE)
+  #
+  #
+  #   ## Compute variance relative to smoothed MF
+  #   var_chr <- computeVar(gr_chr, M_chr, fit_chr,
+  #                               bpWindow,
+  #                               parallel)
+  #   # Concatenate fit_chr from all chromosomes
+  #   var <- c(var, var_chr)
+  #
+  #   if (verbose) {
+  #     t2 <- proc.time()
+  #     message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
+  #   }
+  # }
+  # colnames(fit) <- c("smoothed_mf", "is_smooth")
 
+  # Compute cutoff based on qVar
+  # cutoff <- quantile(var, prob = 1-qVar)
+  mes <- "...Calling candidate regions with cutoff of %.2f on variance."
+  message(sprintf(mes, cutoff))
+
+  # Call candidate regions
+  cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
+                                      pos = start(gr),
+                                      maxGap = maxGap,
+                                      assumeSorted = TRUE)
+  Indexes <- bumphunter::getSegments(x = gr$var, f = cluster,
+                                     cutoff = cutoff,
+                                     assumeSorted = TRUE,
+                                     verbose = FALSE)
+
+  upIndex <- Indexes$upIndex
+  if (length(upIndex) == 0) upIndex <- NULL
+
+  if (!is.null(upIndex)) {
+    # Only keep candidate regions with more than `minNumCR` CpGs
+    CRI <- upIndex[lengths(upIndex) >= minNumCR]
+    return(CRI)
+    # return(list(CRI = CRI, mean_meth_smooth = fit, var = var))
+  } else {
+    return(NULL)
+    # return(list(CRI = NULL, mean_meth_smooth = fit, var = var))
+  }
+
+} # end of function `callCandidRegion`
+
+
+#' Title
+#'
+#' @param gr
+#' @param CRI
+#' @param maxGap
+#' @param minNumVMR
+#' @param minNumLong
+#' @param maxNumMerge
+#' @param tp
+#' @param gradient
+#' @param control
+#' @param verbose
+#' @param parallel
+#'
+#' @return
+#' @export
+#'
+#' @examples
 searchVMR <- function(gr,
                       CRI,
-                      penalty,
-                      maxGap, minNumVMR,
-                      tp,
-                      maxNumMerge,
+                      # penalty,
+                      maxGap,
+                      minNumVMR,
                       minNumLong,
+                      maxNumMerge,
+                      tp,
                       gradient,
                       control,
                       verbose,
@@ -334,47 +375,43 @@ searchVMR <- function(gr,
   } # end of function `searchVMRbyRegion`
 
   if (parallel) {
-    VMRI <- do.call(
+    vmrs.df <- do.call(
       rbind,
       bplapply(1:length(CRI), function(i) searchVMRbyRegion(i))
     )
   } else {
-    VMRI <- do.call(
+    vmrs.df <- do.call(
       rbind,
       lapply(1:length(CRI), function(i) searchVMRbyRegion(i))
     )
   }
 
   # return  a data.frame with columns:
-  return(VMRI)
+  return(vmrs.df)
 
 } # end of function `searchVMR`
 
 
 
-indexToGranges <- function(gr, index, type) {
-
-  if (!type %in% c("VMR", "CR")) stop("'type' has to be 'VMR' or 'CR'.")
-
-  if (type == "VMR") {
-    vmr.gr <- GRanges(
-      seqnames = seqnames(gr)[index$start_ind],
-      ranges = IRanges(start = start(gr)[index$start_ind],
-                       end = end(gr)[index$end_ind])
-    )
-    values(vmr.gr) <- DataFrame(index[,-(1:2)])
-    return(vmr.gr)
-  } else {
-    start_inds <- sapply(index, function(ix) ix[1])
-    end_inds <- sapply(index, function(ix) ix[length(ix)])
-    num_cpg <- lengths(index)
-    cr.gr <- GRanges(
-      seqnames = seqnames(gr)[start_inds],
-      ranges = IRanges(start = start(gr)[start_inds],
-                       end = end(gr)[end_inds])
-    )
-    values(cr.gr) <- DataFrame(cr_index = 1:length(index),
-                               num_cpg = num_cpg)
-    return(cr.gr)
-  }
+#' Title
+#'
+#' @param gr
+#' @param Indexes
+#'
+#' @return
+#' @export
+#'
+#' @examples
+indexToGranges <- function(gr, Indexes) {
+  start_inds <- sapply(Indexes, function(ix) ix[1])
+  end_inds <- sapply(Indexes, function(ix) ix[length(ix)])
+  num_cpg <- lengths(Indexes)
+  output.gr <- GRanges(
+    seqnames = seqnames(gr)[start_inds],
+    ranges = IRanges(start = start(gr)[start_inds],
+                     end = end(gr)[end_inds])
+  )
+  values(output.gr) <- DataFrame(index = 1:length(Indexes),
+                                 num_cpg = num_cpg)
+  return(output.gr)
 }
