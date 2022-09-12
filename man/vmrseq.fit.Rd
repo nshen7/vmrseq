@@ -6,10 +6,12 @@
 \usage{
 vmrseq.fit(
   gr,
-  cutoff = 0.1,
+  cutoff,
+  qVar,
   maxGap = 1000,
   minNumCR = 5,
   minNumVMR = 5,
+  maxNumMerge = 0,
   minNumLong = 0,
   gradient = TRUE,
   tp = NULL,
@@ -17,6 +19,11 @@ vmrseq.fit(
   verbose = TRUE,
   BPPARAM = bpparam()
 )
+}
+\arguments{
+\item{gr}{}
+
+\item{BPPARAM}{}
 }
 \description{
 Title

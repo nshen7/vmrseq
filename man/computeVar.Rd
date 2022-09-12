@@ -4,14 +4,14 @@
 \alias{computeVar}
 \title{Title}
 \usage{
-computeVar(gr, M, mean_meth, bpWindow, parallel)
+computeVar(gr, M, meanMeth, bpWindow, parallel)
 }
 \arguments{
 \item{M}{numeric matrix of binary single-cell methylation status. Row number
 should be equal to the number of CpG sites and column number should be equal
 to the number of cells.}
 
-\item{mean_meth}{numeric vector of across-cell mean methylation. Length should
+\item{meanMeth}{numeric vector of across-cell mean methylation. Length should
 be equal to the number of CpG sites.}
 
 \item{parallel}{}
