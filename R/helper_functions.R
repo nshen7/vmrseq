@@ -31,7 +31,7 @@ smoothMF <- function(x, y, weights, chr,
     clusteri <- clusterC[idx]
 
     if (is.null((yi)))
-      stop("y (mean_meth) is missing")
+      stop("y (meanMeth) is missing")
     if (is.null(xi))
       stop("x (pos) is missing")
     if (is.null(clusteri))
@@ -74,7 +74,7 @@ smoothMF <- function(x, y, weights, chr,
 #' @param M numeric matrix of binary single-cell methylation status. Row number
 #' should be equal to the number of CpG sites and column number should be equal
 #' to the number of cells.
-#' @param mean_meth numeric vector of across-cell mean methylation. Length should
+#' @param meanMeth numeric vector of across-cell mean methylation. Length should
 #' be equal to the number of CpG sites.
 #' @param bpWindow
 #' @param parallel
@@ -85,14 +85,14 @@ smoothMF <- function(x, y, weights, chr,
 #' @examples
 computeVar <- function(gr,
                        M,
-                       mean_meth,
+                       meanMeth,
                        bpWindow,
                        parallel) {
 
   varByCluster <- function(idx) {
 
     gr_i <- gr[idx, ]
-    mean_meth_i <- mean_meth[idx]
+    meanMeth_i <- meanMeth[idx]
     if (length(idx) > 1) {
       M_i <- M[idx, ]
     } else {
@@ -110,7 +110,7 @@ computeVar <- function(gr,
     wds_inds <- split(subjectHits(hits), queryHits(hits))
 
     # Matrix of 'relative methylation' or 'methylation residuals'
-    rel_M_i <- as.matrix(M_i - mean_meth_i)
+    rel_M_i <- as.matrix(M_i - meanMeth_i)
 
     varByWindow <- function(j) {
       ind <- wds_inds[[j]]
@@ -123,19 +123,19 @@ computeVar <- function(gr,
         # w <- exp(-(2.5*d)^2/2) # gaussian kernel
         # w_mat <- matrix(w, nrow = length(d), ncol = ncol(rel_M_i), byrow = FALSE)
         # w_mat[which(is.na(rel_M_i_j))] <- NA
-        # wd_mean_meths <- colSums(rel_M_i_j*w_mat, na.rm = TRUE)/colSums(w_mat, na.rm = TRUE)
+        # wd_meanMeths <- colSums(rel_M_i_j*w_mat, na.rm = TRUE)/colSums(w_mat, na.rm = TRUE)
 
         # local constant smoothing with box kernel
-        wd_mean_meths <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
+        wd_meanMeths <- colMeans(rel_M_i[ind, ], na.rm = TRUE)
       } else {
-        wd_mean_meths <- rel_M_i[ind, ]
+        wd_meanMeths <- rel_M_i[ind, ]
       }
-      wd_var <- var(wd_mean_meths, na.rm = TRUE)
+      wd_var <- var(wd_meanMeths, na.rm = TRUE)
       return(wd_var)
     }
 
     var_i <- do.call(c, lapply(1:length(wds_inds), function(j) varByWindow(j)))
-    # mean_meth_sm_i <- rowMeans(rel_M_i, na.rm = TRUE)
+    # meanMeth_sm_i <- rowMeans(rel_M_i, na.rm = TRUE)
 
     return(var_i)
   } # end of function 'varByCluster'
@@ -190,7 +190,7 @@ callCandidRegion <- function(gr,
   # M <- assays(SE)[[1]]
   #
   # # Compute methylated fraction of cells for individual sites
-  # gr$mean_meth <- gr$meth / gr$total
+  # gr$meanMeth <- gr$meth / gr$total
   #
   # # Apply smoother and compute variance on each chromosome serially
   # chrs <- as.character(unique(seqnames(gr)))
@@ -271,10 +271,10 @@ callCandidRegion <- function(gr,
     # Only keep candidate regions with more than `minNumCR` CpGs
     CRI <- upIndex[lengths(upIndex) >= minNumCR]
     return(CRI)
-    # return(list(CRI = CRI, mean_meth_smooth = fit, var = var))
+    # return(list(CRI = CRI, meanMeth_smooth = fit, var = var))
   } else {
     return(NULL)
-    # return(list(CRI = NULL, mean_meth_smooth = fit, var = var))
+    # return(list(CRI = NULL, meanMeth_smooth = fit, var = var))
   }
 
 } # end of function `callCandidRegion`

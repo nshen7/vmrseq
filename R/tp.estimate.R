@@ -35,13 +35,13 @@
 #'
 #' @examples
 #'
-estimTransitProbs <- function(list,
-                              max_dist_bp = 2000,
-                              buffer_bp = 3000,
-                              lags = 1:10,
-                              BPPARAM = bpparam(),
-                              degree = 2, span = 0.02,
-                              ...) {
+tp.estimate <- function(list,
+                        max_dist_bp = 2000,
+                        buffer_bp = 3000,
+                        lags = 1:10,
+                        BPPARAM = bpparam(),
+                        degree = 2, span = 0.02,
+                        ...) {
 
   # Register the parallel backend
   BiocParallel::register(BPPARAM)

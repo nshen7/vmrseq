@@ -12,6 +12,20 @@
 #' @param verbose
 #' @param BPPARAM
 
+#' @param gr
+#'
+#' @param cutoff
+#' @param qVar
+#' @param minNumCR
+#' @param minNumVMR
+#' @param maxNumMerge
+#' @param minNumLong
+#' @param gradient
+#' @param tp
+#' @param control
+#' @param verbose
+#' @param BPPARAM
+#'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #' @importFrom bumphunter clusterMaker getSegments
 #' @import dplyr
@@ -23,9 +37,11 @@
 #' @examples
 vmrseq.fit <- function(
     gr,
-    cutoff = 0.1,
+    cutoff,
+    qVar,
     maxGap = 1000,
     minNumCR = 5, minNumVMR = 5,
+    maxNumMerge = 0,
     minNumLong = 0,
     gradient = TRUE,
     tp = NULL,

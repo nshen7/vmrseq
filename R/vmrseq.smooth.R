@@ -70,7 +70,7 @@ vmrseq.smooth <- function(
   message("Smoothing in progress...")
 
   # Apply smoother and compute variance on each chromosome serially
-  mean_meth <- NULL; var <- NULL
+  meanMeth <- NULL; var <- NULL
   chrs <- as.character(unique(seqnames(gr)))
   for (chromosome in chrs) {
     if (verbose) message("...Chromosome ",
@@ -80,7 +80,6 @@ vmrseq.smooth <- function(
     t1 <- proc.time() # time point 1
     gr_chr <- subset(gr, seqnames(gr) == chromosome)
     M_chr <- M[seqnames(gr) == chromosome, ]
-    if (length(gr_chr) < minNumCR) {message("No candidates found."); next}
 
     # Locfit smooth on fractional methylation if meanSmooth==TRUE
     origin_mean_chr <- gr_chr$meth / gr_chr$total
@@ -91,26 +90,26 @@ vmrseq.smooth <- function(
                           minInSpan = minInSpan, bpSpan = bpSpan,
                           verbose = verbose,
                           parallel = parallel)
-      mean_meth_chr <- fit_chr %>% pmax(0) %>% pmin(1)
+      meanMeth_chr <- fit_chr %>% pmax(0) %>% pmin(1)
       if (verbose) message("Mean methylation smoothed. ", appendLF = FALSE)
     } else {
-      mean_meth_chr <- origin_mean_chr
+      meanMeth_chr <- origin_mean_chr
     }
 
-    # Compute variance relative to mean_meth
+    # Compute variance relative to meanMeth
     var_chr <- computeVar(gr = gr_chr,
                           M = M_chr,
-                          mean_meth = mean_meth_chr,
+                          meanMeth = meanMeth_chr,
                           bpWindow = bpWindow,
                           parallel = parallel)
     t2 <- proc.time()
     if (verbose) message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
 
-    mean_meth <- c(mean_meth, mean_meth_chr)
+    meanMeth <- c(meanMeth, meanMeth_chr)
     var <- c(var, var_chr)
   } # end looping chromosome
 
-  if (meanSmooth) values(gr)$smoothed_mean <- mean_meth
+  if (meanSmooth) values(gr)$smoothed_mean <- meanMeth
   values(gr)$var <- var
 
   return(gr)

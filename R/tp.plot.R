@@ -19,10 +19,10 @@
 #'
 #' @examples
 #'
-plotTransitProbs <- function(tp,
-                             line_size = 0.2,
-                             plot_train = T,
-                             point_size = 0.2) {
+plot.tp <- function(tp,
+                    line_size = 0.2,
+                    plot_train = T,
+                    point_size = 0.2) {
 
   # compatibility checks within transProbs object
   if(nrow(tp@transit_probs) != tp@max_dist_bp)
