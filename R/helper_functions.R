@@ -356,7 +356,7 @@ searchVMR <- function(gr,
     }
 
     # if (res_2g$loglik > res_1g$loglik + penalty) {
-    if (TRUE) {
+    if (res_2g$loglik > res_1g$loglik) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumVMR,
