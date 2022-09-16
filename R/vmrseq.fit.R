@@ -1,7 +1,7 @@
 #' Title
 #'
 #' @param gr
-#' @param cutoff
+#' @param alpha
 #' @param maxGap
 #' @param minNumCR
 #' @param minNumVMR
@@ -11,21 +11,6 @@
 #' @param control
 #' @param verbose
 #' @param BPPARAM
-
-#' @param gr
-#'
-#' @param cutoff
-#' @param qVar
-#' @param minNumCR
-#' @param minNumVMR
-#' @param maxNumMerge
-#' @param minNumLong
-#' @param gradient
-#' @param tp
-#' @param control
-#' @param verbose
-#' @param BPPARAM
-#'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #' @importFrom bumphunter clusterMaker getSegments
 #' @import dplyr
@@ -37,8 +22,7 @@
 #' @examples
 vmrseq.fit <- function(
     gr,
-    cutoff,
-    qVar,
+    alpha,
     maxGap = 1000,
     minNumCR = 5, minNumVMR = 5,
     maxNumMerge = 0,
@@ -67,6 +51,13 @@ vmrseq.fit <- function(
     }
     parallel <- TRUE
   }
+
+  # Compute cutoff from beta priors
+  cutoff <- computeVarCutoff(
+    alpha = alpha,
+    meth = gr$meth,
+    total = gr$total
+  )
 
   # Bumphunt candidate regions
   message("Step 1: Detecting candidate regions...")
@@ -108,7 +99,7 @@ vmrseq.fit <- function(
   )
   t1 <- proc.time()
 
-  vmrs.df <- searchVMR( # data frame of VMR information
+  vmr.df <- searchVMR( # data frame of VMR information
     gr = gr,
     CRI = CRI,
     # penalty = penalty,
@@ -123,29 +114,32 @@ vmrseq.fit <- function(
     parallel = parallel
   )
   VMRI <- lapply( # list of indices of VMRs
-    1:nrow(vmrs.df),
-    function(i) vmrs.df$start_ind[i]:vmrs.df$end_ind[i]
+    1:nrow(vmr.df),
+    function(i) vmr.df$start_ind[i]:vmr.df$end_ind[i]
   )
 
   t2 <- proc.time()
 
-  if (nrow(vmrs.df) == 0) {
+  if (nrow(vmr.df) == 0) {
     message("No VMR detected.")
     return(NULL)
   } else {
     message("...Finished detecting VMRs - took ",
             round((t2 - t1)[3]/60, 2), " min and ",
-            nrow(vmrs.df), " VMRs found in total.
-  ...", round(sum(vmrs.df$end_ind-vmrs.df$start_ind+1) / length(SE) * 100, 2),
+            nrow(vmr.df), " VMRs found in total.
+  ...", round(sum(vmr.df$end_ind-vmr.df$start_ind+1) / length(SE) * 100, 2),
             "% QC-passed sites are called to be in VMRs.")
   }
 
-  vmr.gr <- indexToGranges(gr = gr, Indexes = VMRI)
-  cr.gr <- indexToGranges(gr = gr, Indexes = CRI)
-
+  # Formatting function output
   vmr_index <- rep(NA, length(SE))
   vmr_index[unlist(VMRI)] <- rep.int(1:length(VMRI), lengths(VMRI))
-  values(gr)$vmr_index <- vmr_index
+  values(gr) <- cbind(values(gr), vmr_index)
+
+  vmr.gr <- indexToGranges(gr = gr, Indexes = VMRI)
+  values(vmr.gr) <- cbind(values(vmr.gr), vmr.df[, -c(3,5)])
+
+  cr.gr <- indexToGranges(gr = gr, Indexes = CRI)
 
   return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr))
 }

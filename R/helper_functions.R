@@ -13,7 +13,8 @@
 #' @export
 #'
 #' @examples
-smoothMF <- function(x, y, weights, chr,
+smoothMF <- function(x, y,
+                     weights, chr,
                      minInSpan, bpSpan,
                      verbose,
                      parallel) {
@@ -83,8 +84,7 @@ smoothMF <- function(x, y, weights, chr,
 #' @export
 #'
 #' @examples
-computeVar <- function(gr,
-                       M,
+computeVar <- function(gr, M,
                        meanMeth,
                        bpWindow,
                        parallel) {
@@ -154,6 +154,31 @@ computeVar <- function(gr,
 
   return(var)
 } # end of function 'computeVar'
+
+
+#' Title
+#'
+#' @param var
+#' @param total
+#' @param alpha
+#' @param meth
+#' @importFrom gamlss.dist rBEZI rBE
+#'
+#' @return
+#' @export
+#'
+#' @examples
+computeVarCutoff <- function(alpha, meth, total, n = 100000) {
+  mf <- meth / total
+  prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
+  pars_u <- .priorParams(median(total), type = "u")
+  pars_m <- .priorParams(median(total), type = "m")
+  null_p_u <- rBEZI(n = round(n*prob[1]), mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'])
+  null_p_m <- rBE(n = round(n*prob[2]), mu = pars_m['mu'], sigma = pars_m['sigma'])
+  null_p <- c(null_p_u, null_p_m)
+  null_var <- null_p * (1-null_p)
+  return(quantile(null_var, 1-alpha))
+}
 
 #' Title
 #'
