@@ -23,4 +23,5 @@ Imports:
     purrr,
     tidyr,
     locfit,
-    gamlss.dist
+    gamlss.dist,
+    recommenderlab

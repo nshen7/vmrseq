@@ -38,7 +38,6 @@ smoothMF <- function(x, y,
     if (is.null(clusteri))
       stop("cluster is missing")
 
-    # if (length(idx) >= minInSpan) {
     df <- data.frame(posi = xi, yi = yi, weightsi = weightsi)
 
     # balance minInSpan and bpSpan
@@ -47,7 +46,9 @@ smoothMF <- function(x, y,
                   data = df, weights = weightsi, family = "gaussian",
                   maxk = 10000)
     yi <- fitted(fit)
+
     return(as.vector(yi))
+
   } # end of function `locfitByCluster`
 
   chr_len <- rep(chr, each = length(x))
@@ -78,6 +79,7 @@ smoothMF <- function(x, y,
 #' @param meanMeth numeric vector of across-cell mean methylation. Length should
 #' be equal to the number of CpG sites.
 #' @param bpWindow
+#' @param sparseNAdrop
 #' @param parallel
 #'
 #' @return
@@ -87,16 +89,18 @@ smoothMF <- function(x, y,
 computeVar <- function(gr, M,
                        meanMeth,
                        bpWindow,
+                       sparseNAdrop,
                        parallel) {
 
   varByCluster <- function(idx) {
 
     gr_i <- gr[idx, ]
     meanMeth_i <- meanMeth[idx]
-    if (length(idx) > 1) {
-      M_i <- M[idx, ]
+
+    if (!sparseNAdrop) {
+      M_i <- matrix(M[idx, ], nrow = length(idx))
     } else {
-      M_i <- t(M[idx, ])
+      M_i <- matrix(M[idx, ] %>% as("sparseMatrix") %>% dropNA2matrix(), nrow = length(idx))
     }
 
     # Obtain window ranges of each site
@@ -110,7 +114,7 @@ computeVar <- function(gr, M,
     wds_inds <- split(subjectHits(hits), queryHits(hits))
 
     # Matrix of 'relative methylation' or 'methylation residuals'
-    rel_M_i <- as.matrix(M_i - meanMeth_i)
+    rel_M_i <- M_i - meanMeth_i
 
     varByWindow <- function(j) {
       ind <- wds_inds[[j]]
@@ -158,7 +162,6 @@ computeVar <- function(gr, M,
 
 #' Title
 #'
-#' @param var
 #' @param total
 #' @param alpha
 #' @param meth
@@ -168,13 +171,30 @@ computeVar <- function(gr, M,
 #' @export
 #'
 #' @examples
+# computeVarCutoff <- function(alpha, meth, total, n = 10000) {
+#   mf <- meth / total
+#   prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
+#   pars_u <- .priorParams(median(total), type = "u")
+#   pars_m <- .priorParams(median(total), type = "m")
+#   bd_u <- sample(total, round(n*prob[1]))
+#   null_p_u <- gamlss.dist::rZIBB(n = round(n*prob[1]),
+#                                  mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'],
+#                                  bd = bd_u) / bd_u
+#   bd_m <- sample(total, round(n*prob[2]))
+#   null_p_m <- gamlss.dist::rBB(n = round(n*prob[2]),
+#                                mu = pars_m['mu'], sigma = pars_m['sigma'],
+#                                bd = bd_m) / bd_m
+#   null_p <- c(null_p_u, null_p_m)
+#   null_var <- null_p * (1-null_p)
+#   return(quantile(null_var, 1-alpha))
+# }
 computeVarCutoff <- function(alpha, meth, total, n = 100000) {
   mf <- meth / total
   prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
   pars_u <- .priorParams(median(total), type = "u")
   pars_m <- .priorParams(median(total), type = "m")
-  null_p_u <- rBEZI(n = round(n*prob[1]), mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'])
-  null_p_m <- rBE(n = round(n*prob[2]), mu = pars_m['mu'], sigma = pars_m['sigma'])
+  null_p_u <- gamlss.dist::rBEZI(n = round(n*prob[1]), mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'])
+  null_p_m <- gamlss.dist::rBE(n = round(n*prob[2]), mu = pars_m['mu'], sigma = pars_m['sigma'])
   null_p <- c(null_p_u, null_p_m)
   null_var <- null_p * (1-null_p)
   return(quantile(null_var, 1-alpha))
@@ -290,18 +310,10 @@ callCandidRegion <- function(gr,
                                      verbose = FALSE)
 
   upIndex <- Indexes$upIndex
-  if (length(upIndex) == 0) upIndex <- NULL
+  CRI <- upIndex[lengths(upIndex) >= minNumCR]
+  if (length(CRI) == 0) CRI <- NULL
 
-  if (!is.null(upIndex)) {
-    # Only keep candidate regions with more than `minNumCR` CpGs
-    CRI <- upIndex[lengths(upIndex) >= minNumCR]
-    return(CRI)
-    # return(list(CRI = CRI, meanMeth_smooth = fit, var = var))
-  } else {
-    return(NULL)
-    # return(list(CRI = NULL, meanMeth_smooth = fit, var = var))
-  }
-
+  return(CRI)
 } # end of function `callCandidRegion`
 
 

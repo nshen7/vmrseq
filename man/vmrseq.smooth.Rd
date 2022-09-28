@@ -6,6 +6,7 @@
 \usage{
 vmrseq.smooth(
   SE,
+  sparseNAdrop = is_sparse(assays(SE)[[1]]),
   residSmooth = TRUE,
   bpWindow = 2000,
   meanSmooth = FALSE,
@@ -14,6 +15,9 @@ vmrseq.smooth(
   verbose = TRUE,
   BPPARAM = bpparam()
 )
+}
+\arguments{
+\item{BPPARAM}{}
 }
 \description{
 Title

@@ -1,17 +1,21 @@
 #' Title
 #'
 #' @param SE
+#' @param sparseNAdrop
 #' @param residSmooth
 #' @param bpWindow
 #' @param meanSmooth
 #' @param bpSpan
 #' @param minInSpan
-
+#' @param verbose
+#' @param BPPARAM
+#'
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #' @importFrom stats fitted median
 #' @importFrom gamlss.dist dZIBB dBB
 #' @importFrom locfit locfit lp
-#' @importFrom DelayedArray rowSums colSums rowMeans colMeans
+#' @importFrom DelayedArray rowSums colSums rowMeans colMeans is_sparse
+#' @importFrom recommenderlab dropNA2matrix
 #' @import dplyr
 #' @import GenomicRanges
 #'
@@ -21,7 +25,7 @@
 #' @examples
 
 vmrseq.smooth <- function(
-    SE,
+    SE, sparseNAdrop = is_sparse(assays(SE)[[1]]),
     residSmooth = TRUE, bpWindow = 2000, # param for individual-cell methylation residual smoother
     meanSmooth = FALSE, bpSpan = 0, minInSpan = 0, # params for across-cell mean methylation smoother
     verbose = TRUE, BPPARAM = bpparam()
@@ -42,8 +46,14 @@ vmrseq.smooth <- function(
   gr <- granges(SE)
   M <- assays(SE)[[1]]
 
-  values(gr)$meth <- rowSums(M, na.rm = T)
-  values(gr)$total <- rowSums(M>=0, na.rm = T)
+  if (!sparseNAdrop) {
+    values(gr)$meth <- rowSums(M, na.rm = T)
+    values(gr)$total <- rowSums(M >= 0, na.rm = T)
+  } else {
+    values(gr)$meth <- as.integer(round(rowSums(M)))
+    values(gr)$total <- rowSums(M > 0)
+  }
+
 
   if (min(values(gr)$total) < 3)
     warning("We suggest removing CpG sites with across-cell coverage lower than 3 before running vmrseq.")
@@ -101,6 +111,7 @@ vmrseq.smooth <- function(
                           M = M_chr,
                           meanMeth = meanMeth_chr,
                           bpWindow = bpWindow,
+                          sparseNAdrop = sparseNAdrop,
                           parallel = parallel)
     t2 <- proc.time()
     if (verbose) message("Variance computed (", round((t2 - t1)[3]/60, 2), " min). ")

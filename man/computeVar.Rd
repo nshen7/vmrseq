@@ -4,7 +4,7 @@
 \alias{computeVar}
 \title{Title}
 \usage{
-computeVar(gr, M, meanMeth, bpWindow, parallel)
+computeVar(gr, M, meanMeth, bpWindow, sparseNAdrop, parallel)
 }
 \arguments{
 \item{M}{numeric matrix of binary single-cell methylation status. Row number

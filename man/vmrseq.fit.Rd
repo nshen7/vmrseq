@@ -6,8 +6,7 @@
 \usage{
 vmrseq.fit(
   gr,
-  cutoff,
-  qVar,
+  alpha,
   maxGap = 1000,
   minNumCR = 5,
   minNumVMR = 5,
@@ -19,11 +18,6 @@ vmrseq.fit(
   verbose = TRUE,
   BPPARAM = bpparam()
 )
-}
-\arguments{
-\item{gr}{}
-
-\item{BPPARAM}{}
 }
 \description{
 Title
