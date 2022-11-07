@@ -21,7 +21,7 @@
 #' Using NA-dropped sparseMatrix representation helps to save RAM during data
 #' processing, as well as storage space saving to disk. Default value is TRUE.
 #'
-#' @importFrom recommenderlab dropNA2matrix
+#' @importFrom recommenderlab dropNA
 #' @importFrom data.table fread
 #' @importFrom dplyr filter mutate select
 #' @importFrom SummarizedExperiment SummarizedExperiment
@@ -65,8 +65,7 @@ data.pool <- function(cellFiles,
     if (sparseNAdrop) {
       M_mat <- NULL
       for (i in 1:length(cellFiles)) {
-        M_mat <- cbind(M_mat, fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% dropNA())
-        cat(i, " ")
+        M_mat <- cbind(M_mat, fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% recommenderlab::dropNA())
       }
       gr <- GRanges(seqnames = chr, ranges = IRanges(start = pos_full, end = pos_full))
       gr$meth <- rowSums(M_mat)
