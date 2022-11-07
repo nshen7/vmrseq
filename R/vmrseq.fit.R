@@ -135,6 +135,6 @@ vmrseq.fit <- function(
 
     cr.gr <- indexToGranges(gr = gr, Indexes = CRI)
 
-    return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr))
+    return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff))
   }
 }
