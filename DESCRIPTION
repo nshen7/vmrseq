@@ -24,4 +24,7 @@ Imports:
     tidyr,
     locfit,
     gamlss.dist,
-    recommenderlab
+    recommenderlab,
+    HDF5Array,
+    data.table,
+    SummarizedExperiment

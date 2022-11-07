@@ -1,5 +1,7 @@
 #' Pool single-cell file together into an HDF5-based SummarizedExperiment
-#' object (with or w/o sparse matrix representation)
+#' object (with or w/o sparse matrix representation).
+#'
+#' @description In each cell, sites with 0 < meth_read/total_read < 1 are removed.
 #'
 #' @param cellFiles Vector of character strings indicating single-cell file
 #' paths you wish to pool into SE object(s). Cell files should be in BED-like
@@ -11,8 +13,6 @@
 #' you wish to store the processed SE object(s).
 #' @param chrNames Single character string or a vector of character strings.
 #' Only chromosomes listed in \code{selectChrs} will be processed.
-#' @param sepChrs Logical value indicating whether or not to separate chromosomes
-#' in different SE objects during processing and saving to disk. Default is TRUE.
 #' @param sparseNAdrop Logical value indicating whether or not to use NA-dropped
 #' sparseMatrix representation. 'NA-dropped' means replacing NAs as zeros and
 #' then represent 0 as a very small positive value close to 0 so that the data
@@ -24,6 +24,10 @@
 #' @importFrom recommenderlab dropNA2matrix
 #' @importFrom data.table fread
 #' @importFrom dplyr filter mutate select
+#' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom HDF5Array saveHDF5SummarizedExperiment
+#' @importFrom DelayedArray rowSums
+
 #'
 #' @return
 #' @export
@@ -34,41 +38,53 @@
 data.pool <- function(cellFiles,
                       writeDir,
                       chrNames,
-                      sepChrs = TRUE,
+                      # sepChrs = TRUE,
                       sparseNAdrop = TRUE) {
 
   # TODO: making checks on input data format
 
-  if (!sepChrs) stop("Sorry, `sepChrs=FALSE` has not been implemented yet!")
+  # if (!sepChrs) stop("Sorry, `sepChrs=FALSE` has not been implemented yet!")
   if (!sparseNAdrop) stop("Sorry, `sparseNAdrop=FALSE` has not been implemented yet!")
 
   message("Start processing chromosome-by-chromosome...")
 
-  if (sparseNAdrop) {
-    for (chr in chrNames) {
-      message(paste0("...", chr, ": "), appendLF = FALSE)
+  for (chr in chrNames) {
+    message(paste0("...", chr, ": "), appendLF = FALSE)
 
-      # Gather genomic coordinates
-      pos0 <- extractCoord(cellFiles[1], chr)
-      for (i in 2:length(cellFiles)) {
-        pos_temp <- extractCoord(cellFiles[i], chr)
-        pos_new <- pos_temp[which(!pos_temp %in% pos0)]
-        pos0 <- c(pos0, pos_new)
-      }
-      pos0 <- sort(pos0)
-      message("coordinates gathered; ", appendLF = FALSE)
-
-      # Process cell info and assemble into matrix form
-
-      message("cells processed; ", appendLF = FALSE)
-
-      # Write out processed data for current chromosome
-
-      message("processed file written out.")
+    # Gather genomic coordinates
+    pos_full <- extractCoord(cellFiles[1], chr)
+    for (i in 2:length(cellFiles)) {
+      pos_temp <- extractCoord(cellFiles[i], chr)
+      pos_new <- pos_temp[which(!pos_temp %in% pos_full)]
+      pos_full <- c(pos_full, pos_new)
     }
+    pos_full <- sort(unique(pos_full))
+    message("coordinates gathered; ", appendLF = FALSE)
 
+    # Process cell info and assemble into matrix form and summarized info to a GRanges obj
+    if (sparseNAdrop) {
+      M_mat <- NULL
+      for (i in 1:length(cellFiles)) {
+        M_mat <- cbind(M_mat, fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% dropNA())
+        cat(i, " ")
+      }
+      gr <- GRanges(seqnames = chr, ranges = IRanges(start = pos_full, end = pos_full))
+      gr$meth <- rowSums(M_mat)
+      gr$total <- rowSums(M_mat > 0)
+    } else {
+      break # TODO
+    }
+    message("cells processed; ", appendLF = FALSE)
+
+    # Write out processed data for current chromosome
+    n <- nchar(writeDir); if(substring(writeDir, n, n)=='/') writeDir <- substring(writeDir,1, n-1)
+    saveHDF5SummarizedExperiment(
+      x = SummarizedExperiment(assays = list(M_mat = M_mat), rowRanges = gr),
+      dir = paste0(writeDir, "/", chr),
+      replace = TRUE
+    )
+    message("processed file written out.")
   }
-
 }
 
 
@@ -105,4 +121,26 @@ extractInfo <- function(file, chr) {
   return(df)
 }
 
+#' Fill NA's in missing cites per cell
+#'
+#' @param file
+#' @param chr
+#' @param pos_full
+#'
+#' @return
+#' @export
+#'
+#' @examples
+fillNA <- function(file, chr, pos_full) {
+  # Read in cell info
+  df <- extractInfo(file, chr)
+
+  # Fill in NA for uncovered position
+  filled <- rep(NA, length(pos_full))
+  ind <- which(pos_full %in% df$pos)
+  if(length(ind) != nrow(df)) stop("'pos_full' does not contain all possible positions")
+  filled[ind] <- df$bool
+
+  return(filled)
+}
 
