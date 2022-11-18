@@ -73,8 +73,8 @@ data.pool <- function(cellFiles,
         cat(i, " ")
       }
       gr <- GenomicRanges::GRanges(seqnames = chr, ranges = IRanges::IRanges(start = pos_full, end = pos_full))
-      gr$meth <- DelayedArray::rowSums(M_mat)
-      gr$total <- DelayedArray::rowSums(M_mat > 0)
+      gr$meth <- as.integer(round(DelayedArray::rowSums(M_mat)))
+      gr$total <- as.integer(DelayedArray::rowSums(M_mat > 0))
     } else {
       break # TODO
     }
