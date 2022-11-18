@@ -26,6 +26,8 @@
 #' @importFrom dplyr filter mutate select
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom HDF5Array saveHDF5SummarizedExperiment
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
 #' @importFrom DelayedArray rowSums
 
 #'
@@ -57,6 +59,7 @@ data.pool <- function(cellFiles,
       pos_temp <- extractCoord(cellFiles[i], chr)
       pos_new <- pos_temp[which(!pos_temp %in% pos_full)]
       pos_full <- c(pos_full, pos_new)
+      # cat(i)
     }
     pos_full <- sort(unique(pos_full))
     message("coordinates gathered; ", appendLF = FALSE)
@@ -65,20 +68,25 @@ data.pool <- function(cellFiles,
     if (sparseNAdrop) {
       M_mat <- NULL
       for (i in 1:length(cellFiles)) {
-        M_mat <- cbind(M_mat, fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% recommenderlab::dropNA())
+        M_mat <- cbind(M_mat,
+                       fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% recommenderlab::dropNA())
+        cat(i, " ")
       }
-      gr <- GRanges(seqnames = chr, ranges = IRanges(start = pos_full, end = pos_full))
-      gr$meth <- rowSums(M_mat)
-      gr$total <- rowSums(M_mat > 0)
+      gr <- GenomicRanges::GRanges(seqnames = chr, ranges = IRanges::IRanges(start = pos_full, end = pos_full))
+      gr$meth <- DelayedArray::rowSums(M_mat)
+      gr$total <- DelayedArray::rowSums(M_mat > 0)
     } else {
       break # TODO
     }
     message("cells processed; ", appendLF = FALSE)
 
     # Write out processed data for current chromosome
+    se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat), rowRanges = gr)
+    se <- se[granges(se)$total > 0, ]
+
     n <- nchar(writeDir); if(substring(writeDir, n, n)=='/') writeDir <- substring(writeDir,1, n-1)
-    saveHDF5SummarizedExperiment(
-      x = SummarizedExperiment(assays = list(M_mat = M_mat), rowRanges = gr),
+    HDF5Array::saveHDF5SummarizedExperiment(
+      x = se,
       dir = paste0(writeDir, "/", chr),
       replace = TRUE
     )
@@ -97,7 +105,7 @@ data.pool <- function(cellFiles,
 #'
 #' @examples
 extractCoord <- function(file, chr) {
-  fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2}'"))$V1
+  data.table::fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2}'"))$V1
 }
 
 #' Extract and process methylation info of a particular chromosome from a cell file.
