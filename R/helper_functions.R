@@ -448,7 +448,6 @@ indexToGranges <- function(gr, Indexes) {
     ranges = IRanges(start = start(gr)[start_inds],
                      end = end(gr)[end_inds])
   )
-  values(output.gr) <- DataFrame(index = 1:length(Indexes),
-                                 num_cpg = num_cpg)
+  values(output.gr) <- DataFrame(num_cpg = num_cpg)
   return(output.gr)
 }
