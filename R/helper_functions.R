@@ -321,9 +321,7 @@ callCandidRegion <- function(gr,
 #'
 #' @param gr
 #' @param CRI
-#' @param maxGap
 #' @param minNumVMR
-#' @param minNumLong
 #' @param maxNumMerge
 #' @param tp
 #' @param gradient
@@ -338,10 +336,9 @@ callCandidRegion <- function(gr,
 searchVMR <- function(gr,
                       CRI,
                       # penalty,
-                      maxGap,
                       minNumVMR,
-                      minNumLong,
-                      maxNumMerge,
+                      # minNumLong,
+                      # maxNumMerge,
                       tp,
                       gradient,
                       control,
@@ -372,7 +369,7 @@ searchVMR <- function(gr,
                          tp = tp,
                          METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
-    if (length(ix) >= minNumLong) { # long region
+    # if (length(ix) >= minNumLong) { # long region
       res_2g <- .solve2Grp(gradient = gradient,
                            pos = pos, totals = totals, meths = meths,
                            tp = tp,
@@ -381,24 +378,28 @@ searchVMR <- function(gr,
                            eta = control$eta, max_iter = control$maxIter,
                            CHOICEARRAY = CHOICEARRAY,
                            METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-    } else { # short region
-      res_2g <- .solve2Grp(gradient = gradient,
-                           pos = pos, totals = totals, meths = meths,
-                           tp = tp,
-                           inits = mean(meths/totals), epsilon = control$epsilon,
-                           backtrack = control$backtrack,
-                           eta = control$eta, max_iter = control$maxIter,
-                           CHOICEARRAY = CHOICEARRAY,
-                           METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-    }
+    # } else { # short region
+    #   res_2g <- .solve2Grp(gradient = gradient,
+    #                        pos = pos, totals = totals, meths = meths,
+    #                        tp = tp,
+    #                        inits = mean(meths/totals), epsilon = control$epsilon,
+    #                        backtrack = control$backtrack,
+    #                        eta = control$eta, max_iter = control$maxIter,
+    #                        CHOICEARRAY = CHOICEARRAY,
+    #                        METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
+    # }
 
     # if (res_2g$loglik > res_1g$loglik + penalty) {
     if (res_2g$loglik > res_1g$loglik) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
-        min_n = minNumVMR,
-        max_n_merge = maxNumMerge
+        min_n = minNumVMR
       )
+      # vmr_inds <- .callVMR(
+      #   state_seq_2g = res_2g$vit_path[, 1:2],
+      #   min_n = minNumVMR,
+      #   max_n_merge = maxNumMerge
+      # )
       if (is.null(vmr_inds)) return(NULL)
       else return(data.frame(vmr_inds + ix[1] - 1,
                              # cr_index = i,
