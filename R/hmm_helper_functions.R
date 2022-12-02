@@ -544,16 +544,42 @@
 #   if (nrow(inds) == 0) inds <- NULL
 #   return(inds)
 # }
-.callVMR <- function(state_seq_2g, min_n){ # Merge all VMRs in a CR
+.callVMR <- function(state_seq_2g, min_n){ # Merge all VMRs with more than `min_n` CpGs in a CR
 
   state_seq_2g <- as.data.frame(state_seq_2g) # Formatting
-  idx_vml <- which(as.logical(abs(state_seq_2g[[1]] - state_seq_2g[[2]])))
+  is_vml <- as.logical(abs(state_seq_2g[[1]] - state_seq_2g[[2]]))
 
-  start_ind <- idx_vml[1]
-  end_ind <- idx_vml[length(idx_vml)]
+  i <- j <- 1; start_ind <- end_ind <- NULL
+  while (j <= len) {
+    if (i==j) { # either i,j are non-VML or start of a VMR
+      if (is_vml[i]) {
+        start_ind <- c(start_ind, i)
+        if (j == len) end_ind <- c(end_ind, j)
+        j <- j + 1
+      } else {
+        i <- j <- j + 1
+      }
+    } else { # i at start of VMR, j goes to end of VMR
+      if (is_vml[j]) {
+        if (j == len) end_ind <- c(end_ind, j)
+        j <- j + 1
+      } else {
+        if (j <= len & is_vml[j]) {
+          j <- j
+        } else {
+          end_ind <- c(end_ind, j-1)
+          i <- j <- j + 1
+        }
+      }
+      # if (j == len) end_ind <- c(end_ind, j)
+    }
+  }
 
+  if (length(start_ind) != length(end_ind))
+    stop("Unmatched length of start_ind and end_ind.")
   inds <- data.frame(start_ind = start_ind, end_ind = end_ind)
-  if (nrow(inds) > 0) inds <- inds %>% filter(end_ind - start_ind + 1 >= min_n)
+  if (nrow(inds) > 0) inds <- inds %>% filter(end_ind - start_ind + 1 >= min_n) # remove VMRs with < `min_n` CpGs
+  if (nrow(inds) > 0) inds <- with(inds, data.frame(start_ind = start_ind[1], end_ind = end_ind[length(end_ind)])) # merge all VMRs >= `min_n` CpGs
   if (nrow(inds) == 0) inds <- NULL
   return(inds)
 }
