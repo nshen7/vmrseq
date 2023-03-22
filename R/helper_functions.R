@@ -296,7 +296,7 @@ callCandidRegion <- function(gr,
 
   # Compute cutoff based on qVar
   # cutoff <- quantile(var, prob = 1-qVar)
-  mes <- "...Calling candidate regions with cutoff of %.2f on variance."
+  mes <- "...Calling candidate regions with cutoff of %.3f on variance."
   message(sprintf(mes, cutoff))
 
   # Call candidate regions
