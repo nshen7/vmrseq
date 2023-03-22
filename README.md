@@ -6,7 +6,7 @@ The R package `vmrseq` is a novel computational tool developed for pinpointing v
 
 Overview of the `vmrseq` framework is shown below:
 
-![](figures/vmrseq_overview.pdf)
+![](figures/vmrseq_overview.png)
 
 
 ## Installation
