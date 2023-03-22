@@ -2,7 +2,7 @@ Package: vmrseq
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.2.0
-Author: Who wrote it
+Author: Ning Shen
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
