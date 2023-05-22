@@ -11,8 +11,11 @@
 #' format.
 #' @param writeDir A single character string indicating a folder directory where
 #' you wish to store the processed SE object(s).
-#' @param chrNames Single character string or a vector of character strings.
-#' Only chromosomes listed in \code{selectChrs} will be processed.
+#' @param chrNames Single character string or a vector of character strings. They
+#' have to exist in all cell files. Only chromosomes listed in \code{selectChrs}
+#' will be processed.
+#' @param colData A DataFrame or data.frame object containing colData for the SE
+#' object (applied to all chromosomes).
 #' @param sparseNAdrop Logical value indicating whether or not to use NA-dropped
 #' sparseMatrix representation. 'NA-dropped' means replacing NAs as zeros and
 #' then represent 0 as a very small positive value close to 0 so that the data
@@ -29,6 +32,7 @@
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom DelayedArray rowSums
+#' @importFrom S4Vectors DataFrame
 
 #'
 #' @return
@@ -40,10 +44,17 @@
 data.pool <- function(cellFiles,
                       writeDir,
                       chrNames,
+                      colData,
                       # sepChrs = TRUE,
                       sparseNAdrop = TRUE) {
 
   # TODO: making checks on input data format
+  chrNames <- as.character(chrNames)
+
+  if (!all(chrNames %in% unlist(fread(cellFiles[1], select = 1, colClasses = 'character'))))
+    stop('Chromosomes not all found in first cell file (`cellFiles[1]`)!')
+
+  if (!file.exists(writeDir)) dir.create(writeDir)
 
   # if (!sepChrs) stop("Sorry, `sepChrs=FALSE` has not been implemented yet!")
   if (!sparseNAdrop) stop("Sorry, `sparseNAdrop=FALSE` has not been implemented yet!")
@@ -81,7 +92,9 @@ data.pool <- function(cellFiles,
     message("cells processed; ", appendLF = FALSE)
 
     # Write out processed data for current chromosome
-    se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat), rowRanges = gr)
+    se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat),
+                                                     rowRanges = gr,
+                                                     colData = S4Vectors::DataFrame(colData))
     se <- se[granges(se)$total > 0, ]
 
     n <- nchar(writeDir); if(substring(writeDir, n, n)=='/') writeDir <- substring(writeDir,1, n-1)
@@ -118,7 +131,8 @@ extractCoord <- function(file, chr) {
 #'
 #' @examples
 extractInfo <- function(file, chr) {
-  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2\"\t\"$4\"\t\"$5}'"))
+  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2\"\t\"$4\"\t\"$5}'"),
+                          colClasses = c('integer', 'integer', 'integer'))
   colnames(df) <- c("pos", "meth", "total")
   df <- df %>%
     dplyr::filter(meth/total == 1 | meth/total == 0) %>%
