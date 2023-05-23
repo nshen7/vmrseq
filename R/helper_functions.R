@@ -159,40 +159,34 @@ computeVar <- function(gr, M,
   return(var)
 } # end of function 'computeVar'
 
-
 #' Title
 #'
-#' @param total
-#' @param alpha
-#' @param meth
+#' @param total vector of total read counts
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getPriorParams <- function(total) {
+  pars_u <- .priorParams(median(total), type = "u")
+  pars_m <- .priorParams(median(total), type = "m")
+  return(list(pars_u = pars_u, pars_m = pars_m))
+}
+
+#' Compute cutoff on smoothed variance for determining candidate regions
+#'
+#' @param alpha level of significance
+#' @param meth vector of meth read counts
+#' @param total vector of total read counts
 #' @importFrom gamlss.dist rBEZI rBE
 #'
 #' @return
 #' @export
 #'
 #' @examples
-# computeVarCutoff <- function(alpha, meth, total, n = 10000) {
-#   mf <- meth / total
-#   prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
-#   pars_u <- .priorParams(median(total), type = "u")
-#   pars_m <- .priorParams(median(total), type = "m")
-#   bd_u <- sample(total, round(n*prob[1]))
-#   null_p_u <- gamlss.dist::rZIBB(n = round(n*prob[1]),
-#                                  mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'],
-#                                  bd = bd_u) / bd_u
-#   bd_m <- sample(total, round(n*prob[2]))
-#   null_p_m <- gamlss.dist::rBB(n = round(n*prob[2]),
-#                                mu = pars_m['mu'], sigma = pars_m['sigma'],
-#                                bd = bd_m) / bd_m
-#   null_p <- c(null_p_u, null_p_m)
-#   null_var <- null_p * (1-null_p)
-#   return(quantile(null_var, 1-alpha))
-# }
-computeVarCutoff <- function(alpha, meth, total, n = 100000) {
+computeVarCutoff <- function(alpha, meth, total, pars_u, pars_m, n = 100000) {
   mf <- meth / total
   prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
-  pars_u <- .priorParams(median(total), type = "u")
-  pars_m <- .priorParams(median(total), type = "m")
   null_p_u <- gamlss.dist::rBEZI(n = round(n*prob[1]), mu = pars_u['mu'], sigma = pars_u['sigma'], nu = pars_u['nu'])
   null_p_m <- gamlss.dist::rBE(n = round(n*prob[2]), mu = pars_m['mu'], sigma = pars_m['sigma'])
   null_p <- c(null_p_u, null_p_m)

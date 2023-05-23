@@ -54,10 +54,13 @@ vmrseq.fit <- function(
   }
 
   # Compute cutoff from beta priors
+  pars <- getPriorParams(total)
   cutoff <- computeVarCutoff(
     alpha = alpha,
     meth = gr$meth,
-    total = gr$total
+    total = gr$total,
+    pars_u =  pars$pars_u,
+    pars_m = pars$pars_m
   )
 
   # Bumphunt candidate regions
@@ -135,6 +138,6 @@ vmrseq.fit <- function(
 
     cr.gr <- indexToGranges(gr = gr, Indexes = CRI)
 
-    return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff))
+    return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff, bb_params = pars))
   }
 }
