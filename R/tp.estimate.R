@@ -49,7 +49,7 @@ tp.estimate <- function(list,
 
   for (i in length(list)) {
     list[[i]] <- list[[i]] %>% na.omit()
-    if(!all(list[[i]][,3] %in% 0:1))
+    if(!all(unlist(list[[i]][,3]) %in% 0:1))
       stop("Methylation value should be either integer 0 or 1.")
   }
 
