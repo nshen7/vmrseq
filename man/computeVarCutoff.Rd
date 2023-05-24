@@ -2,10 +2,17 @@
 % Please edit documentation in R/helper_functions.R
 \name{computeVarCutoff}
 \alias{computeVarCutoff}
-\title{Title}
+\title{Compute cutoff on smoothed variance for determining candidate regions}
 \usage{
-computeVarCutoff(alpha, meth, total, n = 1e+05)
+computeVarCutoff(alpha, meth, total, pars_u, pars_m, n = 1e+05)
+}
+\arguments{
+\item{alpha}{level of significance}
+
+\item{meth}{vector of meth read counts}
+
+\item{total}{vector of total read counts}
 }
 \description{
-Title
+Compute cutoff on smoothed variance for determining candidate regions
 }

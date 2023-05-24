@@ -5,7 +5,7 @@
 \title{Pool single-cell file together into an HDF5-based SummarizedExperiment
 object (with or w/o sparse matrix representation).}
 \usage{
-data.pool(cellFiles, writeDir, chrNames, sparseNAdrop = TRUE)
+data.pool(cellFiles, writeDir, chrNames, colData, sparseNAdrop = TRUE)
 }
 \arguments{
 \item{cellFiles}{Vector of character strings indicating single-cell file
@@ -18,8 +18,12 @@ format.}
 \item{writeDir}{A single character string indicating a folder directory where
 you wish to store the processed SE object(s).}
 
-\item{chrNames}{Single character string or a vector of character strings.
-Only chromosomes listed in \code{selectChrs} will be processed.}
+\item{chrNames}{Single character string or a vector of character strings. They
+have to exist in all cell files. Only chromosomes listed in \code{selectChrs}
+will be processed.}
+
+\item{colData}{A DataFrame or data.frame object containing colData for the SE
+object (applied to all chromosomes).}
 
 \item{sparseNAdrop}{Logical value indicating whether or not to use NA-dropped
 sparseMatrix representation. 'NA-dropped' means replacing NAs as zeros and

@@ -54,7 +54,7 @@ vmrseq.fit <- function(
   }
 
   # Compute cutoff from beta priors
-  pars <- getPriorParams(total)
+  pars <- getPriorParams(gr$total)
   cutoff <- computeVarCutoff(
     alpha = alpha,
     meth = gr$meth,

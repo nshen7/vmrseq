@@ -1,5 +1,5 @@
 #' Pool single-cell file together into an HDF5-based SummarizedExperiment
-#' object (with or w/o sparse matrix representation).
+#' object with sparse matrix representation.
 #'
 #' @description In each cell, sites with 0 < meth_read/total_read < 1 are removed.
 #'
@@ -44,9 +44,7 @@
 data.pool <- function(cellFiles,
                       writeDir,
                       chrNames,
-                      colData,
-                      # sepChrs = TRUE,
-                      sparseNAdrop = TRUE) {
+                      colData) {
 
   # TODO: making checks on input data format
   chrNames <- as.character(chrNames)
@@ -56,10 +54,11 @@ data.pool <- function(cellFiles,
 
   if (!file.exists(writeDir)) dir.create(writeDir)
 
-  # if (!sepChrs) stop("Sorry, `sepChrs=FALSE` has not been implemented yet!")
   if (!sparseNAdrop) stop("Sorry, `sparseNAdrop=FALSE` has not been implemented yet!")
 
   message("Start processing chromosome-by-chromosome...")
+
+  sparseNAdrop <- TRUE
 
   for (chr in chrNames) {
     message(paste0("...", chr, ": "), appendLF = FALSE)
@@ -79,8 +78,12 @@ data.pool <- function(cellFiles,
     if (sparseNAdrop) {
       M_mat <- NULL
       for (i in 1:length(cellFiles)) {
-        M_mat <- cbind(M_mat,
-                       fillNA(cellFiles[i], chr, pos_full) %>% as.matrix() %>% recommenderlab::dropNA())
+        M_mat <- cbind(
+          M_mat,
+          fillNA(cellFiles[i], chr, pos_full) %>%
+            as.matrix() %>%
+            recommenderlab::dropNA()
+        )
         cat(i, " ")
       }
       gr <- GenomicRanges::GRanges(seqnames = chr, ranges = IRanges::IRanges(start = pos_full, end = pos_full))
@@ -104,6 +107,7 @@ data.pool <- function(cellFiles,
       replace = TRUE
     )
     message("processed file written out.")
+    if (sparseNAdrop) message("Important note: the `M_mat` assay is stored in NA-dropped sparse matrix format!")
   }
 }
 

@@ -41,6 +41,7 @@ vmrseq.smooth <- function(
       stop("There exists at least 2 rows with position difference less than 2 bp.")
   }
 
+  # TODO: remove sites with total_read = 0
   # TODO: report data dimensions
 
   gr <- granges(SE)

@@ -6,8 +6,8 @@
 \usage{
 vmrseq.fit(
   gr,
-  alpha,
-  maxGap = 1000,
+  alpha = 0.05,
+  maxGap = 2000,
   minNumCR = 5,
   minNumVMR = 5,
   maxNumMerge = 0,
