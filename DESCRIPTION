@@ -27,7 +27,9 @@ Imports:
     recommenderlab,
     HDF5Array,
     data.table,
-    SummarizedExperiment
+    SummarizedExperiment,
+    IRanges,
+    S4Vectors
 Suggests: 
     knitr,
     rmarkdown,

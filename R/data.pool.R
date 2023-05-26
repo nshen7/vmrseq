@@ -49,6 +49,8 @@ data.pool <- function(cellFiles,
   # TODO: making checks on input data format
   chrNames <- as.character(chrNames)
 
+  sparseNAdrop <- TRUE
+
   if (!all(chrNames %in% unlist(fread(cellFiles[1], select = 1, colClasses = 'character'))))
     stop('Chromosomes not all found in first cell file (`cellFiles[1]`)!')
 
@@ -58,7 +60,6 @@ data.pool <- function(cellFiles,
 
   message("Start processing chromosome-by-chromosome...")
 
-  sparseNAdrop <- TRUE
 
   for (chr in chrNames) {
     message(paste0("...", chr, ": "), appendLF = FALSE)

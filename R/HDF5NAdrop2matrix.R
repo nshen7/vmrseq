@@ -3,6 +3,7 @@
 #' @param HDF5Matrix an HDF5Matrix (e.g. an assay from vmrseq::data.pool output)
 #' with dropped NA values
 #'
+#' @importFrom recommenderlab dropNA2matrix
 #' @return
 #' @export
 #'

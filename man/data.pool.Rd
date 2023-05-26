@@ -3,9 +3,9 @@
 \name{data.pool}
 \alias{data.pool}
 \title{Pool single-cell file together into an HDF5-based SummarizedExperiment
-object (with or w/o sparse matrix representation).}
+object with sparse matrix representation.}
 \usage{
-data.pool(cellFiles, writeDir, chrNames, colData, sparseNAdrop = TRUE)
+data.pool(cellFiles, writeDir, chrNames, colData)
 }
 \arguments{
 \item{cellFiles}{Vector of character strings indicating single-cell file
