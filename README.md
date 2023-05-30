@@ -11,7 +11,7 @@ Overview of the `vmrseq` framework is shown below:
 
 ## Installation
 
-You can install the development version of RAMEN from
+You can install the development version of `vmrseq` from
 [GitHub](https://github.com/) with:
 
 ``` r
