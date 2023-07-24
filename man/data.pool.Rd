@@ -5,7 +5,14 @@
 \title{Pool single-cell file together into an HDF5-based SummarizedExperiment
 object with sparse matrix representation.}
 \usage{
-data.pool(cellFiles, sep, writeDir, chrNames, colData, sparseNAdrop = TRUE)
+data.pool(
+  cellFiles,
+  sep,
+  writeDir,
+  chrNames,
+  colData = DataFrame(),
+  sparseNAdrop = TRUE
+)
 }
 \arguments{
 \item{cellFiles}{Vector of character strings indicating single-cell file

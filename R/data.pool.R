@@ -48,7 +48,7 @@ data.pool <- function(cellFiles,
                       sep,
                       writeDir,
                       chrNames,
-                      colData,
+                      colData = NULL,
                       sparseNAdrop = TRUE) {
 
   # TODO: making checks on input data format
@@ -60,6 +60,10 @@ data.pool <- function(cellFiles,
   if (!file.exists(writeDir)) dir.create(writeDir)
 
   if (!sparseNAdrop) stop("Sorry, `sparseNAdrop=FALSE` has not been implemented yet!")
+
+  if (!is.null(colData)) {
+    if (nrow(colData) != length(cellFiles)) stop('Number of rows of colData should equal to length of cellFiles!')
+  }
 
   message("Start processing chromosome-by-chromosome...")
 
@@ -99,9 +103,14 @@ data.pool <- function(cellFiles,
     message("cells processed; ", appendLF = FALSE)
 
     # Write out processed data for current chromosome
-    se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat),
-                                                     rowRanges = gr,
-                                                     colData = S4Vectors::DataFrame(colData))
+    if (is.null(colData)) {
+      se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat),
+                                                       rowRanges = gr)
+    } else {
+      se <- SummarizedExperiment::SummarizedExperiment(assays = list(M_mat = M_mat),
+                                                       rowRanges = gr,
+                                                       colData = S4Vectors::DataFrame(colData))
+    }
     se <- se[granges(se)$total > 0, ]
 
     n <- nchar(writeDir); if(substring(writeDir, n, n)=='/') writeDir <- substring(writeDir,1, n-1)
@@ -126,7 +135,7 @@ data.pool <- function(cellFiles,
 #'
 #' @examples
 extractCoord <- function(file, chr, sep) {
-  data.table::fread(cmd = paste0("zcat ", file, " | awk -F", sep, " '$1==\"", chr, "\"' | awk -F", sep, " '{print $2}'"))$V1
+  data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2}'"))$V1
 }
 
 #' Extract and process methylation info of a particular chromosome from a cell file.
@@ -139,7 +148,7 @@ extractCoord <- function(file, chr, sep) {
 #'
 #' @examples
 extractInfo <- function(file, chr, sep) {
-  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk -F", sep, " '$1==\"", chr, "\"' | awk -F", sep, " '{print $2\"\t\"$4\"\t\"$5}'"),
+  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2\"\t\"$4\"\t\"$5}'"),
                           colClasses = c('integer', 'integer', 'integer'))
   colnames(df) <- c("pos", "meth", "total")
   df <- df %>%
