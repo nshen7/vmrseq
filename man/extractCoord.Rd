@@ -4,7 +4,7 @@
 \alias{extractCoord}
 \title{Extract genomic coordinates of a particular chromosome in a cell file.}
 \usage{
-extractCoord(file, chr)
+extractCoord(file, chr, sep)
 }
 \arguments{
 \item{chr}{}

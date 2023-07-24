@@ -4,7 +4,7 @@
 \alias{extractInfo}
 \title{Extract and process methylation info of a particular chromosome from a cell file.}
 \usage{
-extractInfo(file, chr)
+extractInfo(file, chr, sep)
 }
 \arguments{
 \item{chr}{}

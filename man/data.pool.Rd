@@ -5,7 +5,7 @@
 \title{Pool single-cell file together into an HDF5-based SummarizedExperiment
 object with sparse matrix representation.}
 \usage{
-data.pool(cellFiles, writeDir, chrNames, colData)
+data.pool(cellFiles, sep, writeDir, chrNames, colData, sparseNAdrop = TRUE)
 }
 \arguments{
 \item{cellFiles}{Vector of character strings indicating single-cell file
@@ -15,12 +15,15 @@ format, where the first 5 columns in each file must be: <chr>, <pos>, <strand>,
 Strand is assumed to be properly filpped. Cell files can be zipped ones in .gz
 format.}
 
+\item{sep}{the field separator character. Values on each line of cell file are
+separated by this character.}
+
 \item{writeDir}{A single character string indicating a folder directory where
 you wish to store the processed SE object(s).}
 
-\item{chrNames}{Single character string or a vector of character strings. They
-have to exist in all cell files. Only chromosomes listed in \code{selectChrs}
-will be processed.}
+\item{chrNames}{Single or a vector of character strings representing chromosome
+names in cell files. Only chromosomes listed in \code{selectChrs} will be
+processed.}
 
 \item{colData}{A DataFrame or data.frame object containing colData for the SE
 object (applied to all chromosomes).}
@@ -31,7 +34,8 @@ then represent 0 as a very small positive value close to 0 so that the data
 matrix is converted to a traditional sparseMatrix form with 0 as default
 entry value. (see \code{sparseNAMatrix-class} from package \code{recommenderlab}).
 Using NA-dropped sparseMatrix representation helps to save RAM during data
-processing, as well as storage space saving to disk. Default value is TRUE.}
+processing, as well as storage space saving to disk. Currently only supports
+TRUE!!}
 }
 \description{
 In each cell, sites with 0 < meth_read/total_read < 1 are removed.

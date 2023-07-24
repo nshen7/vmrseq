@@ -4,7 +4,7 @@
 \alias{fillNA}
 \title{Fill NA's in missing cites per cell}
 \usage{
-fillNA(file, chr, pos_full)
+fillNA(file, chr, pos_full, sep)
 }
 \arguments{
 \item{pos_full}{}

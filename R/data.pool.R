@@ -9,11 +9,13 @@
 #' <meth_read>, <total_read>, in strict order. Each row contains info of one CpG.
 #' Strand is assumed to be properly filpped. Cell files can be zipped ones in .gz
 #' format.
+#' @param sep the field separator character. Values on each line of cell file are
+#' separated by this character.
 #' @param writeDir A single character string indicating a folder directory where
 #' you wish to store the processed SE object(s).
-#' @param chrNames Single character string or a vector of character strings. They
-#' have to exist in all cell files. Only chromosomes listed in \code{selectChrs}
-#' will be processed.
+#' @param chrNames Single or a vector of character strings representing chromosome
+#' names in cell files. Only chromosomes listed in \code{selectChrs} will be
+#' processed.
 #' @param colData A DataFrame or data.frame object containing colData for the SE
 #' object (applied to all chromosomes).
 #' @param sparseNAdrop Logical value indicating whether or not to use NA-dropped
@@ -22,7 +24,8 @@
 #' matrix is converted to a traditional sparseMatrix form with 0 as default
 #' entry value. (see \code{sparseNAMatrix-class} from package \code{recommenderlab}).
 #' Using NA-dropped sparseMatrix representation helps to save RAM during data
-#' processing, as well as storage space saving to disk. Default value is TRUE.
+#' processing, as well as storage space saving to disk. Currently only supports
+#' TRUE!!
 #'
 #' @importFrom recommenderlab dropNA
 #' @importFrom data.table fread
@@ -42,14 +45,14 @@
 #'
 
 data.pool <- function(cellFiles,
+                      sep,
                       writeDir,
                       chrNames,
-                      colData) {
+                      colData,
+                      sparseNAdrop = TRUE) {
 
   # TODO: making checks on input data format
   chrNames <- as.character(chrNames)
-
-  sparseNAdrop <- TRUE
 
   if (!all(chrNames %in% unlist(fread(cellFiles[1], select = 1, colClasses = 'character'))))
     stop('Chromosomes not all found in first cell file (`cellFiles[1]`)!')
@@ -65,9 +68,9 @@ data.pool <- function(cellFiles,
     message(paste0("...", chr, ": "), appendLF = FALSE)
 
     # Gather genomic coordinates
-    pos_full <- extractCoord(cellFiles[1], chr)
+    pos_full <- extractCoord(cellFiles[1], chr, sep)
     for (i in 2:length(cellFiles)) {
-      pos_temp <- extractCoord(cellFiles[i], chr)
+      pos_temp <- extractCoord(cellFiles[i], chr, sep)
       pos_new <- pos_temp[which(!pos_temp %in% pos_full)]
       pos_full <- c(pos_full, pos_new)
       # cat(i)
@@ -81,11 +84,11 @@ data.pool <- function(cellFiles,
       for (i in 1:length(cellFiles)) {
         M_mat <- cbind(
           M_mat,
-          fillNA(cellFiles[i], chr, pos_full) %>%
+          fillNA(cellFiles[i], chr, pos_full, sep) %>%
             as.matrix() %>%
             recommenderlab::dropNA()
         )
-        cat(i, " ")
+        # cat(i, " ")
       }
       gr <- GenomicRanges::GRanges(seqnames = chr, ranges = IRanges::IRanges(start = pos_full, end = pos_full))
       gr$meth <- as.integer(round(DelayedArray::rowSums(M_mat)))
@@ -122,8 +125,8 @@ data.pool <- function(cellFiles,
 #' @export
 #'
 #' @examples
-extractCoord <- function(file, chr) {
-  data.table::fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2}'"))$V1
+extractCoord <- function(file, chr, sep) {
+  data.table::fread(cmd = paste0("zcat ", file, " | awk -F", sep, " '$1==\"", chr, "\"' | awk -F", sep, " '{print $2}'"))$V1
 }
 
 #' Extract and process methylation info of a particular chromosome from a cell file.
@@ -135,8 +138,8 @@ extractCoord <- function(file, chr) {
 #' @export
 #'
 #' @examples
-extractInfo <- function(file, chr) {
-  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk '$1==\"", chr, "\"' | awk '{print $2\"\t\"$4\"\t\"$5}'"),
+extractInfo <- function(file, chr, sep) {
+  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk -F", sep, " '$1==\"", chr, "\"' | awk -F", sep, " '{print $2\"\t\"$4\"\t\"$5}'"),
                           colClasses = c('integer', 'integer', 'integer'))
   colnames(df) <- c("pos", "meth", "total")
   df <- df %>%
@@ -157,9 +160,9 @@ extractInfo <- function(file, chr) {
 #' @export
 #'
 #' @examples
-fillNA <- function(file, chr, pos_full) {
+fillNA <- function(file, chr, pos_full, sep) {
   # Read in cell info
-  df <- extractInfo(file, chr)
+  df <- extractInfo(file, chr, sep)
 
   # Fill in NA for uncovered position
   filled <- rep(NA, length(pos_full))
