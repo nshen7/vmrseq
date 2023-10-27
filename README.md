@@ -1,12 +1,10 @@
-# vmrseq
-Detecting single-cell methylation heterogeneity at site-level resolution.
+# vmrseq: Detecting variably methylated regions (VMRs) from single-cell bisulfite sequencing
 
-## Background
-The R package `vmrseq` is a novel computational tool developed for pinpointing variably methylated regions (VMRs) in scBS-seq data. It thoroughly searches for VMRs with a genome-wide scan in a flexible manner that does not require prior knowledge of their sizes or location contexts. Based on simulations and case studies, `vmrseq` has shown considerable improvements in detection accuracy as well as cell-type clustering performance. 
+The R package `vmrseq` is a novel computational tool developed for pinpointing variably methylated regions (VMRs) in scBS-seq data without prior knowledge on size or location. High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. vmrseq overcomes these challenges and identifies variably methylated regions accurately and robustly. 
 
 Overview of the `vmrseq` framework is shown below:
 
-![](figures/vmrseq_overview.png)
+![](figures/method.pdf)
 
 
 ## Installation
@@ -19,3 +17,6 @@ You can install the development version of `vmrseq` from
 devtools::install_github("korthauer-lab/vmrseq")
 ```
 
+## License/Copyright
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+This package is made available under an MIT license.  
