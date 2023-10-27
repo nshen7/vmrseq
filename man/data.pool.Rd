@@ -10,7 +10,7 @@ data.pool(
   sep,
   writeDir,
   chrNames,
-  colData = DataFrame(),
+  colData = NULL,
   sparseNAdrop = TRUE
 )
 }

@@ -1,6 +1,6 @@
 #' Coerce a NA-dropped HDF5Matrix back to matrix form
 #'
-#' @param HDF5Matrix an HDF5Matrix (e.g. an assay from vmrseq::data.pool output)
+#' @param HDF5Matrix an HDF5Matrix (e.g. assay output from vmrseq::data.pool)
 #' with dropped NA values
 #'
 #' @importFrom recommenderlab dropNA2matrix

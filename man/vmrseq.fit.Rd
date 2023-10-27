@@ -2,7 +2,9 @@
 % Please edit documentation in R/vmrseq.fit.R
 \name{vmrseq.fit}
 \alias{vmrseq.fit}
-\title{Title}
+\title{Construct candidate regions (CRs) by taking groups of consecutive loci that exceed
+threshold on the variance of smoothed relative methylation levels and detect
+variably methylated regions (VMRs) by optimizing a hidden Markov model (HMM).}
 \usage{
 vmrseq.fit(
   gr,
@@ -10,8 +12,6 @@ vmrseq.fit(
   maxGap = 2000,
   minNumCR = 5,
   minNumVMR = 5,
-  maxNumMerge = 0,
-  minNumLong = 0,
   gradient = TRUE,
   tp = NULL,
   control = vmrseq.optim.control(),
@@ -19,6 +19,54 @@ vmrseq.fit(
   BPPARAM = bpparam()
 )
 }
+\arguments{
+\item{gr}{\code{GRanges} object output by \code{vmrseq::vmrseq.smooth},
+containing genomic coordinates (chr, start, end) and summarized information
+(meth, total, var) of CpG sites in the input dataset.}
+
+\item{alpha}{positive scalar value between 0 and 1 that represents the
+designated significance level for determining variance threshold of candidate
+regions construction. The variance threshold is determined by taking 1-alpha
+quantile value of an approximate null distribution of variance simulated
+from the beta priors of emission probability in the hidden Markov model.
+Default value of alpha is 0.05.}
+
+\item{maxGap}{integer value representing maximum number of base pairs in
+between neighboring CpGs to be included in the same VMR. Default value is
+2000 bp.}
+
+\item{minNumCR}{positive integer value representing the minimum number of
+CpG sites within a candidate region. Default value is 5.}
+
+\item{minNumVMR}{positive integer value representing the minimum number of
+CpG sites within a variably methylated region. Default value is 5.}
+
+\item{gradient}{logical value indicating whether exponentiated gradient
+descent shall be applied to update prevalence parameter. Default is TRUE. If
+set as FALSE, initial values (i.e., value of \code{inits} arguments in
+\code{vmrsqe::vmrseq.optim.control}, can be set up in the \code{control}
+argument of this function) are used as prevalence parameter for decoding
+hidden states.}
+
+\item{tp}{a `transitProbs-class` object that contains the transition
+probability distribution used for HMM optimization. Default value is
+transition probability \code{vmrseq:::tp0} built in the package that was
+previously trained on mouse brain cells. See manuscript for training
+procedure and data source.}
+
+\item{control}{list of miscellaneous parameters used to control optimization
+of the HMM model. Default is output of \code{vmrseq::vmrseq.optim.control()}.
+Can be changed by tweaking arguments in function \code{vmrseq::vmrseq.optim.control()}.}
+
+\item{verbose}{logical value that indicates whether progress messages
+should be printed to stdout. Defaults value is TRUE.}
+
+\item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
+backend. The default option is \code{BiocParallel::bpparam()} which will
+automatically creates a cluster appropriate for the operating system.}
+}
 \description{
-Title
+Construct candidate regions (CRs) by taking groups of consecutive loci that exceed
+threshold on the variance of smoothed relative methylation levels and detect
+variably methylated regions (VMRs) by optimizing a hidden Markov model (HMM).
 }

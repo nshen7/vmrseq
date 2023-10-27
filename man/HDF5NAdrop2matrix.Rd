@@ -7,7 +7,7 @@
 HDF5NAdrop2matrix(hdf5_matrix)
 }
 \arguments{
-\item{HDF5Matrix}{an HDF5Matrix (e.g. an assay from vmrseq::data.pool output)
+\item{HDF5Matrix}{an HDF5Matrix (e.g. assay output from vmrseq::data.pool)
 with dropped NA values}
 }
 \description{
