@@ -32,6 +32,7 @@
 #' @importFrom recommenderlab dropNA2matrix
 #' @import dplyr
 #' @import GenomicRanges
+#' @import S4Vectors
 #' @import SummarizedExperiment
 #'
 #' @return a \code{GRanges} object that contains the result of smoothing.

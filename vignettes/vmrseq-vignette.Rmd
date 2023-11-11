@@ -30,8 +30,9 @@ After installation, load the package:
 library(vmrseq)
 ```
 
+You might also have to manually install one of the dependencies of vmrseq, the `bumphunter` package (using `BiocManager::install('bumphunter')`). 
 
-# Running
+# Apply vmrseq to single-cell BS-seq data
 
 ```{r}
 data(se0)
