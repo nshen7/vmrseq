@@ -12,7 +12,7 @@ You can install the development version of `vmrseq` from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("korthauer-lab/vmrseq")
+devtools::install_github("nshen7/vmrseq")
 ```
 
 ## License/Copyright
