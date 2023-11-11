@@ -45,5 +45,8 @@ processing, as well as storage space saving to disk. Currently only supports
 TRUE!!}
 }
 \description{
-In each cell, sites with 0 < meth_read/total_read < 1 are removed.
+This function pools individual-cell CpG read files into a
+SummarizedExperiment object so that it can be input to the \code{vmrseq.smooth}
+function. Note that in each cell, sites with hemimethylation or intermediate
+methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
 }

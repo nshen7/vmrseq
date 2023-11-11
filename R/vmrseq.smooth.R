@@ -32,6 +32,7 @@
 #' @importFrom recommenderlab dropNA2matrix
 #' @import dplyr
 #' @import GenomicRanges
+#' @import SummarizedExperiment
 #'
 #' @return a \code{GRanges} object that contains the result of smoothing.
 #'  The object retains genomic coordinates (chr, start, end) of input CpG
@@ -82,9 +83,9 @@ vmrseq.smooth <- function(
     values(gr)$total <- rowSums(M > 0)
   }
 
-
-  if (min(values(gr)$total) < 3)
-    warning("We suggest removing CpG sites with across-cell coverage lower than 3 before running vmrseq.")
+#
+#   if (min(values(gr)$total) < 3)
+#     warning("We suggest removing CpG sites with across-cell coverage lower than 3 before running vmrseq.")
 
   # Register the parallel backend
   BiocParallel::register(BPPARAM)

@@ -1,8 +1,8 @@
 ---
-title: "vmrseq-vignette"
+title: "Analyzing single-cell bisulfite sequencing data with vmrseq"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{vmrseq-vignette}
+  %\VignetteIndexEntry{Analyzing single-cell bisulfite sequencing data with vmrseq}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,8 +12,40 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+devtools::load_all()
 ```
 
-```{r setup}
+# Installation
+
+This package will be submitted to Bioconductor. For now, you can install the development version from our [GitHub repository](https://github.com/nshen7/vmrseq) through running this:
+
+```{r, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("nshen7/vmrseq")
+```
+
+After installation, load the package:
+
+```{r setup, eval = FALSE}
 library(vmrseq)
 ```
+
+
+# Running
+
+```{r}
+data(se0)
+GenomicRanges::granges(se0)
+```
+
+On a side note: Individual-cell files can be processed into SummarizedExperiment object (with NA-dropped sparseMatrix representation) using `data.pool` function, see:
+```{r eval=FALSE}
+?data.pool
+```
+
+
+```{r}
+gr <- vmrseq.smooth(se0)
+output <- vmrseq.fit(gr)
+```
+

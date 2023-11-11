@@ -1,7 +1,10 @@
 #' Pool single-cell file together into an HDF5-based SummarizedExperiment
 #' object with sparse matrix representation.
 #'
-#' @description In each cell, sites with 0 < meth_read/total_read < 1 are removed.
+#' @description This function pools individual-cell CpG read files into a
+#' SummarizedExperiment object so that it can be input to the \code{vmrseq.smooth}
+#' function. Note that in each cell, sites with hemimethylation or intermediate
+#' methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
 #'
 #' @param cellFiles Vector of character strings indicating single-cell file
 #' paths you wish to pool into SE object(s). Cell files should be in BED-like
