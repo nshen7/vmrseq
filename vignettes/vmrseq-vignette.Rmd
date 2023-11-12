@@ -30,7 +30,7 @@ After installation, load the package:
 library(vmrseq)
 ```
 
-Note that you might also have to manually install one of the dependencies of vmrseq, the `bumphunter` package (using `BiocManager::install('bumphunter')`). 
+Note that you might also have to manually install one of the dependencies of vmrseq, the `bumphunter` package (using `BiocManager::install("bumphunter")`). 
 
 # How to get help for vmrseq
 
@@ -39,19 +39,23 @@ Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repositor
 # Background
 
 
-# Apply vmrseq to single-cell BS-seq data
+# Analyze single-cell BS-seq data
 
 ## Input data
 
 vmrseq takes processed and filtered single-cell bisulfite sequencing *binary* methylation values as input. After processing and filtering, each sequenced CpG takes a value of methylated or unmethylated in each cell.
 
-We have implemented a `data.pool` function to process individual-cell files into a format that is suitable to input to the vmrseq framework. Here is an example of how to use this function:
+### Process and filter cell read files
+We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Here is an example of how to use this function:
 
-```{r eval=FALSE}
-# file_path <- system.file("extdata", "cell_1.rda", package = 'vmrseq')
+```{r}
+cell_1_path <- system.file("data", "cell_1.csv", package = "vmrseq")
+cell_2_path <- system.file("data", "cell_2.csv", package = "vmrseq")
+cell_3_path <- system.file("data", "cell_3.csv", package = "vmrseq")
 ```
 
 ```{r}
+cell_list <- c(cell_1_path, cell_2_path, cell_3_path)
 # data.pool()
 ```
 
@@ -59,7 +63,7 @@ We have implemented a `data.pool` function to process individual-cell files into
 SummarizedExperiment object (with NA-dropped sparseMatrix representation) using  function
 
 
-## 
+### Apply vmrseq framework
 In this vignette, we use a formatted example dataset built in the package called `se0`: 
 ```{r}
 data(se0)
