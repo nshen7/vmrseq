@@ -30,23 +30,60 @@ After installation, load the package:
 library(vmrseq)
 ```
 
-You might also have to manually install one of the dependencies of vmrseq, the `bumphunter` package (using `BiocManager::install('bumphunter')`). 
+Note that you might also have to manually install one of the dependencies of vmrseq, the `bumphunter` package (using `BiocManager::install('bumphunter')`). 
+
+# How to get help for vmrseq
+
+Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
+
+# Background
+
 
 # Apply vmrseq to single-cell BS-seq data
 
+## Input data
+
+vmrseq takes processed and filtered single-cell bisulfite sequencing *binary* methylation values as input. After processing and filtering, each sequenced CpG takes a value of methylated or unmethylated in each cell.
+
+We have implemented a `data.pool` function to process individual-cell files into a format that is suitable to input to the vmrseq framework. Here is an example of how to use this function:
+
+```{r eval=FALSE}
+# file_path <- system.file("extdata", "cell_1.rda", package = 'vmrseq')
+```
+
+```{r}
+# data.pool()
+```
+
+
+SummarizedExperiment object (with NA-dropped sparseMatrix representation) using  function
+
+
+## 
+In this vignette, we use a formatted example dataset built in the package called `se0`: 
 ```{r}
 data(se0)
+```
+
+It is a `SummarizedExperiment` object that stores CpG sites as rows and cells as columns:
+```{r}
 GenomicRanges::granges(se0)
 ```
 
-On a side note: Individual-cell files can be processed into SummarizedExperiment object (with NA-dropped sparseMatrix representation) using `data.pool` function, see:
-```{r eval=FALSE}
-?data.pool
+It has one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites:
+```{r}
+assays(se0)
+```
+
+
+Moreover, 
+```{r}
+assays(se0)$M_mat[5:10, 5:10]
 ```
 
 
 ```{r}
-gr <- vmrseq.smooth(se0)
-output <- vmrseq.fit(gr)
+# gr <- vmrseq.smooth(se0)
+# output <- vmrseq.fit(gr)
 ```
 
