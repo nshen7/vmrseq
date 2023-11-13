@@ -47,7 +47,7 @@ How to get help for vmrseq: Feel free to raise questions by opening issue(s) in 
 High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. We present `vmrseq`, a statistical method that overcomes these challenges to accurately  and robustly identify de novo variably methylated regions (VMR) in single-cell DNA methylation data. To the best of our knowledge, vmrseq has been the only method that flexibly pinpoints biologically relevant regions at single-base pair resolution without prior knowledge of size or location. In addition, vmrseq is the only approach capable of detecting VMRs that are sensitive to the level of heterogeneity present in input datasets so far.
 
 ```{r vmrseq, fig.retina = NULL, fig.align='center', fig.wide = TRUE, echo=FALSE}
-knitr::include_graphics("../figures/method.png")
+knitr::include_graphics("../man/figures/method.png")
 ```
 
 
