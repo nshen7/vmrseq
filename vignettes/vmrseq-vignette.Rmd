@@ -20,7 +20,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-devtools::load_all()
 ```
 
 # Installation
@@ -34,11 +33,9 @@ devtools::install_github("nshen7/vmrseq")
 
 After installation, load the package:
 
-```{r setup, eval = FALSE}
+```{r setup}
 library(vmrseq)
 ```
-
-Note that you might also have to manually install some of the dependencies from Bioconductor, for instance, the `bumphunter` package (using `BiocManager::install("bumphunter")`). 
 
 How to get help for vmrseq: Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
 
@@ -69,7 +66,7 @@ cell_list <- c(cell_1_path, cell_2_path, cell_3_path)
 
 Each cell file should be in BED-like format, where the first 5 columns in each file must be: <chr>, <pos>, <strand>, <meth_read>, <total_read>, in strict order, for example:
 ```{r}
-cell_1 <- fread(cell_1_path)
+cell_1 <- data.table::fread(cell_1_path)
 head(cell_1)
 ```
 
