@@ -26,7 +26,7 @@ format.}
 separated by this character.}
 
 \item{writeDir}{A single character string indicating a folder directory where
-you wish to store the processed SE object(s).}
+you wish to store the processed SE object(s). The SE will be stored in HDF5 format.}
 
 \item{chrNames}{Single or a vector of character strings representing chromosome
 names in cell files. Only chromosomes listed in \code{selectChrs} will be

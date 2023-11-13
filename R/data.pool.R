@@ -15,7 +15,7 @@
 #' @param sep the field separator character. Values on each line of cell file are
 #' separated by this character.
 #' @param writeDir A single character string indicating a folder directory where
-#' you wish to store the processed SE object(s).
+#' you wish to store the processed SE object(s). The SE will be stored in HDF5 format.
 #' @param chrNames Single or a vector of character strings representing chromosome
 #' names in cell files. Only chromosomes listed in \code{selectChrs} will be
 #' processed.

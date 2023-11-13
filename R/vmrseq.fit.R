@@ -107,7 +107,7 @@ vmrseq.fit <- function(
     message("...Finished calling candidate regions - found ", length(CRI),
             " candidate regions in total.
   ...", pct_incr,
-            "% QC-passed sites are called to be in candidate regions.")
+            "% sites are called to be in candidate regions.")
 
     # Add summary stats (smoothed var and CR index) into output
     cr_index <- rep(NA, length(gr))
@@ -149,7 +149,7 @@ vmrseq.fit <- function(
               round((t2 - t1)[3]/60, 2), " min and ",
               nrow(vmr.df), " VMRs found in total.
   ...", round(sum(vmr.df$end_ind-vmr.df$start_ind+1) / length(gr) * 100, 2),
-              "% QC-passed sites are called to be in VMRs.")
+              "% sites are called to be in VMRs.")
     }
 
     # Formatting function output
