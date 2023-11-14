@@ -31,9 +31,9 @@ This package will be submitted to Bioconductor. For now, you can install the dev
 devtools::install_github("nshen7/vmrseq")
 ```
 
-After installation, load the package:
+After installation, load the vmrseq package:
 
-```{r setup}
+```{r setup, warning=F, message=F}
 library(vmrseq)
 ```
 
@@ -56,24 +56,19 @@ vmrseq takes processed and filtered single-cell bisulfite sequencing **binary** 
 
 We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Following is an example of how to use this function.
 
-Store the file paths of individual cells to a list: 
-```{r}
-cell_1_path <- system.file("data", "cell_1.csv", package = "vmrseq")
-cell_2_path <- system.file("data", "cell_2.csv", package = "vmrseq")
-cell_3_path <- system.file("data", "cell_3.csv", package = "vmrseq")
-cell_list <- c(cell_1_path, cell_2_path, cell_3_path)
-```
-
-Each cell file should be in BED-like format, where the first 5 columns in each file must be: <chr>, <pos>, <strand>, <meth_read>, <total_read>, in strict order, for example:
-```{r}
-cell_1 <- data.table::fread(cell_1_path)
-head(cell_1)
-```
-
-The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). In each cell, sites with hemimethylation or intermediate methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example:
+The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example:
 ```{r eval = F}
 data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")
 ```
+Note that in each cell, sites with hemimethylation or intermediate methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
+
+Each cell file should be in BED-like format, where the first 5 columns in each file must be: <chr>, <pos>, <strand>, <meth_read>, <total_read>, in strict order, for example:
+```{r}
+data(cell_1)
+head(cell_1)
+```
+
+
 The `SummarizedExperiment` object stores CpG sites as rows and cells as columns. We adopted the NA-dropped sparseMatrix representation to save storage space for large single-cell datasets (see following section for specifics of how this representation look like). This option can be turned off but we recommend to keep it on. 
 
 Further, `data.pool` write the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
@@ -90,12 +85,12 @@ It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that 
 ```{r}
 dim(se0)
 GenomicRanges::granges(se0)
-assays(se0)
+SummarizedExperiment::assays(se0)
 ```
 
 Moreover, the assay matrix is in *NA-dropped sparseMatrix representation* (implemented using the `recommenderlab::dropNA` function):
 ```{r}
-assays(se0)$M_mat[5:10, 5:10]
+SummarizedExperiment::assays(se0)$M_mat[5:10, 5:10]
 ```
 In particular, the NAs in the dataset are represented by 0 (or 0.000000e+00 as shown above), and the 0's are represented in a very small positive real number (2.225074e-308 as shown above). This allows the matrix to be stored in a `sparseMatrix` format so that it takes less disk storage. One can use the `vmrseq::HDF5NAdrop2matrix` function to convert the NA-dropped HDF5 matrices back to regular matrices.
 
