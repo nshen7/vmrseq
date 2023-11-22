@@ -78,7 +78,7 @@ Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HD
 
 In this vignette, we use a formatted example dataset built in the package called `se0` that's ready to be input to model fitting function: 
 ```{r}
-se0 <- loadHDF5SummarizedExperiment(system.file('data/se0', package = 'vmrseq'))
+se0 <- HDF5Array::loadHDF5SummarizedExperiment(system.file('data/se0', package = 'vmrseq'))
 ```
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
