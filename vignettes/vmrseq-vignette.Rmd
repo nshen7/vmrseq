@@ -1,5 +1,11 @@
 ---
 title: "Analyzing single-cell bisulfite sequencing data with vmrseq"
+author:
+- name: Ning Shen
+  affiliation: 
+  - Department of Statistics, University of British Columbia
+  - Centre for Molecular Medicine and Therapeutics, BC Children's Hospital Research Institute
+  email: ning.shen@stat.ubc.ca
 output: 
   # rmarkdown::html_vignette:
   html_document:
@@ -21,6 +27,13 @@ knitr::opts_chunk$set(
   comment = "##"
 )
 ```
+
+# Citation
+
+**If you use dmrseq in published research, please cite: **
+
+Shen, Ning, and Keegan Korthauer. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv, November 21, 2023. https://doi.org/10.1101/2023.11.20.567911.
+
 
 # Installation
 
