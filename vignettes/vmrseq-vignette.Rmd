@@ -86,8 +86,18 @@ toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
 toy.se
+```
+```{r}
 dim(toy.se)
+```
+
+
+```{r}
 GenomicRanges::granges(toy.se)
+```
+
+
+```{r}
 SummarizedExperiment::assays(toy.se)
 ```
 
