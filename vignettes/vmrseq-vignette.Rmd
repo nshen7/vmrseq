@@ -18,7 +18,7 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "##"
 )
 ```
 
@@ -85,6 +85,7 @@ toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
+toy.se
 dim(toy.se)
 GenomicRanges::granges(toy.se)
 SummarizedExperiment::assays(toy.se)
