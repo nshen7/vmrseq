@@ -62,7 +62,7 @@ data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/
 ```
 Note that in each cell, sites with hemimethylation or intermediate methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
 
-Each cell file should be in BED-like format, where the first 5 columns in each file must be: <chr>, <pos>, <strand>, <meth_read>, <total_read>, in strict order, for example:
+Each cell file should be in BED-like format, where the first 5 columns in each file must be: *chr*, *pos*, *strand*, *meth_read*, *total_read*, in strict order, for example:
 ```{r}
 data(cell_1)
 head(cell_1)
