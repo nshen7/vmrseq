@@ -1,4 +1,4 @@
-#' Coerce a NA-dropped HDF5Matrix back to matrix form
+#' Coerce a NA-dropped HDF5Matrix back to regular matrix form where NAs are not dropped to 0.
 #'
 #' @param HDF5Matrix an HDF5Matrix (e.g. assay output from vmrseq::data.pool)
 #' with dropped NA values

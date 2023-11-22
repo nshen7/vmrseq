@@ -71,14 +71,14 @@ head(cell_1)
 
 The `SummarizedExperiment` object stores CpG sites as rows and cells as columns. We adopted the NA-dropped sparseMatrix representation to save storage space for large single-cell datasets (see following section for specifics of how this representation look like). This option can be turned off but we recommend to keep it on. 
 
-Further, `data.pool` write the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
+Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. Using `HDF5::loadHDF5SummarizedExperiment()` to load saved HDF5SummarizedExperiment objects into R. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
 
 
 ## Load example data
 
 In this vignette, we use a formatted example dataset built in the package called `se0` that's ready to be input to model fitting function: 
 ```{r}
-data(se0)
+se0 <- loadHDF5SummarizedExperiment(system.file('data/se0', package = 'vmrseq'))
 ```
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
