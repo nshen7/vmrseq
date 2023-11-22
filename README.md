@@ -15,6 +15,17 @@ You can install the development version of `vmrseq` from
 devtools::install_github("nshen7/vmrseq")
 ```
 
+## Online Vignette
+
+An online vignette of how to use the vmrseq package can be found at 
+[https://rpubs.com/nshen7/1118741](https://rpubs.com/nshen7/1118741)
+
+
+## Citation
+
+Shen, Ning, and Keegan Korthauer. 2023. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv. [https://doi.org/10.1101/2023.11.20.567911](https://doi.org/10.1101/2023.11.20.567911).
+
 ## License/Copyright
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 This package is made available under an MIT license.  
