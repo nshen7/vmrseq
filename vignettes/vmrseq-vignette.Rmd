@@ -56,7 +56,7 @@ vmrseq takes processed and filtered single-cell bisulfite sequencing **binary** 
 
 We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Following is an example of how to use this function.
 
-The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example:
+The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example: (this step might take quite some time in practice since input datasets usually contain many cells)
 ```{r eval = F}
 data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")
 ```
@@ -71,28 +71,30 @@ head(cell_1)
 
 The `SummarizedExperiment` object stores CpG sites as rows and cells as columns. We adopted the NA-dropped sparseMatrix representation to save storage space for large single-cell datasets (see following section for specifics of how this representation look like). This option can be turned off but we recommend to keep it on. 
 
-Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. Using `HDF5::loadHDF5SummarizedExperiment()` to load saved HDF5SummarizedExperiment objects into R. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
+Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
 
 
 ## Load example data
 
-In this vignette, we use a formatted example dataset built in the package called `se0` that's ready to be input to model fitting function: 
-```{r}
-se0 <- HDF5Array::loadHDF5SummarizedExperiment(system.file('data/se0', package = 'vmrseq'))
+In this vignette, we use a formatted example dataset built in the package called `toy.se` that's ready to be input to model fitting function (which is not accessible to users due to format limitation of internal data of R packages). In usual cases users of this package would use `HDF5::loadHDF5SummarizedExperiment` to load saved HDF5SummarizedExperiment objects into R. 
+
+```{r, include=FALSE}
+### This can only be run inside the Rproj of this package!!!
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
 ```
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
-dim(se0)
-GenomicRanges::granges(se0)
-SummarizedExperiment::assays(se0)
+dim(toy.se)
+GenomicRanges::granges(toy.se)
+SummarizedExperiment::assays(toy.se)
 ```
 
 Moreover, the assay matrix is in *NA-dropped sparseMatrix representation* (implemented using the `recommenderlab::dropNA` function):
 ```{r}
-SummarizedExperiment::assays(se0)$M_mat[5:10, 5:10]
+SummarizedExperiment::assays(toy.se)$M_mat[5:10, 5:10]
 ```
-In particular, the NAs in the dataset are represented by 0 (or 0.000000e+00 as shown above), and the 0's are represented in a very small positive real number (2.225074e-308 as shown above). This allows the matrix to be stored in a `sparseMatrix` format so that it takes less disk storage. One can use the `vmrseq::HDF5NAdrop2matrix` function to convert the NA-dropped HDF5 matrices back to regular matrices.
+In particular, the NAs in the dataset are represented by 0 (or 0.000000e+00 as shown above), and the 0's are represented in a very small positive real number (2.225074e-308 as shown above). This allows the matrix to be stored in a `sparseMatrix` format so that it takes less disk storage. One can use the `vmrseq::HDF5NAdrop2matrix` function to convert the assay from HDF5SummarizedExpriment object saved by `vmrseq::data.pool` back to regular matrices.
 
 # Detect variably methylated regions (VMR)
 
@@ -121,9 +123,9 @@ Generally, the computation time of vmrseq depends on not only the number of core
 
 The standard VMR analysis steps are wrapped into two functions, `vmrseq.smooth` and `vmrseq.fit`. The estimation steps performed by them are described briefly below, as well as in more detail in the vmrseq paper. Here we run the results for a subset of 30,000 CpGs in 200 cells in the interest of computation time.
 
-The `vmrseq.smooth` function performs kernel smoothing on the single-cell methylation and output a `GRanges` object with the CpG coordinate information extracted from the input `se0` and metadata columns indicating the methylated cell count (i.e., <meth>), the total cell coverage (i.e., <total>) and the inter-cellular variance on methylation level.
+The `vmrseq.smooth` function performs kernel smoothing on the single-cell methylation and output a `GRanges` object with the CpG coordinate information extracted from the input `toy.se` and metadata columns indicating the methylated cell count (i.e., <meth>), the total cell coverage (i.e., <total>) and the inter-cellular variance on methylation level.
 ```{r}
-gr <- vmrseq.smooth(se0)
+gr <- vmrseq.smooth(toy.se)
 ```
 ```{r}
 head(gr)
