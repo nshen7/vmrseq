@@ -69,7 +69,7 @@ vmrseq takes processed and filtered single-cell bisulfite sequencing **binary** 
 
 We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Following is an example of how to use this function.
 
-The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example: (this step might take quite some time in practice since input datasets usually contain many cells)
+The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example: (this step might take long in practice since input datasets usually contain many cells; suggest to parallelize the computation with chromosomes)
 ```{r eval = F}
 data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")
 ```
@@ -89,16 +89,14 @@ Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HD
 
 ## Load example data
 
-In this vignette, we use a formatted example dataset built in the package called `toy.se` that's ready to be input to model fitting function (which is not accessible to users due to format limitation of internal data of R packages). In usual cases users of this package would use `HDF5::loadHDF5SummarizedExperiment` to load saved HDF5SummarizedExperiment objects into R. 
+In this vignette, we use a formatted example dataset built in the package that's ready to be input to model fitting function (which is not accessible to users due to format limitation of internal data of R packages). In usual cases users of this package would use `HDF5::loadHDF5SummarizedExperiment` to load saved HDF5SummarizedExperiment objects into R. 
 
-```{r, include=FALSE}
-### This can only be run inside the Rproj of this package!!!
-# toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
+```{r}
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
 ```
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
-toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy.se", package = "vmrseq"))
 toy.se
 ```
 ```{r}
