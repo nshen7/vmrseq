@@ -18,7 +18,7 @@ devtools::install_github("nshen7/vmrseq")
 ## Online Vignette
 
 An online vignette of how to use the vmrseq package can be found at 
-[https://rpubs.com/nshen7/1118741](https://rpubs.com/nshen7/1118741)
+[https://rpubs.com/nshen7/vmrseq-vignette](https://rpubs.com/nshen7/vmrseq-vignette)
 
 
 ## Citation
