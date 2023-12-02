@@ -8,3 +8,5 @@ docs
 .Rhistory
 .RData
 .Rbuildignore
+/doc/
+/Meta/
