@@ -9,3 +9,5 @@ docs
 .RData
 .Rbuildignore
 *.Rproj
+/doc/
+/Meta/

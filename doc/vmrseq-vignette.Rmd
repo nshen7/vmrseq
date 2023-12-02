@@ -30,9 +30,9 @@ knitr::opts_chunk$set(
 
 # Citation
 
-**If you use dmrseq in published research, please cite: **
+**If you use vmrseq in published research, please cite: **
 
-Shen, Ning, and Keegan Korthauer. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv, November 21, 2023. https://doi.org/10.1101/2023.11.20.567911.
+Shen, Ning, and Keegan Korthauer. “vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv, November 21, 2023. https://doi.org/10.1101/2023.11.20.567911.
 
 
 # Installation
