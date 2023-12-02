@@ -1,0 +1,201 @@
+---
+title: "Analyzing single-cell bisulfite sequencing data with vmrseq"
+author:
+- name: Ning Shen
+  affiliation: 
+  - Department of Statistics, University of British Columbia
+  - Centre for Molecular Medicine and Therapeutics, BC Children's Hospital Research Institute
+  email: ning.shen@stat.ubc.ca
+output: 
+  # rmarkdown::html_vignette:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    fig_width: 9
+    fig_height: 4.5
+vignette: >
+  %\VignetteIndexEntry{Analyzing single-cell bisulfite sequencing data with vmrseq}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "##"
+)
+```
+
+# Citation
+
+**If you use dmrseq in published research, please cite: **
+
+Shen, Ning, and Keegan Korthauer. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv, November 21, 2023. https://doi.org/10.1101/2023.11.20.567911.
+
+
+# Installation
+
+This package will be submitted to Bioconductor. For now, you can install the development version from our [GitHub repository](https://github.com/nshen7/vmrseq) through running this:
+
+```{r installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("nshen7/vmrseq")
+```
+
+After installation, load the vmrseq package:
+
+```{r setup, warning=F, message=F}
+library(vmrseq)
+```
+
+How to get help for vmrseq: Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
+
+# Background
+
+High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. We present `vmrseq`, a statistical method that overcomes these challenges to accurately  and robustly identify de novo variably methylated regions (VMR) in single-cell DNA methylation data. To the best of our knowledge, vmrseq has been the only method that flexibly pinpoints biologically relevant regions at single-base pair resolution without prior knowledge of size or location. In addition, vmrseq is the only approach capable of detecting VMRs that are sensitive to the level of heterogeneity present in input datasets so far.
+
+```{r vmrseq, fig.retina = NULL, fig.align='center', fig.wide = TRUE, echo=FALSE}
+knitr::include_graphics("../man/figures/method.png")
+```
+
+
+# Input data
+
+vmrseq takes processed and filtered single-cell bisulfite sequencing **binary** methylation values as input. After processing and filtering, each sequenced CpG takes a value of methylated or unmethylated in each cell.
+
+## Process and filter individual-cell read files
+
+We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Following is an example of how to use this function.
+
+The `data.pool` function pools individual-cell CpG read files into a SummarizedExperiment object (with *NA-dropped sparseMatrix representation* by default). Store the file paths of individual cells to a list, for example, called `cell_list`, and input it to `data.pool` function. `data.pool` does not give any output but directly writes the SummarizedExperiment object into the `writeDir` specified by the user, here is an example: (this step might take long in practice since input datasets usually contain many cells; suggest to parallelize the computation with chromosomes)
+```{r eval = F}
+data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")
+```
+Note that in each cell, sites with hemimethylation or intermediate methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
+
+Each cell file should be in BED-like format, where the first 5 columns in each file must be: *chr*, *pos*, *strand*, *meth_read*, *total_read*, in strict order, for example:
+```{r}
+data("cell_1")
+head(cell_1)
+```
+
+
+The `SummarizedExperiment` object stores CpG sites as rows and cells as columns. We adopted the NA-dropped sparseMatrix representation to save storage space for large single-cell datasets (see following section for specifics of how this representation look like). This option can be turned off but we recommend to keep it on. 
+
+Further, `data.pool` saves the `SummarizedExperiment` object into disk using `HDF5` format, which is a backend extension of `DelayedArray`. The HDF5/DelayedArray format allows one to perform common array operations on it without loading the object in memory. See packages [HDF5Array](https://bioconductor.org/packages/release/bioc/html/HDF5Array.html) and [DelayedArray](https://bioconductor.org/packages/release/bioc/html/DelayedArray.html) for details.
+
+
+## Load example data
+
+In this vignette, we use a formatted example dataset built in the package that's ready to be input to model fitting function (which is not accessible to users due to format limitation of internal data of R packages). In usual cases users of this package would use `HDF5::loadHDF5SummarizedExperiment` to load saved HDF5SummarizedExperiment objects into R. 
+
+```{r}
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+```
+
+It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
+```{r}
+toy.se
+```
+```{r}
+dim(toy.se)
+```
+
+
+```{r}
+GenomicRanges::granges(toy.se)
+```
+
+
+```{r}
+SummarizedExperiment::assays(toy.se)
+```
+
+Moreover, the assay matrix is in *NA-dropped sparseMatrix representation* (implemented using the `recommenderlab::dropNA` function):
+```{r}
+SummarizedExperiment::assays(toy.se)$M_mat[5:10, 5:10]
+```
+In particular, the NAs in the dataset are represented by 0 (or 0.000000e+00 as shown above), and the 0's are represented in a very small positive real number (2.225074e-308 as shown above). This allows the matrix to be stored in a `sparseMatrix` format so that it takes less disk storage. One can use the `vmrseq::HDF5NAdrop2matrix` function to convert the assay from HDF5SummarizedExpriment object saved by `vmrseq::data.pool` back to regular matrices.
+
+# Detect variably methylated regions (VMR)
+
+## Brief intro on the vmrseq method
+
+vmrseq is a two-stage approach that first constructs candidate regions and then determines whether a VMR is present and its location if applicable. The first stage of vmrseq scans the genome for regions containing consecutive CpGs that show evidence of potential cell-to-cell variation. vmrseq first applies smoothing to mitigate the influence of limited coverage and counteract the reduction in statistical power caused by the inherent noise in single-cell data. The candidate regions are defined as groups of consecutive loci that exceed some threshold on the inter-cellular variance of smoothed methylation levels. 
+
+The second stage of vmrseq optimizes a hidden Markov model that models methylation states of individual CpG sites for each candidate region. The estimation of parameters and hidden states in the HMM determines whether groups of cell subpopulations show distinct epigenetic signals in each region and solves for the precise genomic range of VMRs.
+
+For more details, refer to the **vmrseq** paper (Shen et al. 2023).
+
+
+## On the note of computational time
+
+The use of parallelization can sufficiently lower computation time of vmrseq. To use more cores, use the `register` function of [BiocParallel](http://bioconductor.org/packages/BiocParallel). For example, the following chunk (not evaluated here), would register 8 cores, and then the functions above would split computation over these cores.
+
+```{r eval = F}
+library("BiocParallel")
+register(MulticoreParam(8))
+```
+
+Generally, the computation time of vmrseq depends on not only the number of cores, but also the level of heterogeneity presents in input data. **Thus we suggest users to first run vmrseq on a small subset of the cells and CpG sites of the input dataset to test out the computational burden before apply the method on the complete dataset.**
+
+
+## Run vmrseq method
+
+The standard VMR analysis steps are wrapped into two functions, `vmrseq.smooth` and `vmrseq.fit`. The estimation steps performed by them are described briefly below, as well as in more detail in the vmrseq paper. Here we run the results for a subset of 30,000 CpGs in 200 cells in the interest of computation time.
+
+The `vmrseq.smooth` function performs kernel smoothing on the single-cell methylation and output a `GRanges` object with the CpG coordinate information extracted from the input `toy.se` and metadata columns indicating the methylated cell count (i.e., <meth>), the total cell coverage (i.e., <total>) and the inter-cellular variance on methylation level.
+```{r}
+gr <- vmrseq.smooth(toy.se)
+```
+```{r}
+head(gr)
+```
+
+
+Next, the `vmrseq.fit` function performs rest steps of the method, i.e., defining the candidate regions based on the variance and fitting the hidden Markov model to detect the VMRs. 
+```{r}
+results <- vmrseq.fit(gr)
+```
+
+
+## Method output
+
+```{r}
+results
+```
+
+The results object is a list of 6 elements that contains the following information:
+
+  1. `gr`: The `Granges` object that has been input to `vmrseq.fit` with two added metadata columns:
+      + `cr_index` = Index in reference to rows of `cr.ranges`, denoting row number of the candidate region to which the CpG site belongs.
+      + `vmr_index` = Index in reference to rows of `vmr.ranges`, denoting row number of the variably methylated region to which the CpG site belongs.
+  2. `vmr.ranges`: A `Granges` object with the coordinates of each detected variably methylated region (each row is a VMR), with metadata columns:
+      + `num_cpg` = Number of observed CpG sites in the VMR.
+      + `start_ind` = Index of the starting CpG sites in reference to rows of `gr`.
+      + `end_ind` = Index of the ending CpG sites in reference to rows of `gr`.
+      + `pi` = Prevalence of the methylated grouping (see manuscript for details)
+      + `loglik_diff` = Difference in log-likelihood of two-grouping and one-grouping HMM fitted to the VMR; can be used to rank the VMRs.
+  3. `cr.ranges`: A `Granges` object with the coordinates of each candidate region (each row is a candidate region), with metadata column:
+      + `num_cpg` = Number of observed CpG sites in the candidate region.
+  4. `alpha`: Designated significance level (default 0.05, can be changed by user with function argument). It is used for determining the threshold on variance used for constructing candidate. The threshold is computed by taking the $1-\alpha$ quantile of an approximate null distribution of variance (see manuscript for details).
+  5. `var_cutoff`: Variance cutoff computed from `alpha`.
+  6. `bb_params`: Beta-binomial parameter used in emission probability of the HMM model; they are determined by the magnitude of the input dataset (see manuscript for details). 
+
+In summary, vmrseq found `r length(results$cr.ranges)` candidate regions, among which `r length(results$vmr.ranges)` contains VMR.
+
+# Downstream analysis
+
+In the **vmrseq** manuscript, we generally apply downstream analyses (such as dimension reduction, clustering analysis and association with gene expression) on the regional average methylation of VMRs. Thus, we are in the process of implementing a function for summarizing regional methylation levels.
+
+We will also implement wrapper functions of downstream analyses tailored for scBS-seq data as well -- coming soon!
+
+# Session info
+
+```{r}
+sessionInfo()
+```
+
+
