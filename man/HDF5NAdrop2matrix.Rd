@@ -2,14 +2,13 @@
 % Please edit documentation in R/HDF5NAdrop2matrix.R
 \name{HDF5NAdrop2matrix}
 \alias{HDF5NAdrop2matrix}
-\title{Coerce a NA-dropped HDF5Matrix back to matrix form}
+\title{Coerce a NA-dropped HDF5 matrix back to regular matrix form where NAs are not dropped to 0.}
 \usage{
-HDF5NAdrop2matrix(hdf5_matrix)
+HDF5NAdrop2matrix(hdf5_assay)
 }
 \arguments{
-\item{HDF5Matrix}{an HDF5Matrix (e.g. assay output from vmrseq::data.pool)
-with dropped NA values}
+\item{hdf5_assay}{an DelayedMatrix object with dropped NA values (e.g. an assay from HDF5SummarizedExpriment object saved by vmrseq::data.pool)}
 }
 \description{
-Coerce a NA-dropped HDF5Matrix back to matrix form
+Coerce a NA-dropped HDF5 matrix back to regular matrix form where NAs are not dropped to 0.
 }

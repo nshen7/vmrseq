@@ -77,7 +77,7 @@ Note that in each cell, sites with hemimethylation or intermediate methylation l
 
 Each cell file should be in BED-like format, where the first 5 columns in each file must be: *chr*, *pos*, *strand*, *meth_read*, *total_read*, in strict order, for example:
 ```{r}
-data(cell_1)
+data("cell_1")
 head(cell_1)
 ```
 
@@ -93,11 +93,12 @@ In this vignette, we use a formatted example dataset built in the package called
 
 ```{r, include=FALSE}
 ### This can only be run inside the Rproj of this package!!!
-toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
+# toy.se <- HDF5Array::loadHDF5SummarizedExperiment(here::here('data', 'toy.se'))
 ```
 
 It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy.se", package = "vmrseq"))
 toy.se
 ```
 ```{r}

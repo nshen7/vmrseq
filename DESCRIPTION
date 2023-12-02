@@ -20,7 +20,6 @@ Imports:
     GenomicRanges,
     ggplot2,
     methods,
-    purrr,
     tidyr,
     locfit,
     gamlss.dist,
