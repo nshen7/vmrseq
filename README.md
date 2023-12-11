@@ -23,7 +23,7 @@ An online vignette of how to use the vmrseq package can be found at
 
 ## Citation
 
-Shen, Ning, and Keegan Korthauer. 2023. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv. [https://doi.org/10.1101/2023.11.20.567911](https://doi.org/10.1101/2023.11.20.567911).
+Ning Shen and Keegan Korthauer. 2023. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv. [https://doi.org/10.1101/2023.11.20.567911](https://doi.org/10.1101/2023.11.20.567911).
 
 ## License/Copyright
 
