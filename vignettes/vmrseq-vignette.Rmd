@@ -7,7 +7,7 @@ author:
   - Centre for Molecular Medicine and Therapeutics, BC Children's Hospital Research Institute
   email: ning.shen@stat.ubc.ca
 output: 
-  # rmarkdown::html_vignette:
+  rmarkdown::html_vignette:
   html_document:
     toc: true
     toc_depth: 3
