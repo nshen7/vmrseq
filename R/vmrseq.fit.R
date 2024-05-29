@@ -14,6 +14,9 @@
 #' @param maxGap integer value representing maximum number of base pairs in
 #' between neighboring CpGs to be included in the same VMR. Default value is
 #' 2000 bp.
+#' @param stage1only boolean value indicating whether the algorithm should run
+#' stage 1 of vmrseq (the construction of candidate regions) only. If set to TRUE,
+#' the function will output only the candidate regions. Default is FALSE.
 #' @param minNumCR positive integer value representing the minimum number of
 #' CpG sites within a candidate region. Default value is 5.
 #' @param minNumVMR positive integer value representing the minimum number of
@@ -51,6 +54,7 @@ vmrseq.fit <- function(
     gr,
     alpha = 0.05,
     maxGap = 2000,
+    stage1only = FALSE,
     minNumCR = 5, minNumVMR = 5,
     gradient = TRUE,
     tp = NULL,
@@ -114,54 +118,53 @@ vmrseq.fit <- function(
     cr_index[unlist(CRI)] <- rep.int(1:length(CRI), lengths(CRI))
     values(gr)$cr_index <- cr_index
 
-    # Starting detecting VMRs
-    message(
-      "Step 2: Detecting VMRs..."
-    )
-    t1 <- proc.time()
-
-    vmr.df <- searchVMR( # data frame of VMR information
-      gr = gr,
-      CRI = CRI,
-      # penalty = penalty,
-      # maxGap = maxGap,
-      minNumVMR = minNumVMR,
-      # minNumLong = minNumLong,
-      # maxNumMerge = maxNumMerge,
-      tp = tp,
-      gradient = gradient,
-      control = control,
-      verbose = verbose,
-      parallel = parallel
-    )
-    VMRI <- lapply( # list of indices of VMRs
-      1:nrow(vmr.df),
-      function(i) vmr.df$start_ind[i]:vmr.df$end_ind[i]
-    )
-
-    t2 <- proc.time()
-
-    if (nrow(vmr.df) == 0) {
-      message("No VMR detected.")
-      return(NULL)
-    } else {
-      message("...Finished detecting VMRs - took ",
-              round((t2 - t1)[3]/60, 2), " min and ",
-              nrow(vmr.df), " VMRs found in total.
-  ...", round(sum(vmr.df$end_ind-vmr.df$start_ind+1) / length(gr) * 100, 2),
-              "% sites are called to be in VMRs.")
-    }
-
-    # Formatting function output
-    vmr_index <- rep(NA, length(gr))
-    vmr_index[unlist(VMRI)] <- rep.int(1:length(VMRI), lengths(VMRI))
-    values(gr) <- cbind(values(gr), vmr_index)
-
-    vmr.gr <- indexToGranges(gr = gr, Indexes = VMRI)
-    values(vmr.gr) <- cbind(values(vmr.gr), vmr.df[, -c(3,5)])
-
     cr.gr <- indexToGranges(gr = gr, Indexes = CRI)
 
-    return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff, bb_params = pars))
+    if (stage1only) {
+      return(list(gr = gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff))
+    } else {
+      # Starting detecting VMRs
+      message(
+        "Step 2: Detecting VMRs..."
+      )
+      t1 <- proc.time()
+
+      vmr.df <- searchVMR( # data frame of VMR information
+        gr = gr,
+        CRI = CRI,
+        minNumVMR = minNumVMR,
+        tp = tp,
+        gradient = gradient,
+        control = control,
+        verbose = verbose,
+        parallel = parallel
+      )
+      VMRI <- lapply( # list of indices of VMRs
+        1:nrow(vmr.df),
+        function(i) vmr.df$start_ind[i]:vmr.df$end_ind[i]
+      )
+
+      t2 <- proc.time()
+
+      if (nrow(vmr.df) == 0) {
+        message("No VMR detected.")
+        return(NULL)
+      } else {
+        message("...Finished detecting VMRs - took ",
+                round((t2 - t1)[3]/60, 2), " min and ",
+                nrow(vmr.df), " VMRs found in total.
+  ...", round(sum(vmr.df$end_ind-vmr.df$start_ind+1) / length(gr) * 100, 2),
+                "% sites are called to be in VMRs.")
+      }
+
+      # Formatting function output
+      vmr_index <- rep(NA, length(gr))
+      vmr_index[unlist(VMRI)] <- rep.int(1:length(VMRI), lengths(VMRI))
+      values(gr) <- cbind(values(gr), vmr_index)
+
+      vmr.gr <- indexToGranges(gr = gr, Indexes = VMRI)
+      values(vmr.gr) <- cbind(values(vmr.gr), vmr.df[, -c(3,5)])
+      return(list(gr = gr, vmr.ranges = vmr.gr, cr.ranges = cr.gr, alpha = alpha, var_cutoff = cutoff, bb_params = pars))
+    }
   }
 }
