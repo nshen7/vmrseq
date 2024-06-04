@@ -7,7 +7,7 @@ author:
   - Centre for Molecular Medicine and Therapeutics, BC Children's Hospital Research Institute
   email: ning.shen@stat.ubc.ca
 output: 
-  # rmarkdown::html_vignette:
+  rmarkdown::html_vignette:
   html_document:
     toc: true
     toc_depth: 3
@@ -57,13 +57,23 @@ How to get help for vmrseq: Feel free to raise questions by opening issue(s) in 
 High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. We present `vmrseq`, a statistical method that overcomes these challenges to accurately  and robustly identify de novo variably methylated regions (VMR) in single-cell DNA methylation data. To the best of our knowledge, vmrseq has been the only method that flexibly pinpoints biologically relevant regions at single-base pair resolution without prior knowledge of size or location. In addition, vmrseq is the only approach capable of detecting VMRs that are sensitive to the level of heterogeneity present in input datasets so far.
 
 ```{r vmrseq, fig.retina = NULL, fig.align='center', fig.wide = TRUE, echo=FALSE}
-knitr::include_graphics("../man/figures/method.png")
+knitr::include_graphics("../man/figures/method.png", dpi = 300)
 ```
 
 
 # Input data
 
 vmrseq takes processed and filtered single-cell bisulfite sequencing **binary** methylation values as input. After processing and filtering, each sequenced CpG takes a value of methylated or unmethylated in each cell.
+
+## On the note of pre-processing
+
+In the experiments of the vmrseq manuscript, the authors did not carry out the pre-processing but instead, adopted the processed .bam files provided by the original publications of the sequencing protocol and datasets. However, by summarizing the processing steps described in those publications as sources, we offer a flexible guideline intended to serve as a general reference rather than a strict requirement: 
+
+1. Remove cells with a low non-conversion rate (e.g., $\leq1\%$ in mouse and $\leq2\%$ in human). 
+1. To eliminate contaminated samples, remove cells with a low number of non-clonal mapped reads (e.g., 400K in mouse; 500K in human). 
+1. To protect against wells with multiple cells, remove cells exceeding an upper limit on coverage ($\leq15\%$ of cytosines). 
+1. Remove cells with low CpG site coverage (e.g., $\leq50,000$ CpG sites)
+
 
 ## Process and filter individual-cell read files
 
@@ -160,6 +170,11 @@ Next, the `vmrseq.fit` function performs rest steps of the method, i.e., definin
 results <- vmrseq.fit(gr)
 ```
 
+For users who need a preliminary check or prioritize speed over high precision in region detection and the ranking of regions, we recommend running only the first stage of the methodology. This allows for a faster initial analysis before applying the full methodology. This can be achieved by specifying the argument `stage1only = TRUE` in the `vmrseq.fit` function.
+```{r}
+results_s1 <- vmrseq.fit(gr, stage1only = TRUE)
+```
+
 
 ## Method output
 
@@ -185,6 +200,13 @@ The results object is a list of 6 elements that contains the following informati
   6. `bb_params`: Beta-binomial parameter used in emission probability of the HMM model; they are determined by the magnitude of the input dataset (see manuscript for details). 
 
 In summary, vmrseq found `r length(results$cr.ranges)` candidate regions, among which `r length(results$vmr.ranges)` contains VMR.
+
+
+If the argument `stage1only = TRUE` has been turned on, the output only contains four of the above-mentioned elements: `gr`, `cr.ranges`, `alpha`, `var_cutoff`. 
+```{r}
+names(results_s1)
+```
+
 
 # Downstream analysis
 

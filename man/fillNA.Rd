@@ -7,7 +7,13 @@
 fillNA(file, chr, pos_full, sep)
 }
 \arguments{
-\item{pos_full}{}
+\item{file}{file path}
+
+\item{chr}{chromosome name}
+
+\item{pos_full}{a complete list of genomic coordinates}
+
+\item{sep}{separator between columns}
 }
 \description{
 Fill NA's in missing cites per cell

@@ -11,11 +11,11 @@ LazyData: true
 RoxygenNote: 7.2.3
 biocViews: 
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5.0)
 Imports: 
     bumphunter,
-    BiocParallel,
     dplyr,
+    BiocParallel,
     DelayedArray,
     GenomicRanges,
     ggplot2,

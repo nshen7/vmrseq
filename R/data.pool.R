@@ -41,10 +41,8 @@
 #' @importFrom S4Vectors DataFrame
 
 #'
-#' @return
+#' @return Directly write out to the `writeDir` and does not return anything.
 #' @export
-#'
-#' @examples
 #'
 
 data.pool <- function(cellFiles,
@@ -130,26 +128,18 @@ data.pool <- function(cellFiles,
 
 #' Extract genomic coordinates of a particular chromosome in a cell file.
 #'
-#' @param file
-#' @param chr
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @param file file path
+#' @param sep separator between columns
+#' @param chr chromosome name
 extractCoord <- function(file, chr, sep) {
   data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2}'"))$V1
 }
 
 #' Extract and process methylation info of a particular chromosome from a cell file.
 #'
-#' @param file
-#' @param chr
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @param file file path
+#' @param sep separator between columns
+#' @param chr chromosome name
 extractInfo <- function(file, chr, sep) {
   df <- data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2\"\t\"$4\"\t\"$5}'"),
                           colClasses = c('integer', 'integer', 'integer'))
@@ -164,14 +154,10 @@ extractInfo <- function(file, chr, sep) {
 
 #' Fill NA's in missing cites per cell
 #'
-#' @param file
-#' @param chr
-#' @param pos_full
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @param file file path
+#' @param chr chromosome name
+#' @param sep separator between columns
+#' @param pos_full a complete list of genomic coordinates
 fillNA <- function(file, chr, pos_full, sep) {
   # Read in cell info
   df <- extractInfo(file, chr, sep)

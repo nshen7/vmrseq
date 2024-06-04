@@ -1,4 +1,6 @@
-#' Construct candidate regions (CRs) by taking groups of consecutive loci that exceed
+#' @title Construct candidate regions and detect variably methylated regions.
+#'
+#' @description Construct candidate regions (CRs) by taking groups of consecutive loci that exceed
 #' threshold on the variance of smoothed relative methylation levels and detect
 #' variably methylated regions (VMRs) by optimizing a hidden Markov model (HMM).
 #'
@@ -43,19 +45,34 @@
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom gamlss.dist rBEZI rBE
-#' @import dplyr
+#' @importFrom dplyr filter
 #' @import GenomicRanges
 #'
-#' @return
+#' @return The results object is a list of 6 elements that contains the following information:
+#' 1. `gr`: The `Granges` object that has been input to `vmrseq.fit` with two added metadata columns:
+#'     + `cr_index` = Index in reference to rows of `cr.ranges`, denoting row number of the candidate region to which the CpG site belongs.
+#'     + `vmr_index` = Index in reference to rows of `vmr.ranges`, denoting row number of the variably methylated region to which the CpG site belongs.
+#' 2. `vmr.ranges`: A `Granges` object with the coordinates of each detected variably methylated region (each row is a VMR), with metadata columns:
+#'     + `num_cpg` = Number of observed CpG sites in the VMR.
+#'     + `start_ind` = Index of the starting CpG sites in reference to rows of `gr`.
+#'     + `end_ind` = Index of the ending CpG sites in reference to rows of `gr`.
+#'     + `pi` = Prevalence of the methylated grouping (see manuscript for details)
+#'     + `loglik_diff` = Difference in log-likelihood of two-grouping and one-grouping HMM fitted to the VMR; can be used to rank the VMRs.
+#' 3. `cr.ranges`: A `Granges` object with the coordinates of each candidate region (each row is a candidate region), with metadata column:
+#'     + `num_cpg` = Number of observed CpG sites in the candidate region.
+#' 4. `alpha`: Designated significance level (default 0.05, can be changed by user with function argument). It is used for determining the threshold on variance used for constructing candidate. The threshold is computed by taking the (1-alpha) quantile of an approximate null distribution of variance (see manuscript for details).
+#' 5. `var_cutoff`: Variance cutoff computed from `alpha`.
+#' 6. `bb_params`: Beta-binomial parameter used in emission probability of the HMM model; they are determined by the magnitude of the input dataset (see manuscript for details).
+#'
 #' @export
 #'
-#' @examples
 vmrseq.fit <- function(
     gr,
     alpha = 0.05,
     maxGap = 2000,
     stage1only = FALSE,
-    minNumCR = 5, minNumVMR = 5,
+    minNumCR = 5,
+    minNumVMR = 5,
     gradient = TRUE,
     tp = NULL,
     control = vmrseq.optim.control(),

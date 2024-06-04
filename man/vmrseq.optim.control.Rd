@@ -28,6 +28,9 @@ Default is \code{ifelse(backtrack, 0.05, 0.005)}.}
 \item{maxIter}{positive integer value representing the maximum number of
 iterations in optimization algorithm.}
 }
+\value{
+the list of arguments for optimization control
+}
 \description{
 Typically only used when calling vmrseq function with the
 option \code{control}.

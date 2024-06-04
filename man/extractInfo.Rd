@@ -7,7 +7,11 @@
 extractInfo(file, chr, sep)
 }
 \arguments{
-\item{chr}{}
+\item{file}{file path}
+
+\item{chr}{chromosome name}
+
+\item{sep}{separator between columns}
 }
 \description{
 Extract and process methylation info of a particular chromosome from a cell file.

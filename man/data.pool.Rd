@@ -44,6 +44,9 @@ Using NA-dropped sparseMatrix representation helps to save RAM during data
 processing, as well as storage space saving to disk. Currently only supports
 TRUE!!}
 }
+\value{
+Directly write out to the `writeDir` and does not return anything.
+}
 \description{
 This function pools individual-cell CpG read files into a
 SummarizedExperiment object so that it can be input to the \code{vmrseq.smooth}

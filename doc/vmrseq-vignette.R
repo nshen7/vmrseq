@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
 library(vmrseq)
 
 ## ----vmrseq, fig.retina = NULL, fig.align='center', fig.wide = TRUE, echo=FALSE----
-knitr::include_graphics("../man/figures/method.png")
+knitr::include_graphics("../man/figures/method.png", dpi = 300)
 
 ## ----eval = F-----------------------------------------------------------------
 #  data.pool(cellFiles = cell_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")
@@ -53,7 +53,13 @@ head(gr)
 results <- vmrseq.fit(gr)
 
 ## -----------------------------------------------------------------------------
+results_s1 <- vmrseq.fit(gr, stage1only = TRUE)
+
+## -----------------------------------------------------------------------------
 results
+
+## -----------------------------------------------------------------------------
+names(results_s1)
 
 ## -----------------------------------------------------------------------------
 sessionInfo()

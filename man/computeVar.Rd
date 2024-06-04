@@ -2,11 +2,13 @@
 % Please edit documentation in R/helper_functions.R
 \name{computeVar}
 \alias{computeVar}
-\title{Title}
+\title{Compute the smoothed variance}
 \usage{
 computeVar(gr, M, meanMeth, bpWindow, sparseNAdrop, parallel)
 }
 \arguments{
+\item{gr}{same as in \code{vmrseq.smooth}}
+
 \item{M}{numeric matrix of binary single-cell methylation status. Row number
 should be equal to the number of CpG sites and column number should be equal
 to the number of cells.}
@@ -14,8 +16,13 @@ to the number of cells.}
 \item{meanMeth}{numeric vector of across-cell mean methylation. Length should
 be equal to the number of CpG sites.}
 
-\item{parallel}{}
+\item{bpWindow}{same as in \code{vmrseq.smooth}}
+
+\item{sparseNAdrop}{same as in \code{vmrseq.smooth}}
+
+\item{parallel}{logical value that indicates whether function should be
+run in parallel}
 }
 \description{
-Title
+Compute the smoothed variance
 }

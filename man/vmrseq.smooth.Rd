@@ -14,7 +14,7 @@ vmrseq.smooth(
 )
 }
 \arguments{
-\item{SE}{SummarizedExperiment object with one (and only one) assay that
+\item{SE}{\code{SummarizedExperiment} object with one (and only one) assay that
 contains *binary* methylation status of CpG sites in individual cells. We
 recommend using output by \code{vmrseq::data.pool} (i.e., an NA-dropped
 HDF5-based SummarizedExperiment object) to prevent running out of memory.}

@@ -14,7 +14,7 @@
 #' @param maxIter positive integer value representing the maximum number of
 #' iterations in optimization algorithm.
 #'
-#' @return
+#' @return the list of arguments for optimization control
 #'
 #' @export
 #'

@@ -2,13 +2,29 @@
 % Please edit documentation in R/helper_functions.R
 \name{smoothMF}
 \alias{smoothMF}
-\title{Title}
+\title{Kernel smoothing function}
 \usage{
 smoothMF(x, y, weights, chr, minInSpan, bpSpan, verbose, parallel)
 }
 \arguments{
-\item{parallel}{}
+\item{x}{vector of the x values}
+
+\item{y}{vector of the y values}
+
+\item{weights}{vector of the weight associated with each data point}
+
+\item{chr}{string of the chromosome name}
+
+\item{minInSpan}{minimum number of sites in the span}
+
+\item{bpSpan}{base pair of the span}
+
+\item{verbose}{logical value that indicates whether progress messages
+should be printed to stdout}
+
+\item{parallel}{logical value that indicates whether function should be
+run in parallel}
 }
 \description{
-Title
+Kernel smoothing function
 }

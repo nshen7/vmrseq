@@ -7,7 +7,11 @@
 extractCoord(file, chr, sep)
 }
 \arguments{
-\item{chr}{}
+\item{file}{file path}
+
+\item{chr}{chromosome name}
+
+\item{sep}{separator between columns}
 }
 \description{
 Extract genomic coordinates of a particular chromosome in a cell file.

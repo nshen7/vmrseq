@@ -1,18 +1,44 @@
-#' Title
+#' cell_1
 #'
-#' @param x
-#' @param y
-#' @param weights
-#' @param chr
-#' @param minInSpan
-#' @param bpSpan
-#' @param verbose
-#' @param parallel
+#' This dataset is an example of a single-cell file that can be input to
+#' \code{vmrseq::data.pool} function. It contains the first 100 CpG sites in
+#' a cell from mouse frontal cortext dataset published by Luo et al. (2017).
 #'
-#' @return
-#' @export
-#'
+#' @docType data
+#' @name cell_1
+#' @usage data(cell_1)
+#' @format A data frame with 100 rows and 5 variables (no column names):
+#' \describe{
+#'   \item{V1}{Chromosome}
+#'   \item{V2}{Genomic coordinate}
+#'   \item{V3}{Strand information}
+#'   \item{V4}{Number of methylated reads}
+#'   \item{V5}{Number of reads in total}
+#' }
+#' @references Luo, Chongyuan et al. \emph{Single-cell methylomes identify neuronal
+#' subtypes and regulatory elements in mammalian cortex.}. Science (New York, N.Y.)
+#' vol. 357,6351 (2017): 600-604.
 #' @examples
+#' data(cell_1)
+#' cell_1
+#'
+"cell_1"
+
+
+
+#' Kernel smoothing function
+#'
+#' @param x vector of the x values
+#' @param y vector of the y values
+#' @param weights vector of the weight associated with each data point
+#' @param chr string of the chromosome name
+#' @param minInSpan minimum number of sites in the span
+#' @param bpSpan base pair of the span
+#' @param verbose logical value that indicates whether progress messages
+#' should be printed to stdout
+#' @param parallel logical value that indicates whether function should be
+#' run in parallel
+
 smoothMF <- function(x, y,
                      weights, chr,
                      minInSpan, bpSpan,
@@ -70,22 +96,19 @@ smoothMF <- function(x, y,
 } # end of function `smoothMF`
 
 
-#' Title
+#' Compute the smoothed variance
 #'
-#' @param gr
+#' @param gr same as in \code{vmrseq.smooth}
 #' @param M numeric matrix of binary single-cell methylation status. Row number
 #' should be equal to the number of CpG sites and column number should be equal
 #' to the number of cells.
 #' @param meanMeth numeric vector of across-cell mean methylation. Length should
 #' be equal to the number of CpG sites.
-#' @param bpWindow
-#' @param sparseNAdrop
-#' @param parallel
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @param bpWindow same as in \code{vmrseq.smooth}
+#' @param sparseNAdrop same as in \code{vmrseq.smooth}
+#' @param parallel logical value that indicates whether function should be
+#' run in parallel
+
 computeVar <- function(gr, M,
                        meanMeth,
                        bpWindow,
@@ -139,7 +162,6 @@ computeVar <- function(gr, M,
     }
 
     var_i <- do.call(c, lapply(1:length(wds_inds), function(j) varByWindow(j)))
-    # meanMeth_sm_i <- rowMeans(rel_M_i, na.rm = TRUE)
 
     return(var_i)
   } # end of function 'varByCluster'
@@ -159,14 +181,6 @@ computeVar <- function(gr, M,
   return(var)
 } # end of function 'computeVar'
 
-#' Title
-#'
-#' @param total vector of total read counts
-#'
-#' @return
-#' @export
-#'
-#' @examples
 getPriorParams <- function(total) {
   pars_u <- .priorParams(median(total), type = "u")
   pars_m <- .priorParams(median(total), type = "m")
@@ -177,13 +191,13 @@ getPriorParams <- function(total) {
 #'
 #' @param alpha level of significance
 #' @param meth vector of meth read counts
+#' @param pars_u parameters used in the ZIBB distribution for unmethylated grouping
+#' @param pars_m parameters used in the BB distribution for methylated grouping
+#' @param n number of simulations
 #' @param total vector of total read counts
+#'
 #' @importFrom gamlss.dist rBEZI rBE
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 computeVarCutoff <- function(alpha, meth, total, pars_u, pars_m, n = 100000) {
   mf <- meth / total
   prob <- c(sum(mf < 0.4), sum(mf > 0.6)) / sum(mf < 0.4 | mf > 0.6)
@@ -194,20 +208,7 @@ computeVarCutoff <- function(alpha, meth, total, pars_u, pars_m, n = 100000) {
   return(quantile(null_var, 1-alpha))
 }
 
-#' Title
-#'
-#' @param gr
-#' @param cutoff
-#' @param maxGap
-#' @param minNumCR
-#' @param bpWindow
-#' @param verbose
-#' @param parallel
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 callCandidRegion <- function(gr,
                              cutoff,
                              maxGap,
@@ -216,80 +217,8 @@ callCandidRegion <- function(gr,
                              verbose,
                              parallel
 ) {
-  # callCandidRegion <- function(SE,
-  #                              qVar,
-  #                              maxGap, minNumCR,
-  #                              bpWindow,
-  #                              acrsSmooth, bpSpan, minInSpan,
-  #                              maxNumMerge,
-  #                              verbose,
-  #                              parallel) {
-  #
-  # gr <- granges(SE)
-  # M <- assays(SE)[[1]]
-  #
-  # # Compute methylated fraction of cells for individual sites
-  # gr$meanMeth <- gr$meth / gr$total
-  #
-  # # Apply smoother and compute variance on each chromosome serially
-  # chrs <- as.character(unique(seqnames(gr)))
-  # fit <- NULL; var <- NULL
-  # for (chromosome in chrs) {
-  #
-  #   if (verbose) message(
-  #     "...Chromosome ",
-  #     paste(chromosome, collapse = ", "), ": ",
-  #     appendLF = FALSE
-  #   )
-  #
-  #   t1 <- proc.time()
-  #
-  #   # Subset one chromosome from gr and M
-  #   gr_chr <- subset(gr, seqnames(gr) == chromosome)
-  #   if (length(gr_chr) < minNumCR){
-  #     message("No candidates found.")
-  #     next
-  #   }
-  #   M_chr <- M[seqnames(gr) == chromosome, ]
-  #
-  #   ## Locfit smooth on fractional methylation
-  #   if (acrsSmooth) {
-  #     weights <- gr_chr$total
-  #     fit_chr <- smoothMF(x = start(gr_chr), y = gr_chr$mf,
-  #                         chr = chromosome,
-  #                         weights = weights,
-  #                         maxGap = maxGap, minNumCR = minNumCR,
-  #                         minInSpan = minInSpan, bpSpan = bpSpan,
-  #                         verbose = verbose,
-  #                         parallel = parallel)
-  #     fit_chr$fitted <- fit_chr$fitted %>% pmax(0) %>% pmin(1)
-  #   } else {
-  #     fit_chr <- data.frame(fitted = rep(NA, length(gr_chr)), is_smooth = FALSE)
-  #   }
-  #   # Keep the raw mf if not smoothed
-  #   ind <- which(!fit_chr$is_smooth)
-  #   if (length(ind) > 0) fit_chr$fitted[ind] <- gr_chr$mf[ind]
-  #   # Concatenate fit_chr from all chromosomes
-  #   fit <- rbind(fit, fit_chr)
-  #   if (verbose) message("Smoothed, ", appendLF = FALSE)
-  #
-  #
-  #   ## Compute variance relative to smoothed MF
-  #   var_chr <- computeVar(gr_chr, M_chr, fit_chr,
-  #                               bpWindow,
-  #                               parallel)
-  #   # Concatenate fit_chr from all chromosomes
-  #   var <- c(var, var_chr)
-  #
-  #   if (verbose) {
-  #     t2 <- proc.time()
-  #     message("variance computed (", round((t2 - t1)[3]/60, 2), " min). ")
-  #   }
-  # }
-  # colnames(fit) <- c("smoothed_mf", "is_smooth")
 
   # Compute cutoff based on qVar
-  # cutoff <- quantile(var, prob = 1-qVar)
   mes <- "...Calling candidate regions with cutoff of %.3f on variance."
   message(sprintf(mes, cutoff))
 
@@ -311,28 +240,9 @@ callCandidRegion <- function(gr,
 } # end of function `callCandidRegion`
 
 
-#' Title
-#'
-#' @param gr
-#' @param CRI
-#' @param minNumVMR
-#' @param maxNumMerge
-#' @param tp
-#' @param gradient
-#' @param control
-#' @param verbose
-#' @param parallel
-#'
-#' @return
-#' @export
-#'
-#' @examples
 searchVMR <- function(gr,
                       CRI,
-                      # penalty,
                       minNumVMR,
-                      # minNumLong,
-                      # maxNumMerge,
                       tp,
                       gradient,
                       control,
@@ -363,37 +273,20 @@ searchVMR <- function(gr,
                          tp = tp,
                          METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
-    # if (length(ix) >= minNumLong) { # long region
-      res_2g <- .solve2Grp(gradient = gradient,
-                           pos = pos, totals = totals, meths = meths,
-                           tp = tp,
-                           inits = control$inits, epsilon = control$epsilon,
-                           backtrack = control$backtrack,
-                           eta = control$eta, max_iter = control$maxIter,
-                           CHOICEARRAY = CHOICEARRAY,
-                           METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-    # } else { # short region
-    #   res_2g <- .solve2Grp(gradient = gradient,
-    #                        pos = pos, totals = totals, meths = meths,
-    #                        tp = tp,
-    #                        inits = mean(meths/totals), epsilon = control$epsilon,
-    #                        backtrack = control$backtrack,
-    #                        eta = control$eta, max_iter = control$maxIter,
-    #                        CHOICEARRAY = CHOICEARRAY,
-    #                        METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
-    # }
+    res_2g <- .solve2Grp(gradient = gradient,
+                         pos = pos, totals = totals, meths = meths,
+                         tp = tp,
+                         inits = control$inits, epsilon = control$epsilon,
+                         backtrack = control$backtrack,
+                         eta = control$eta, max_iter = control$maxIter,
+                         CHOICEARRAY = CHOICEARRAY,
+                         METHARRAY = METHARRAY, UNMETHARRAY = UNMETHARRAY)
 
-    # if (res_2g$loglik > res_1g$loglik + penalty) {
     if (res_2g$loglik > res_1g$loglik) {
       vmr_inds <- .callVMR(
         state_seq_2g = res_2g$vit_path[, 1:2],
         min_n = minNumVMR
       )
-      # vmr_inds <- .callVMR(
-      #   state_seq_2g = res_2g$vit_path[, 1:2],
-      #   min_n = minNumVMR,
-      #   max_n_merge = maxNumMerge
-      # )
       if (is.null(vmr_inds)) return(NULL)
       else return(data.frame(vmr_inds + ix[1] - 1,
                              # cr_index = i,
@@ -424,16 +317,6 @@ searchVMR <- function(gr,
 } # end of function `searchVMR`
 
 
-
-#' Title
-#'
-#' @param gr
-#' @param Indexes
-#'
-#' @return
-#' @export
-#'
-#' @examples
 indexToGranges <- function(gr, Indexes) {
   start_inds <- sapply(Indexes, function(ix) ix[1])
   end_inds <- sapply(Indexes, function(ix) ix[length(ix)])

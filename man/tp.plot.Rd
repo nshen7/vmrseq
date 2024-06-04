@@ -2,7 +2,7 @@
 % Please edit documentation in R/tp.plot.R
 \name{tp.plot}
 \alias{tp.plot}
-\title{Plot fitted transition probabilities}
+\title{Plot transition probability distribution}
 \usage{
 tp.plot(tp, line_size = 0.2, plot_train = T, point_size = 0.2)
 }
@@ -18,6 +18,9 @@ Default is TRUE.}
 \item{point_size}{size of training data points. Only applicable when
 `plot_train = T`. Default value is 0.2.}
 }
+\value{
+A plot of the transition probability distribution
+}
 \description{
-Plot fitted transition probabilities
+Plot transition probability distribution
 }

@@ -1,4 +1,4 @@
-#' Plot fitted transition probabilities
+#' Plot transition probability distribution
 #'
 #' @param tp 'transitProbs' object storing information about trained transition
 #' probabilities. Can be obtained from function `estimTransitProbs`
@@ -10,14 +10,12 @@
 #'
 #'
 #' @import ggplot2
-#' @import dplyr
+#' @importFrom dplyr %>%
 #' @importFrom stats na.omit var
 #' @importFrom tidyr pivot_longer
 #'
-#' @return
+#' @return A plot of the transition probability distribution
 #' @export
-#'
-#' @examples
 #'
 tp.plot <- function(tp,
                     line_size = 0.2,
@@ -38,7 +36,6 @@ tp.plot <- function(tp,
       rbind(tp@transit_probs, tp@buffer_probs),
       tp@train
     ) %>%
-    # dplyr::select(-starts_with("var")) %>%
     tidyr::pivot_longer(
       cols = -1,
       names_to = c(".value", "type"),

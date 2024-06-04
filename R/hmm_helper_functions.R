@@ -562,7 +562,7 @@
 
   # Merge all VMRs >= `min_n` CpGs in this CR
   inds <- data.frame(start_ind = start_ind, end_ind = end_ind)
-  if (nrow(inds) > 0) inds <- inds %>% filter(end_ind - start_ind + 1 >= min_n) # remove VMRs with < `min_n` CpGs
+  if (nrow(inds) > 0) inds <- inds %>% dplyr::filter(end_ind - start_ind + 1 >= min_n) # remove VMRs with < `min_n` CpGs
   if (nrow(inds) > 0) inds <- with(inds, data.frame(start_ind = start_ind[1], end_ind = end_ind[length(end_ind)])) # merge
   if (nrow(inds) == 0) inds <- NULL
   return(inds)

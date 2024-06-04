@@ -12,6 +12,12 @@ computeVarCutoff(alpha, meth, total, pars_u, pars_m, n = 1e+05)
 \item{meth}{vector of meth read counts}
 
 \item{total}{vector of total read counts}
+
+\item{pars_u}{parameters used in the ZIBB distribution for unmethylated grouping}
+
+\item{pars_m}{parameters used in the BB distribution for methylated grouping}
+
+\item{n}{number of simulations}
 }
 \description{
 Compute cutoff on smoothed variance for determining candidate regions

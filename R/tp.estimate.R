@@ -26,14 +26,12 @@
 #' @return a 'transitProbs' object. Postfixes rule in the output variables:
 #' P(0|0) => '00'; P(0|1) => '01'; P(1|0) => '10'; P(1|1) => '11'.
 #'
-#' @import dplyr
+#' @importFrom dplyr %>% mutate lag ungroup select filter group_by summarise right_join arrange
 #' @importFrom methods new
 #' @importFrom stats loess
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #'
 #' @export
-#'
-#' @examples
 #'
 tp.estimate <- function(list,
                         max_dist_bp = 2000,
@@ -103,9 +101,9 @@ tp.estimate <- function(list,
   .computeLag <- function(lag) {
     lag_df <- df %>%
       group_by(chr) %>%
-      mutate(state_lag = dplyr::lag(state, n = lag),
-             dist_bp = c(rep(NA, lag), diff(pos, lag = lag))) %>%
-      ungroup() %>%
+      dplyr::mutate(state_lag = dplyr::lag(state, n = lag),
+                    dist_bp = c(rep(NA, lag), diff(pos, lag = lag))) %>%
+      dplyr::ungroup() %>%
       dplyr::select(state, state_lag, dist_bp) %>%
       dplyr::filter(dist_bp <= max_dist_bp + buffer_bp) %>%
       group_by(dist_bp) %>%
@@ -118,24 +116,21 @@ tp.estimate <- function(list,
   }
 
   smr_df <- do.call(rbind, lapply(lags, .computeLag)) %>%
-  # smr_df <- df %>%
-  #   group_by(chr) %>%
-  #   mutate(state_lag = dplyr::lag(state), dist_bp = c(NA, diff(pos))) %>%
-    group_by(dist_bp) %>%
-    summarise(N_00 = sum(N_00), # number of sites from 0 to 0
-              N_10 = sum(N_10), # number of sites from 0 to 1
-              N_01 = sum(N_01), # number of sites from 1 to 0
-              N_11 = sum(N_11)  # number of sites from 1 to 1
+    dplyr::group_by(dist_bp) %>%
+    dplyr::summarise(N_00 = sum(N_00), # number of sites from 0 to 0
+                     N_10 = sum(N_10), # number of sites from 0 to 1
+                     N_01 = sum(N_01), # number of sites from 1 to 0
+                     N_11 = sum(N_11)  # number of sites from 1 to 1
     ) %>%
-    mutate(p_00 = N_00 / (N_00 + N_10), # P(X_i = 0 | X_{i-1} = 0)
-           p_01 = N_01 / (N_01 + N_11) # P(X_i = 0 | X_{i-1} = 1)
+    dplyr::mutate(p_00 = N_00 / (N_00 + N_10), # P(X_i = 0 | X_{i-1} = 0)
+                  p_01 = N_01 / (N_01 + N_11) # P(X_i = 0 | X_{i-1} = 1)
     ) %>%
-    mutate(p_10 = 1 - p_00, # P(X_i = 1 | X_{i-1} = 0)
-           p_11 = 1 - p_01 # P(X_i = 1 | X_{i-1} = 1)
+    dplyr::mutate(p_10 = 1 - p_00, # P(X_i = 1 | X_{i-1} = 0)
+                  p_11 = 1 - p_01 # P(X_i = 1 | X_{i-1} = 1)
     ) %>%
     # dplyr::select(-c(N_00, N_10, N_01, N_11)) %>%
-    right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp") %>%
-    arrange(dist_bp)
+    dplyr::right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp") %>%
+    dplyr::arrange(dist_bp)
 
   return(smr_df)
 }
@@ -149,8 +144,8 @@ tp.estimate <- function(list,
   message("Computing mean and var of the probs across cells.")
   train_data <- smr_units %>%
     dplyr::filter(dist_bp > 0) %>%
-    group_by(dist_bp) %>%
-    summarise(pbar_00 = mean(p_00, na.rm = T),
+    dplyr::group_by(dist_bp) %>%
+    dplyr::summarise(pbar_00 = mean(p_00, na.rm = T),
               pbar_01 = mean(p_01, na.rm = T),
               pbar_10 = mean(p_10, na.rm = T),
               pbar_11 = mean(p_11, na.rm = T),
@@ -158,11 +153,11 @@ tp.estimate <- function(list,
               var_01 = var(p_01, na.rm = T),
               var_10 = var(p_10, na.rm = T),
               var_11 = var(p_11, na.rm = T)) %>%
-    # add_row(dist_bp = 1,
+    # dplyr::add_row(dist_bp = 1,
     #         pbar_00 = NA, pbar_01 = NA, pbar_10 = NA, pbar_11 = NA,
     #         var_00 = NA, var_01 = NA, var_10 = NA, var_11 = NA,
     #         .before = 1) %>%
-    right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp")
+    dplyr::right_join(data.frame(dist_bp = 1:(max_dist_bp+buffer_bp)), by = "dist_bp")
 
   message("Loess smoothing over probs.")
 
@@ -170,8 +165,8 @@ tp.estimate <- function(list,
     # 'subscript' should be one of the strings '00', '01', '10', '11'
     train_cols <- train_data %>%
       dplyr::select(dist_bp,
-             paste0("pbar_", subscript),
-             paste0("var_", subscript)) %>%
+                    paste0("pbar_", subscript),
+                    paste0("var_", subscript)) %>%
       dplyr::filter(eval(parse(text = paste0("var_", subscript))) > 0)
     return(train_cols)
   }

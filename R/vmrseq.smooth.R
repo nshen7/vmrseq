@@ -8,7 +8,7 @@
 #'  to adjust for uneven coverage biases and borrow information from nearby sites.
 #'  See manuscript for detailed description.
 #'
-#' @param SE SummarizedExperiment object with one (and only one) assay that
+#' @param SE \code{SummarizedExperiment} object with one (and only one) assay that
 #'  contains *binary* methylation status of CpG sites in individual cells. We
 #'  recommend using output by \code{vmrseq::data.pool} (i.e., an NA-dropped
 #'  HDF5-based SummarizedExperiment object) to prevent running out of memory.
@@ -30,9 +30,7 @@
 #' @importFrom locfit locfit lp
 #' @importFrom DelayedArray rowSums colSums rowMeans colMeans is_sparse
 #' @importFrom recommenderlab dropNA2matrix
-#' @import dplyr
 #' @import GenomicRanges
-#' @import S4Vectors
 #' @import SummarizedExperiment
 #'
 #' @return a \code{GRanges} object that contains the result of smoothing.
@@ -47,8 +45,6 @@
 #' @seealso \code{\link{data.pool}}, \code{\link{vmrseq.fit}}
 #' @export
 #'
-#' @examples
-
 vmrseq.smooth <- function(
     SE,
     bpWindow = 2000, # param for individual-cell methylation residual smoother
