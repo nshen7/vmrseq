@@ -210,9 +210,7 @@ names(results_s1)
 
 # Downstream analysis
 
-In the **vmrseq** manuscript, we generally apply downstream analyses (such as dimension reduction, clustering analysis and association with gene expression) on the regional average methylation of VMRs. Thus, we are in the process of implementing a function for summarizing regional methylation levels.
-
-We will also implement wrapper functions of downstream analyses tailored for scBS-seq data as well -- coming soon!
+In the **vmrseq** manuscript, we generally apply downstream analyses (such as dimension reduction, clustering analysis and association with gene expression) on the regional average methylation of VMRs. We will be sharing another vignette with a demonstration of downstream analysis.
 
 # Session info
 
