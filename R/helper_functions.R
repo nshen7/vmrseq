@@ -218,11 +218,14 @@ callCandidRegion <- function(gr,
                              parallel
 ) {
 
-  # Compute cutoff based on qVar
+  ## Compute cutoff based on qVar
   mes <- "...Calling candidate regions with cutoff of %.3f on variance."
   message(sprintf(mes, cutoff))
 
-  # Call candidate regions
+  ## Remove rows with var==NA
+  gr <- subset(gr, !is.na(gr$var))
+
+  ## Call candidate regions
   cluster <- bumphunter::clusterMaker(chr = seqnames(gr),
                                       pos = start(gr),
                                       maxGap = maxGap,

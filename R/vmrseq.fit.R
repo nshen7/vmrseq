@@ -77,7 +77,7 @@ vmrseq.fit <- function(
     tp = NULL,
     control = vmrseq.optim.control(),
     verbose = TRUE,
-    BPPARAM = bpparam()
+    BPPARAM = BiocParallel::bpparam()
 ) {
 
   # Register the parallel backend
