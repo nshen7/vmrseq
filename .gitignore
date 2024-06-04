@@ -1,3 +1,7 @@
+..Rcheck/00check.log
+..Rcheck/Rdlatex.log
+R/.DS_Store
+vmrseq.Rproj
 ..Rcheck/
 data-raw/
 .Rproj.user
@@ -9,6 +13,5 @@ docs
 .Rhistory
 .RData
 .Rbuildignore
-*.Rproj
-/doc/
-/Meta/
+
+
