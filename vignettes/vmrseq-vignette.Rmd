@@ -3,7 +3,7 @@ title: "Analyzing single-cell bisulfite sequencing data with vmrseq"
 author:
 - name: Ning Shen
   affiliation: 
-  - Department of Statistics, University of British Columbia
+  - Department of Statistics, University of British Columbia; 
   - Centre for Molecular Medicine and Therapeutics, BC Children's Hospital Research Institute
   email: ning.shen@stat.ubc.ca
 output: 
