@@ -8,6 +8,7 @@ data-raw/
 Rplots.pdf
 inst/doc
 docs
+*.DS_Store
 .DS_Store
 ._*
 .Rhistory

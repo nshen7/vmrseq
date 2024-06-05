@@ -75,7 +75,7 @@ In the experiments of the vmrseq manuscript, the authors did not carry out the p
 1. Remove cells with low CpG site coverage (e.g., $\leq50,000$ CpG sites)
 
 
-## Process individual-cell read files
+## Process and filter individual-cell read files
 
 We have implemented a `data.pool` function to process individual-cell read files into a format that is suitable to input to the vmrseq framework. Following is an example of how to use this function.
 
@@ -128,17 +128,6 @@ Moreover, the assay matrix is in *NA-dropped sparseMatrix representation* (imple
 SummarizedExperiment::assays(toy.se)$M_mat[5:10, 5:10]
 ```
 In particular, the NAs in the dataset are represented by 0 (or 0.000000e+00 as shown above), and the 0's are represented in a very small positive real number (2.225074e-308 as shown above). This allows the matrix to be stored in a `sparseMatrix` format so that it takes less disk storage. One can use the `vmrseq::HDF5NAdrop2matrix` function to convert the assay from HDF5SummarizedExpriment object saved by `vmrseq::data.pool` back to regular matrices.
-
-## Filter out low-cell-coverage sites
-Prior to applying vmrseq, we filter out CpG sites with total number of covered cells < 3. Note that the `assays(toy.se)$M_mat`, which stores the binary methyation values per site and per cell, is in *NA-dropped sparseMatrix representation* (see above section). Therefore, to count the covered cells per CpG, we count the number of non-zero values per row.
-```{r}
-total <- DelayedArray::rowSums(SummarizedExperiment::assays(toy.se)$M_mat > 0)
-toy.se <- subset(toy.se, total >= 3)
-```
-
-```{r}
-dim(toy.se)
-```
 
 # Detect variably methylated regions (VMR)
 

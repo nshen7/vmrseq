@@ -1,0 +1,27 @@
+HDF5NAdrop2matrix       Coerce a NA-dropped HDF5 matrix back to regular
+                        matrix form where NAs are not dropped to 0.
+cell_1                  cell_1
+computeVar              Compute the smoothed variance
+computeVarCutoff        Compute cutoff on smoothed variance for
+                        determining candidate regions
+data.pool               Pool single-cell file together into an
+                        HDF5-based SummarizedExperiment object with
+                        sparse matrix representation.
+extractCoord            Extract genomic coordinates of a particular
+                        chromosome in a cell file.
+extractInfo             Extract and process methylation info of a
+                        particular chromosome from a cell file.
+fillNA                  Fill NA's in missing cites per cell
+region.summary          Compute regional average methylation for
+                        individual cells.
+smoothMF                Kernel smoothing function
+tp.estimate             Estimate transition probilities conditioning on
+                        CpG-CpG distance
+tp.plot                 Plot transition probability distribution
+vmrseq.fit              Construct candidate regions and detect variably
+                        methylated regions.
+vmrseq.optim.control    Auxiliary function as user interface for vmrseq
+                        optimization.
+vmrseq.smooth           Smoothing on single-cell bisulfite sequencing
+                        data for the purpose of constructing candidate
+                        regions.
