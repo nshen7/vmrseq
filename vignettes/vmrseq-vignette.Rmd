@@ -47,7 +47,8 @@ devtools::install_github("nshen7/vmrseq")
 After installation, load the vmrseq package:
 
 ```{r setup, warning=F, message=F}
-library(vmrseq)
+# library(vmrseq)
+devtools::load_all('..')
 ```
 
 How to get help for vmrseq: Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
@@ -221,7 +222,44 @@ names(results_s1)
 
 # Downstream analysis
 
-In the **vmrseq** manuscript, we generally apply downstream analyses (such as dimension reduction, clustering analysis and association with gene expression) on the regional average methylation of VMRs. We will be sharing another vignette with a demonstration of downstream analysis.
+## Compute region-level methylation
+
+We also provide a function called `region.summary` to compute regional methylation information for downstream analysis. As an example, we use this function to summarize the regional info of the detected VMRs from `toy.se`:
+```{r}
+regions.se <- region.summary(SE = toy.se, region_ranges = results$vmr.ranges)
+regions.se
+```
+The function output a SummarizedExperiment object of dimension (# regions x # cells). In total the object contains thress assays. Specifically, `M` and `Cov` represent the number of methylated CpGs and the number of covered CpGs in each region per cell; and `MF` (stands for methylation fraction) represents the regional average methylation level computed by `M/Cov`. Note that `MF` contains NAs due to zero counts in the `Cov` matrix.
+
+```{r}
+assays(regions.se)$MF[1:5, 1:5]
+```
+
+
+## Clustering analysis
+
+Although this toy dataset does not contain distinct cell clusters, we demonstrate the procedure of a clustering analysis presented in the vmrseq paper. 
+
+We first compute a cell-to-cell dissimilarity matrix based on the `MF` assay output by `region.summary`. The `daisy` function from `cluster` is used here for it allows NA values in its input. 
+```{r}
+MF <- assays(regions.se)$MF
+d_mat <- cluster::daisy(t(MF), metric = 'manhattan', stand = FALSE, warnBin = FALSE) %>% as.matrix()
+```
+
+Then, UMAP coordinates of the cells were computed using the `umap` function from package `uwot`:
+```{r}
+umap <- uwot::umap(d_mat %>% as("sparseMatrix"), n_neighbors = 15, n_components = 2)
+```
+
+We plot the cells with the UMAP coords in the following figure. However, since cells in the toy dataset were not simulated to belong to specific cell clusters, we shall not expect to see seperable clusters in the UMAP plot.
+```{r}
+as.data.frame(umap) %>% 
+  ggplot(aes(V1, V2)) +
+  geom_point() +
+  theme_classic() +
+  xlab('UMAP 1') + 
+  ylab('UMAP 2')
+```
 
 # Session info
 
