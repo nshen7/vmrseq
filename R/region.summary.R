@@ -1,7 +1,7 @@
 #' @title Compute regional methylation information for individual cells.
 #' 
 #' @description This function summarize the methylated CpG count and total CpG count
-#' per region per cell.#' 
+#' per region per cell. 
 #'
 #' @param region_ranges \code{GRanges} object that contains genomic coordinates
 #' of regions of interest.
@@ -12,6 +12,9 @@
 #' droppped in the input \code{SE} object. \code{SE} objects output by
 #' \code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
 #' for details about NA-dropped representation.
+#' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
+#' backend. The default option is \code{BiocParallel::bpparam()} which will
+#' automatically creates a cluster appropriate for the operating system.
 #' @importFrom GenomicRanges findOverlaps granges
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom S4Vectors subjectHits queryHits
@@ -20,16 +23,35 @@
 #' `M` and `Cov` represent the number of methylated CpGs and the number of covered 
 #' CpGs in each region per cell; and `MF` (stands for methylation fraction) represents 
 #' the regional average methylation level computed by `M/Cov`.
-
 #' @export
 #'
 #'
 region.summary <- function(
     SE,
     region_ranges,
-    sparseNAdrop = is_sparse(assays(SE)[[1]])
+    sparseNAdrop = is_sparse(assays(SE)[[1]]),
+    BPPARAM = BiocParallel::bpparam()
 ) {
-
+  
+  # Register the parallel backend
+  BiocParallel::register(BPPARAM)
+  backend <- paste0("BiocParallel:", class(bpparam())[1])
+  if (bpparam()$workers == 1) {
+    if (verbose) {
+      mes <- "Parallel: Using a single core (backend: %s)."
+      message(sprintf(mes, backend))
+    }
+    parallel <- FALSE
+  } else {
+    if (verbose) {
+      mes <- paste0("Parallel: Parallelizing using %s workers/cores ",
+                    "(backend: %s).")
+      message(sprintf(mes, bpparam()$workers, backend))
+    }
+    parallel <- TRUE
+  }
+  
+  ## Fing the CpG sites that locate within the targeted regions
   hits <- GenomicRanges::findOverlaps(GenomicRanges::granges(SE), region_ranges)
 
   if (length(hits) > 0) {
@@ -44,14 +66,10 @@ region.summary <- function(
         matrix(ncol = ncol(SE))
       
       if (!sparseNAdrop) {
-        # mat <- M_mat[S4Vectors::queryHits(hits)[S4Vectors::subjectHits(hits)==i], ]
         if (type == "M") return(colSums(mat, na.rm = T))
         else if (type == "Cov") return(colSums(mat >= 0, na.rm = T))
         else stop("Wrong 'type' value. Either 'Cov' or 'M'.")
       } else {
-        # mat <- M_mat[S4Vectors::queryHits(hits)[S4Vectors::subjectHits(hits)==i], ] %>% 
-        #   matrix(ncol = ncol(SE)) %>% 
-        #   as("sparseMatrix")
         if (type == "M") return(round(colSums(mat)))
         else if (type == "Cov") return(colSums(mat > 0))
         else stop("Wrong 'type' value. Either 'Cov' or 'M'.")

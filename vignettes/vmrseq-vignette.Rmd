@@ -235,7 +235,6 @@ The function output a SummarizedExperiment object of dimension (# regions x # ce
 assays(regions.se)$MF[1:5, 1:5]
 ```
 
-
 ## Clustering analysis
 
 Although this toy dataset does not contain distinct cell clusters, we demonstrate the procedure of a clustering analysis presented in the vmrseq paper. 
@@ -260,6 +259,51 @@ as.data.frame(umap) %>%
   xlab('UMAP 1') + 
   ylab('UMAP 2')
 ```
+
+## Gene context annotation
+
+```{r}
+suppressPackageStartupMessages(library(annotatr)) 
+suppressPackageStartupMessages(library(TxDb.Mmusculus.UCSC.mm10.knownGene))
+suppressPackageStartupMessages(library(org.Mm.eg.db))
+```
+```{r}
+types_gene <- grep("mm10_genes.*", builtin_annotations(), value = T)
+annt_genes <- build_annotations(genome = 'mm10', annotations = types_gene)
+```
+```{r}
+regions.gr <- results$vmr.ranges
+annt <- annotate_regions(
+  regions = regions.gr,
+  annotations = annt_genes,
+  ignore.strand = TRUE,
+  quiet = FALSE
+) %>% data.frame()
+
+rand_regions <- randomize_regions(
+  regions = regions.gr,
+  allow.overlaps = TRUE,
+  per.chromosome = TRUE)
+
+# Annotate the random regions using the same annotations as above
+set.seed(100)
+rand_annt <- annotate_regions(
+  regions = rand_regions,
+  annotations = annt_genes,
+  ignore.strand = TRUE,
+  quiet = TRUE)
+
+plot_annotation(
+  annotated_regions = method_annt,
+  annotated_random = rand_annt,
+  annotation_order = unique(annt_genes$type),
+  plot_title = plot_title,
+  x_label = 'Annotations',
+  y_label = 'Count')
+
+```
+
+
 
 # Session info
 
