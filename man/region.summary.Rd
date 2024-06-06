@@ -2,9 +2,14 @@
 % Please edit documentation in R/region.summary.R
 \name{region.summary}
 \alias{region.summary}
-\title{Compute regional average methylation for individual cells.}
+\title{Compute regional methylation information for individual cells.}
 \usage{
-region.summary(SE, region_ranges, sparseNAdrop = is_sparse(assays(SE)[[1]]))
+region.summary(
+  SE,
+  region_ranges,
+  sparseNAdrop = is_sparse(assays(SE)[[1]]),
+  BPPARAM = BiocParallel::bpparam()
+)
 }
 \arguments{
 \item{SE}{\code{SummarizedExperiment} object with one (and only one) assay that
@@ -18,11 +23,19 @@ of regions of interest.}
 droppped in the input \code{SE} object. \code{SE} objects output by
 \code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
 for details about NA-dropped representation.}
+
+\item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
+backend. The default option is \code{BiocParallel::bpparam()} which will
+automatically creates a cluster appropriate for the operating system.}
 }
 \value{
-Returns a \code{SummarizedExperiment} object that contains the regional
-average methylation per cell.
+Returns a \code{SummarizedExperiment} object of dimension 
+(# regions x # cells). In total the object contains thress assays. Specifically, 
+`M` and `Cov` represent the number of methylated CpGs and the number of covered 
+CpGs in each region per cell; and `MF` (stands for methylation fraction) represents 
+the regional average methylation level computed by `M/Cov`.
 }
 \description{
-Compute regional average methylation for individual cells.
+This function summarize the methylated CpG count and total CpG count
+per region per cell.
 }
