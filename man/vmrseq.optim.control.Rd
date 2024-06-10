@@ -35,3 +35,8 @@ the list of arguments for optimization control
 Typically only used when calling vmrseq function with the
 option \code{control}.
 }
+\examples{
+vmrseq.optim.control()
+
+
+}

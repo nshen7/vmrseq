@@ -18,3 +18,12 @@ Returns a matrix.
 Coerce a NA-dropped HDF5 matrix back to regular matrix form where NAs are not
 dropped to 0.
 }
+\examples{
+# load example data
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+
+# run the function
+HDF5NAdrop2matrix(assays(toy.se)$M_mat)
+
+
+}

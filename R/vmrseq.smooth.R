@@ -45,7 +45,7 @@
 #' @seealso \code{\link{data.pool}}, \code{\link{vmrseq.fit}}
 #' @export
 #' 
-#' #' @examples
+#' @examples
 #' # load example data
 #' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
 #' 

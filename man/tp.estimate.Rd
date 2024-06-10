@@ -51,3 +51,19 @@ conditioning on CpG-CpG distance in each cell. Then the probs from
 individual cells are smoothed over CpG-CpG distance using `loess`
 with inverse-variance fitting.
 }
+\examples{
+
+# load example data
+data(cell_1, cell_2, cell_3)
+
+# process the data to align with input format
+library(dplyr)
+df_1 <- cell_1 \%>\% mutate(meth = round(mc_count / total)) \%>\% select(chr, pos, meth)
+df_2 <- cell_2 \%>\% mutate(meth = round(mc_count / total)) \%>\% select(chr, pos, meth)
+df_3 <- cell_3 \%>\% mutate(meth = round(mc_count / total)) \%>\% select(chr, pos, meth)
+
+# run tp.estimate
+list <- list(df_1, df_2, df_3)
+tp.estimate(list)
+
+}

@@ -52,6 +52,18 @@ a \code{GRanges} object that contains the result of smoothing.
  to adjust for uneven coverage biases and borrow information from nearby sites.
  See manuscript for detailed description.
 }
+\examples{
+# load example data
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+
+# preprocessing
+total <- DelayedArray::rowSums(SummarizedExperiment::assays(toy.se)$M_mat > 0)
+toy.se <- subset(toy.se, total >= 3)
+
+# run vmrseq.smooth
+vmrseq.smooth(toy.se)
+
+}
 \seealso{
 \code{\link{data.pool}}, \code{\link{vmrseq.fit}}
 }

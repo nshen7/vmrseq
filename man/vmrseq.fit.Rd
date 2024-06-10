@@ -90,3 +90,10 @@ Construct candidate regions (CRs) by taking groups of consecutive loci that exce
 threshold on the variance of smoothed relative methylation levels and detect
 variably methylated regions (VMRs) by optimizing a hidden Markov model (HMM).
 }
+\examples{
+# load example data
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+# run vmrseq.fit
+vmrseq.fit(toy.gr)
+
+}

@@ -24,3 +24,7 @@ A plot of the transition probability distribution
 \description{
 Plot transition probability distribution
 }
+\examples{
+tp.plot(tp0)
+
+}
