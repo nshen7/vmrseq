@@ -7,7 +7,7 @@
 vmrseq.optim.control(
   inits = c(0.2, 0.5, 0.8),
   epsilon = 0.001,
-  backtrack = T,
+  backtrack = TRUE,
   eta = ifelse(backtrack, 0.05, 0.005),
   maxIter = 100
 )

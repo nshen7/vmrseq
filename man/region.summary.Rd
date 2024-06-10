@@ -43,3 +43,14 @@ the regional average methylation level computed by `M/Cov`.
 This function summarize the methylated CpG count and total CpG count
 per region per cell.
 }
+\examples{
+
+# load example data
+toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+data(toy.results)
+
+# run vmrseq.fit
+regions.se <- region.summary(SE = toy.se, region_ranges = toy.results$vmr.ranges[1:3])
+regions.se
+
+}

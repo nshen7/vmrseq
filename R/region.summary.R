@@ -28,6 +28,7 @@
 #' @export
 #'
 #' @examples
+#' 
 #' # load example data
 #' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
 #' data(toy.results)

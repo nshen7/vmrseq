@@ -61,7 +61,8 @@ total <- DelayedArray::rowSums(SummarizedExperiment::assays(toy.se)$M_mat > 0)
 toy.se <- subset(toy.se, total >= 3)
 
 # run vmrseq.smooth
-vmrseq.smooth(toy.se)
+toy.gr <- vmrseq.smooth(toy.se)
+toy.gr
 
 }
 \seealso{

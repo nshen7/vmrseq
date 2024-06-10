@@ -44,6 +44,9 @@
 #' @return Directly write out to the `writeDir` and does not return anything.
 #' @export
 #'
+#' @examples
+#' \dontrun{data.pool(cellFiles = your_cell_file_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")}
+#' 
 
 data.pool <- function(cellFiles,
                       sep,

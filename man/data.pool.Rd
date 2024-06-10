@@ -53,3 +53,7 @@ SummarizedExperiment object so that it can be input to the \code{vmrseq.smooth}
 function. Note that in each cell, sites with hemimethylation or intermediate
 methylation levels (i.e., 0 < meth_read/total_read < 1) will be removed.
 }
+\examples{
+\dontrun{data.pool(cellFiles = your_cell_file_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")}
+
+}

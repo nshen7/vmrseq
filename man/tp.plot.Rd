@@ -4,7 +4,7 @@
 \alias{tp.plot}
 \title{Plot transition probability distribution}
 \usage{
-tp.plot(tp, line_size = 0.2, plot_train = T, point_size = 0.2)
+tp.plot(tp, line_size = 0.2, plot_train = TRUE, point_size = 0.2)
 }
 \arguments{
 \item{tp}{'transitProbs' object storing information about trained transition
