@@ -219,9 +219,7 @@ names(results_s1)
 ```
 
 
-# Downstream analysis
-
-## Compute region-level methylation
+# Compute region-level methylation
 
 We also provide a function called `region.summary` to compute regional methylation information for downstream analysis. As an example, we use this function to summarize the regional info of the detected VMRs from `toy.se`:
 ```{r}
@@ -234,75 +232,9 @@ The function output a SummarizedExperiment object of dimension (# regions x # ce
 SummarizedExperiment::assays(regions.se)$MF[1:5, 1:5]
 ```
 
-## Clustering analysis
+# Downstream analysis
 
-Although this toy dataset does not contain distinct cell clusters, we demonstrate the procedure of a clustering analysis presented in the vmrseq paper. 
-
-We first compute a cell-to-cell dissimilarity matrix based on the `MF` assay output by `region.summary`. The `daisy` function from `cluster` is used here for it allows NA values in its input. 
-```{r}
-MF <- assays(regions.se)$MF
-d_mat <- cluster::daisy(t(MF), metric = 'manhattan', stand = FALSE, warnBin = FALSE) %>% as.matrix()
-```
-
-Then, UMAP coordinates of the cells were computed using the `umap` function from package `uwot`:
-```{r}
-umap <- uwot::umap(d_mat %>% as("sparseMatrix"), n_neighbors = 15, n_components = 2)
-```
-
-We plot the cells with the UMAP coords in the following figure. However, since cells in the toy dataset were not simulated to belong to specific cell clusters, we shall not expect to see seperable clusters in the UMAP plot.
-```{r}
-as.data.frame(umap) %>% 
-  ggplot(aes(V1, V2)) +
-  geom_point() +
-  theme_classic() +
-  xlab('UMAP 1') + 
-  ylab('UMAP 2')
-```
-
-## Gene context annotation
-
-```{r}
-suppressPackageStartupMessages(library(annotatr)) 
-suppressPackageStartupMessages(library(TxDb.Mmusculus.UCSC.mm10.knownGene))
-suppressPackageStartupMessages(library(org.Mm.eg.db))
-```
-```{r}
-types_gene <- grep("mm10_genes.*", builtin_annotations(), value = T)
-annt_genes <- build_annotations(genome = 'mm10', annotations = types_gene)
-```
-```{r}
-regions.gr <- results$vmr.ranges
-annt <- annotate_regions(
-  regions = regions.gr,
-  annotations = annt_genes,
-  ignore.strand = TRUE,
-  quiet = FALSE
-) %>% data.frame()
-
-rand_regions <- randomize_regions(
-  regions = regions.gr,
-  allow.overlaps = TRUE,
-  per.chromosome = TRUE)
-
-# Annotate the random regions using the same annotations as above
-set.seed(100)
-rand_annt <- annotate_regions(
-  regions = rand_regions,
-  annotations = annt_genes,
-  ignore.strand = TRUE,
-  quiet = TRUE)
-
-plot_annotation(
-  annotated_regions = method_annt,
-  annotated_random = rand_annt,
-  annotation_order = unique(annt_genes$type),
-  plot_title = plot_title,
-  x_label = 'Annotations',
-  y_label = 'Count')
-
-```
-
-
+We have created the GitHub repo [vmrseq-workflow-vignette](https://github.com/nshen7/vmrseq-workflow-vignette) as a demo of complete workflow of scBS-seq analysis using vmrseq. This repo includes scripts that run vmseq and apply downstream analysis such as gene/CpG annotation and clustering analysis. Feel free to check it out!
 
 # Session info
 
