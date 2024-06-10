@@ -17,6 +17,10 @@
 #' @return the list of arguments for optimization control
 #'
 #' @export
+#' 
+#' @examples
+#' vmrseq.optim.control()
+#' 
 #'
 vmrseq.optim.control <- function(
     inits = c(.2, .5, .8),

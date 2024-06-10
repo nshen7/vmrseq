@@ -1,13 +1,13 @@
 #' cell_1
 #'
 #' This dataset is an example of a single-cell file that can be input to
-#' \code{vmrseq::data.pool} function. It contains the first 100 CpG sites in
+#' \code{vmrseq::data.pool} function. It contains the first 10000 CpG sites in
 #' a cell from mouse frontal cortext dataset published by Luo et al. (2017).
 #'
 #' @docType data
-#' @name cell_1
+#' @name cellFile
 #' @usage data(cell_1)
-#' @format A data frame with 100 rows and 5 variables (no column names):
+#' @format A data frame with 10000 rows and 5 variables (no column names):
 #' \describe{
 #'   \item{V1}{Chromosome}
 #'   \item{V2}{Genomic coordinate}
@@ -25,19 +25,81 @@
 "cell_1"
 
 
+#' @rdname cellFile
+"cell_2"
 
-#' Kernel smoothing function
+#' @rdname cellFile
+"cell_3"
+
+
+
+#' toy.gr
 #'
-#' @param x vector of the x values
-#' @param y vector of the y values
-#' @param weights vector of the weight associated with each data point
-#' @param chr string of the chromosome name
-#' @param minInSpan minimum number of sites in the span
-#' @param bpSpan base pair of the span
-#' @param verbose logical value that indicates whether progress messages
-#' should be printed to stdout
-#' @param parallel logical value that indicates whether function should be
-#' run in parallel
+#' This \code{GRanges} object is an example of output from \code{vmrseq::vmrseq.smooth} 
+#' function.
+#'
+#' @docType data
+#' @name toy.gr
+#' @usage data(toy.gr)
+#' @format A \code{GRanges} object.
+#' @examples
+#' data(toy.gr)
+#' toy.gr
+#'
+"toy.gr"
+
+
+#' toy.results
+#'
+#' This \code{list} object is an example of output from \code{vmrseq::vmrseq.fit} 
+#' function.
+#'
+#' @docType data
+#' @name toy.results
+#' @usage data(toy.results)
+#' @format A \code{GRanges} object.
+#' @examples
+#' data(toy.results)
+#' toy.results
+#'
+"toy.results"
+
+
+# ---- Helpers for data.pool ----
+## Extract genomic coordinates of a particular chromosome in a cell file.
+extractCoord <- function(file, chr, sep) {
+  data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2}'"))$V1
+}
+
+## Extract and process methylation info of a particular chromosome from a cell file.
+extractInfo <- function(file, chr, sep) {
+  df <- data.table::fread(cmd = paste0("zcat ", file, " | awk -F '", sep, "' '$1==\"", chr, "\"' | awk -F '", sep, "' '{print $2\"\t\"$4\"\t\"$5}'"),
+                          colClasses = c('integer', 'integer', 'integer'))
+  colnames(df) <- c("pos", "meth", "total")
+  df <- df %>%
+    dplyr::filter(meth/total == 1 | meth/total == 0) %>%
+    dplyr::filter(!duplicated(pos)) %>%
+    dplyr::mutate(bool = round(meth/total)) %>%
+    dplyr::select(pos, bool)
+  return(df)
+}
+
+## Fill NA's in missing cites per cell
+fillNA <- function(file, chr, pos_full, sep) {
+  # Read in cell info
+  df <- extractInfo(file, chr, sep)
+  
+  # Fill in NA for uncovered position
+  filled <- rep(NA, length(pos_full))
+  ind <- which(pos_full %in% df$pos)
+  if(length(ind) != nrow(df)) stop("'pos_full' does not contain all possible positions")
+  filled[ind] <- df$bool
+  
+  return(filled)
+}
+
+
+# ---- Helpers for vmrseq.smooth and vmrseq.fit ----
 
 smoothMF <- function(x, y,
                      weights, chr,
@@ -95,19 +157,6 @@ smoothMF <- function(x, y,
 
 } # end of function `smoothMF`
 
-
-#' Compute the smoothed variance
-#'
-#' @param gr same as in \code{vmrseq.smooth}
-#' @param M numeric matrix of binary single-cell methylation status. Row number
-#' should be equal to the number of CpG sites and column number should be equal
-#' to the number of cells.
-#' @param meanMeth numeric vector of across-cell mean methylation. Length should
-#' be equal to the number of CpG sites.
-#' @param bpWindow same as in \code{vmrseq.smooth}
-#' @param sparseNAdrop same as in \code{vmrseq.smooth}
-#' @param parallel logical value that indicates whether function should be
-#' run in parallel
 
 computeVar <- function(gr, M,
                        meanMeth,
@@ -186,17 +235,6 @@ getPriorParams <- function(total) {
   pars_m <- .priorParams(median(total), type = "m")
   return(list(pars_u = pars_u, pars_m = pars_m))
 }
-
-#' Compute cutoff on smoothed variance for determining candidate regions
-#'
-#' @param alpha level of significance
-#' @param meth vector of meth read counts
-#' @param pars_u parameters used in the ZIBB distribution for unmethylated grouping
-#' @param pars_m parameters used in the BB distribution for methylated grouping
-#' @param n number of simulations
-#' @param total vector of total read counts
-#'
-#' @importFrom gamlss.dist rBEZI rBE
 
 computeVarCutoff <- function(alpha, meth, total, pars_u, pars_m, n = 100000) {
   mf <- meth / total

@@ -1,0 +1,10 @@
+citHeader("To cite vmrseq in publications use:")
+
+bibentry(bibtype = "Article",
+         title = "vmrseq: Probabilistic Modeling of Single-cell Methylation Heterogeneity",
+         author = c(person("Shen", "Ning"),
+                    person("Keegan", "Korthauer")),
+         year = "2023", 
+         publisher = "Cold Spring Harbor Laboratory", 
+         journal = "bioRxiv",
+         doi = "10.1101/2023.11.20.567911")

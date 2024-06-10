@@ -65,6 +65,12 @@
 #' 6. `bb_params`: Beta-binomial parameter used in emission probability of the HMM model; they are determined by the magnitude of the input dataset (see manuscript for details).
 #'
 #' @export
+#' 
+#' @examples
+#' # load example data
+#' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+#' # run vmrseq.fit
+#' vmrseq.fit(toy.gr)
 #'
 vmrseq.fit <- function(
     gr,

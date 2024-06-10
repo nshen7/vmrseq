@@ -169,31 +169,31 @@ The standard VMR analysis steps are wrapped into two functions, `vmrseq.smooth` 
 
 The `vmrseq.smooth` function performs kernel smoothing on the single-cell methylation and output a `GRanges` object with the CpG coordinate information extracted from the input `toy.se` and metadata columns indicating the methylated cell count (i.e., <meth>), the total cell coverage (i.e., <total>) and the inter-cellular variance on methylation level.
 ```{r}
-gr <- vmrseq.smooth(toy.se)
+toy.gr <- vmrseq.smooth(toy.se)
 ```
 ```{r}
-head(gr)
+head(toy.gr)
 ```
 
 
 Next, the `vmrseq.fit` function performs rest steps of the method, i.e., defining the candidate regions based on the variance and fitting the hidden Markov model to detect the VMRs. 
 ```{r}
-results <- vmrseq.fit(gr)
+toy.results <- vmrseq.fit(toy.gr)
 ```
 
 For users who need a preliminary check or prioritize speed over high precision in region detection and the ranking of regions, we recommend running only the first stage of the methodology. This allows for a faster initial analysis before applying the full methodology. This can be achieved by specifying the argument `stage1only = TRUE` in the `vmrseq.fit` function.
 ```{r}
-results_s1 <- vmrseq.fit(gr, stage1only = TRUE)
+toy.results_s1 <- vmrseq.fit(toy.gr, stage1only = TRUE)
 ```
 
 
 ## Method output
 
 ```{r}
-results
+toy.results
 ```
 
-The results object is a list of 6 elements that contains the following information:
+The toy.results object is a list of 6 elements that contains the following information:
 
   1. `gr`: The `Granges` object that has been input to `vmrseq.fit` with two added metadata columns:
       + `cr_index` = Index in reference to rows of `cr.ranges`, denoting row number of the candidate region to which the CpG site belongs.
@@ -210,12 +210,12 @@ The results object is a list of 6 elements that contains the following informati
   5. `var_cutoff`: Variance cutoff computed from `alpha`.
   6. `bb_params`: Beta-binomial parameter used in emission probability of the HMM model; they are determined by the magnitude of the input dataset (see manuscript for details). 
 
-In summary, vmrseq found `r length(results$cr.ranges)` candidate regions, among which `r length(results$vmr.ranges)` contains VMR.
+In summary, vmrseq found `r length(toy.results$cr.ranges)` candidate regions, among which `r length(toy.results$vmr.ranges)` contains VMR.
 
 
 If the argument `stage1only = TRUE` has been turned on, the output only contains four of the above-mentioned elements: `gr`, `cr.ranges`, `alpha`, `var_cutoff`. 
 ```{r}
-names(results_s1)
+names(toy.results_s1)
 ```
 
 
@@ -223,7 +223,7 @@ names(results_s1)
 
 We also provide a function called `region.summary` to compute regional methylation information for downstream analysis. As an example, we use this function to summarize the regional info of the detected VMRs from `toy.se`:
 ```{r}
-regions.se <- region.summary(SE = toy.se, region_ranges = results$vmr.ranges)
+regions.se <- region.summary(SE = toy.se, region_ranges = toy.results$vmr.ranges)
 regions.se
 ```
 The function output a SummarizedExperiment object of dimension (# regions x # cells). In total the object contains thress assays. Specifically, `M` and `Cov` represent the number of methylated CpGs and the number of covered CpGs in each region per cell; and `MF` (stands for methylation fraction) represents the regional average methylation level computed by `M/Cov`. Note that `MF` contains NAs due to zero counts in the `Cov` matrix.

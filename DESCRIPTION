@@ -1,15 +1,15 @@
 Package: vmrseq
 Type: Package
 Title: Probabilistic Modeling of Single-cell Methylation Heterogeneity
-Version: 0.99.0.9000
-Author: Ning Shen
-Maintainer: Ning Shen <ning.shen@stat.ubc.ca>
+Version: 0.99.0
+Authors@R: person("Ning", "Shen", email = "ning.shen.wk@gmail.com",role = c("aut", "cre"))
 Description: High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. We present vmrseq, a statistical method that overcomes these challenges and identifies variably methylated regions accurately and robustly.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
-biocViews: 
+biocViews: Software, ImmunoOncology, DNAMethylation, Epigenetics, SingleCellData
+  Sequencing, WholeGenome, ProbablisticModel, BisulfiteSequencing 
 Depends: 
     R (>= 3.5.0)
 Imports: 
@@ -35,4 +35,5 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://nshen7.github.io/vmrseq/
+URL: https://github.com/nshen7/vmrseq
+BugReports: https://github.com/nshen7/vmrseq/issues

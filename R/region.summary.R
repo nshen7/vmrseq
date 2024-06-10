@@ -70,8 +70,8 @@ region.summary <- function(
       
       if (!sparseNAdrop) {
         return(list(
-          "M" = colSums(mat, na.rm = T),
-          "Cov" = colSums(mat >= 0, na.rm = T)
+          "M" = colSums(mat, na.rm = TRUE),
+          "Cov" = colSums(mat >= 0, na.rm = TRUE)
         ))
       } else {
         return(list(

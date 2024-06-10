@@ -44,6 +44,17 @@
 #'
 #' @seealso \code{\link{data.pool}}, \code{\link{vmrseq.fit}}
 #' @export
+#' 
+#' #' @examples
+#' # load example data
+#' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+#' 
+#' # preprocessing
+#' total <- DelayedArray::rowSums(SummarizedExperiment::assays(toy.se)$M_mat > 0)
+#' toy.se <- subset(toy.se, total >= 3)
+#' 
+#' # run vmrseq.smooth
+#' vmrseq.smooth(toy.se)
 #'
 vmrseq.smooth <- function(
     SE,
@@ -53,8 +64,8 @@ vmrseq.smooth <- function(
 ) {
 
   # Params for across-cell mean methylation smoother (for experimental purpose)
-  meanSmooth = FALSE # turning off meanSmooth works better in practice
-  bpSpan = 0; minInSpan = 0
+  meanSmooth <- FALSE # turning off meanSmooth works better in practice
+  bpSpan <- 0; minInSpan <- 0
 
   if (meanSmooth & bpSpan<=0 & minInSpan<=0)
     stop("If mean methylation need to be smoothed, at least one of 'bpSpan' and 'minInSpan' should be positive (integer) number.")
@@ -73,8 +84,8 @@ vmrseq.smooth <- function(
   M <- assays(SE)[[1]]
 
   if (!sparseNAdrop) {
-    values(gr)$meth <- rowSums(M, na.rm = T)
-    values(gr)$total <- rowSums(M >= 0, na.rm = T)
+    values(gr)$meth <- rowSums(M, na.rm = TRUE)
+    values(gr)$total <- rowSums(M >= 0, na.rm = TRUE)
   } else {
     values(gr)$meth <- as.integer(round(rowSums(M)))
     values(gr)$total <- rowSums(M > 0)

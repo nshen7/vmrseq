@@ -17,6 +17,9 @@
 #' @return A plot of the transition probability distribution
 #' @export
 #'
+#' @examples
+#' tp.plot(tp0)
+#' 
 tp.plot <- function(tp,
                     line_size = 0.2,
                     plot_train = T,

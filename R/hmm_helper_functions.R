@@ -374,7 +374,7 @@
 }
 
 .prevOptimSnglInit <- function(pos, totals, meths, pi1_init, trans_probs,
-                               epsilon = 1e-3, backtrack = T, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
+                               epsilon = 1e-3, backtrack = TRUE, eta = ifelse(backtrack, 0.05, 0.005), max_iter = 200,
                                CHOICEARRAY, METHARRAY, UNMETHARRAY){
   # `tp` is an transitProbs object, which stores the transition probability distribution
   # `pi1_init` is the set initial value of \pi_1

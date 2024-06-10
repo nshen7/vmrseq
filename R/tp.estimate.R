@@ -32,6 +32,21 @@
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
 #'
 #' @export
+#' 
+#' @examples
+#' 
+#' # load example data
+#' data(cell_1, cell_2, cell_3)
+#' 
+#' # process the data to align with input format
+#' library(dplyr)
+#' df_1 <- cell_1 %>% mutate(meth = round(mc_count / total)) %>% select(chr, pos, meth)
+#' df_2 <- cell_2 %>% mutate(meth = round(mc_count / total)) %>% select(chr, pos, meth)
+#' df_3 <- cell_3 %>% mutate(meth = round(mc_count / total)) %>% select(chr, pos, meth)
+#' 
+#' # run tp.estimate
+#' list <- list(df_1, df_2, df_3)
+#' tp.estimate(list)
 #'
 tp.estimate <- function(list,
                         max_dist_bp = 2000,
