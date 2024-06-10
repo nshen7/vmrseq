@@ -8,6 +8,7 @@ region.summary(
   SE,
   region_ranges,
   sparseNAdrop = is_sparse(assays(SE)[[1]]),
+  verbose = TRUE,
   BPPARAM = BiocParallel::bpparam()
 )
 }
@@ -23,6 +24,9 @@ of regions of interest.}
 droppped in the input \code{SE} object. \code{SE} objects output by
 \code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
 for details about NA-dropped representation.}
+
+\item{verbose}{logical value that indicates whether progress messages
+should be printed to stdout. Defaults value is TRUE.}
 
 \item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel
 backend. The default option is \code{BiocParallel::bpparam()} which will

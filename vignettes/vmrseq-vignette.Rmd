@@ -47,8 +47,7 @@ devtools::install_github("nshen7/vmrseq")
 After installation, load the vmrseq package:
 
 ```{r setup, warning=F, message=F}
-# library(vmrseq)
-devtools::load_all('..')
+library(vmrseq)
 ```
 
 How to get help for vmrseq: Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
@@ -106,7 +105,7 @@ In this vignette, we use a formatted example dataset built in the package that's
 toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
 ```
 
-It is a `SummarizedExperiment` object with one `assay` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
+It is a `SummarizedExperiment` object with one `assays` slot called `M_mat` that contains the binary methylation values of individual cells at CpG sites (sites as rows and cells as columns):
 ```{r}
 toy.se
 ```
@@ -232,7 +231,7 @@ regions.se
 The function output a SummarizedExperiment object of dimension (# regions x # cells). In total the object contains thress assays. Specifically, `M` and `Cov` represent the number of methylated CpGs and the number of covered CpGs in each region per cell; and `MF` (stands for methylation fraction) represents the regional average methylation level computed by `M/Cov`. Note that `MF` contains NAs due to zero counts in the `Cov` matrix.
 
 ```{r}
-assays(regions.se)$MF[1:5, 1:5]
+SummarizedExperiment::assays(regions.se)$MF[1:5, 1:5]
 ```
 
 ## Clustering analysis

@@ -12,6 +12,8 @@
 #' droppped in the input \code{SE} object. \code{SE} objects output by
 #' \code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
 #' for details about NA-dropped representation.
+#' @param verbose logical value that indicates whether progress messages
+#' should be printed to stdout. Defaults value is TRUE.
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
 #' backend. The default option is \code{BiocParallel::bpparam()} which will
 #' automatically creates a cluster appropriate for the operating system.
@@ -30,6 +32,7 @@ region.summary <- function(
     SE,
     region_ranges,
     sparseNAdrop = is_sparse(assays(SE)[[1]]),
+    verbose = TRUE,
     BPPARAM = BiocParallel::bpparam()
 ) {
   
@@ -60,28 +63,31 @@ region.summary <- function(
 
     M_mat <- assays(SE)$M_mat
 
-    computeRegionStats <- function(i, type) { # i th feature/window
+    computeRegionStats <- function(i) { # i th feature/window
       
       mat <- M_mat[S4Vectors::queryHits(hits)[S4Vectors::subjectHits(hits)==i], ] %>% 
         matrix(ncol = ncol(SE))
       
       if (!sparseNAdrop) {
-        if (type == "M") return(colSums(mat, na.rm = T))
-        else if (type == "Cov") return(colSums(mat >= 0, na.rm = T))
-        else stop("Wrong 'type' value. Either 'Cov' or 'M'.")
+        return(list(
+          "M" = colSums(mat, na.rm = T),
+          "Cov" = colSums(mat >= 0, na.rm = T)
+        ))
       } else {
-        if (type == "M") return(round(colSums(mat)))
-        else if (type == "Cov") return(colSums(mat > 0))
-        else stop("Wrong 'type' value. Either 'Cov' or 'M'.")
+        return(list(
+          "M" = round(colSums(mat)),
+          "Cov" = colSums(mat > 0)
+        ))
       }
     }
+    lists <- bplapply(idx, computeRegionStats)
     M <- do.call(
       rbind,
-      bplapply(idx, computeRegionStats, type = "M")
+      lapply(lists, function(l) l$M)
     )
     Cov <- do.call(
       rbind,
-      bplapply(idx, computeRegionStats, type = "Cov")
+      lapply(lists, function(l) l$Cov)
     )
 
     regions.se <- SummarizedExperiment::SummarizedExperiment(
