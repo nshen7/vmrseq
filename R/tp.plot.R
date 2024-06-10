@@ -22,7 +22,7 @@
 #' 
 tp.plot <- function(tp,
                     line_size = 0.2,
-                    plot_train = T,
+                    plot_train = TRUE,
                     point_size = 0.2) {
 
   # compatibility checks within transProbs object

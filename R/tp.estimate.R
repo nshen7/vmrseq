@@ -160,14 +160,14 @@ tp.estimate <- function(list,
   train_data <- smr_units %>%
     dplyr::filter(dist_bp > 0) %>%
     dplyr::group_by(dist_bp) %>%
-    dplyr::summarise(pbar_00 = mean(p_00, na.rm = T),
-              pbar_01 = mean(p_01, na.rm = T),
-              pbar_10 = mean(p_10, na.rm = T),
-              pbar_11 = mean(p_11, na.rm = T),
-              var_00 = var(p_00, na.rm = T),
-              var_01 = var(p_01, na.rm = T),
-              var_10 = var(p_10, na.rm = T),
-              var_11 = var(p_11, na.rm = T)) %>%
+    dplyr::summarise(pbar_00 = mean(p_00, na.rm = TRUE),
+              pbar_01 = mean(p_01, na.rm = TRUE),
+              pbar_10 = mean(p_10, na.rm = TRUE),
+              pbar_11 = mean(p_11, na.rm = TRUE),
+              var_00 = var(p_00, na.rm = TRUE),
+              var_01 = var(p_01, na.rm = TRUE),
+              var_10 = var(p_10, na.rm = TRUE),
+              var_11 = var(p_11, na.rm = TRUE)) %>%
     # dplyr::add_row(dist_bp = 1,
     #         pbar_00 = NA, pbar_01 = NA, pbar_10 = NA, pbar_11 = NA,
     #         var_00 = NA, var_01 = NA, var_10 = NA, var_11 = NA,

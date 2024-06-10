@@ -68,9 +68,10 @@
 #' 
 #' @examples
 #' # load example data
-#' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
+#' data(toy.gr)
 #' # run vmrseq.fit
-#' vmrseq.fit(toy.gr)
+#' toy.results <- vmrseq.fit(toy.gr)
+#' toy.results
 #'
 vmrseq.fit <- function(
     gr,

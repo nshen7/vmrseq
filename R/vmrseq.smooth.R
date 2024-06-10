@@ -54,7 +54,8 @@
 #' toy.se <- subset(toy.se, total >= 3)
 #' 
 #' # run vmrseq.smooth
-#' vmrseq.smooth(toy.se)
+#' toy.gr <- vmrseq.smooth(toy.se)
+#' toy.gr
 #'
 vmrseq.smooth <- function(
     SE,
