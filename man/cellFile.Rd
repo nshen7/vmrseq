@@ -31,7 +31,7 @@ cell_3
 \description{
 This dataset is an example of a single-cell file that can be input to
 \code{vmrseq::data.pool} function. It contains the first 10000 CpG sites in
-a cell from mouse frontal cortext dataset published by Luo et al. (2017).
+a random cell from mouse frontal cortext dataset published by Luo et al. (2017).
 }
 \examples{
 data(cell_1)

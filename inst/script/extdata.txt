@@ -1,0 +1,4 @@
+We explain as follows how the data in inst/extdata/ were generated:
+
+- `cell_1.csv`, `cell_2.csv`, `cell_3.csv`: Bam-like files of individual cellular information. Identical to the exported data `cell_1`, `cell_2`, `cell_2`. Please refer to the manual page of these exported data.
+- `toy/`: This folder stores an HDF5SummarizedExperiment object with 200 cells and 30,000 CpG sites. It was a subset from one of the synthetic datasets generated for simulation studies of the vmrseq manuscript. Please refer to the manusript (doi: https://doi.org/10.1101/2023.11.20.567911) for details regrading data generation.
