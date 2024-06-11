@@ -17,11 +17,18 @@ devtools::install_github("nshen7/vmrseq")
 
 ## Online Vignette
 
-An online vignette of 'Get Started' on the `vmrseq` package can be found at 
+- An online vignette of 'Get Started' on the `vmrseq` package can be found at 
 [https://rpubs.com/nshen7/vmrseq-vignette](https://rpubs.com/nshen7/vmrseq-vignette).
-
-An example workflow on scBS-seq data analysis using `vmrseq` can be found at
+- An example workflow on scBS-seq data analysis using `vmrseq` can be found at
 [https://github.com/nshen7/vmrseq-workflow-vignette](https://github.com/nshen7/vmrseq-workflow-vignette).
+
+## Docker Image
+
+We provide a Docker image for robust setup and use of this package. The Docker image includes all necessary dependencies for the package and vignettes. To pull the Docker image from Docker Hub, use the following command:
+
+``` bash
+docker pull nshen7/vmrseq-bioc-3.19:latest
+```
 
 
 ## Citation
