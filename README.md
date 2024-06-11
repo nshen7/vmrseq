@@ -7,7 +7,7 @@ The R package `vmrseq` is a novel computational tool developed for pinpointing v
 
 ## Installation
 
-You can install the development version of `vmrseq` from
+You can install the development version of `vmrseq` in R from
 [GitHub](https://github.com/) with:
 
 ``` r
@@ -24,7 +24,7 @@ devtools::install_github("nshen7/vmrseq")
 
 ## Docker Image
 
-We provide a Docker image for robust setup and use of this package. The Docker image includes all necessary dependencies for the package and vignettes. To pull the Docker image from Docker Hub, use the following command:
+We provide a Docker image for robust setup and use of this package. The Docker image includes all necessary dependencies for the package and vignettes. To pull the Docker image from Docker Hub, use the following command in bash:
 
 ``` bash
 docker pull nshen7/vmrseq-bioc-3.19:latest
