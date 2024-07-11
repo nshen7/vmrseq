@@ -1,0 +1,21 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/vmrseq-vignette.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/HDF5NAdrop2matrix.html</loc></url>
+<url><loc>/reference/cellFile.html</loc></url>
+<url><loc>/reference/data.pool.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/region.summary.html</loc></url>
+<url><loc>/reference/toy.gr.html</loc></url>
+<url><loc>/reference/toy.results.html</loc></url>
+<url><loc>/reference/tp.estimate.html</loc></url>
+<url><loc>/reference/tp.plot.html</loc></url>
+<url><loc>/reference/vmrseq.fit.html</loc></url>
+<url><loc>/reference/vmrseq.optim.control.html</loc></url>
+<url><loc>/reference/vmrseq.smooth.html</loc></url>
+</urlset>
+
