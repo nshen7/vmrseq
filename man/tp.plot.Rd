@@ -25,6 +25,6 @@ A plot of the transition probability distribution
 Plot transition probability distribution
 }
 \examples{
-tp.plot(tp0)
+tp.plot(vmrseq:::tp0)
 
 }
