@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">vmrseq</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.99.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.99.1</span>
       </span>
     </div>
 
@@ -371,7 +371,7 @@ inter-cellular variance on methylation level.</total></meth></p>
 <code class="sourceCode R"><span><span class="va">toy.gr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vmrseq.smooth.html">vmrseq.smooth</a></span><span class="op">(</span><span class="va">toy.se</span><span class="op">)</span></span>
 <span><span class="co">## Parallel: Parallelizing using 2 workers/cores (backend: BiocParallel:MulticoreParam).</span></span>
 <span><span class="co">## Smoothing in progress...</span></span>
-<span><span class="co">## ...Chromosome pseudo: Variance computed (0.06 min).</span></span></code></pre></div>
+<span><span class="co">## ...Chromosome pseudo: Variance computed (0.05 min).</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">toy.gr</span><span class="op">)</span></span>
 <span><span class="co">## GRanges object with 6 ranges and 3 metadata columns:</span></span>
@@ -396,7 +396,7 @@ fitting the hidden Markov model to detect the VMRs.</p>
 <span><span class="co">## ...Finished calling candidate regions - found 73 candidate regions in total.</span></span>
 <span><span class="co">##   ...3.25% sites are called to be in candidate regions.</span></span>
 <span><span class="co">## Step 2: Detecting VMRs...</span></span>
-<span><span class="co">## ...Finished detecting VMRs - took 0.2 min and 63 VMRs found in total.</span></span>
+<span><span class="co">## ...Finished detecting VMRs - took 0.21 min and 63 VMRs found in total.</span></span>
 <span><span class="co">##   ...2.87% sites are called to be in VMRs.</span></span></code></pre></div>
 <p>For users who need a preliminary check or prioritize speed over high
 precision in region detection and the ranking of regions, we recommend
@@ -659,7 +659,7 @@ out!</p>
 <span><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">## [1] vmrseq_0.99.0</span></span>
+<span><span class="co">## [1] vmrseq_0.99.1</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
 <span><span class="co">##   [1] DBI_1.2.3                   bitops_1.0-7               </span></span>
@@ -696,7 +696,7 @@ out!</p>
 <span><span class="co">##  [63] Biostrings_2.72.1           pillar_1.9.0               </span></span>
 <span><span class="co">##  [65] MatrixGenerics_1.16.0       rngtools_1.5.2             </span></span>
 <span><span class="co">##  [67] foreach_1.5.2               stats4_4.4.1               </span></span>
-<span><span class="co">##  [69] generics_0.1.3              RCurl_1.98-1.14            </span></span>
+<span><span class="co">##  [69] generics_0.1.3              RCurl_1.98-1.16            </span></span>
 <span><span class="co">##  [71] float_0.3-2                 S4Vectors_0.42.1           </span></span>
 <span><span class="co">##  [73] ggplot2_3.5.1               munsell_0.5.1              </span></span>
 <span><span class="co">##  [75] scales_1.3.0                bumphunter_1.46.0          </span></span>
