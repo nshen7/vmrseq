@@ -26,5 +26,4 @@ Plot transition probability distribution
 }
 \examples{
 tpPlot(tp0)
-
 }

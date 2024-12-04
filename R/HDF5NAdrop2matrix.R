@@ -14,7 +14,7 @@
 #' toy.se <- HDF5Array::loadHDF5SummarizedExperiment(system.file("extdata", "toy", package = "vmrseq"))
 #' 
 #' # run the function
-#' HDF5NAdrop2matrix(assays(toy.se)$M_mat)
+#' HDF5NAdrop2matrix(SummarizedExperiment::assays(toy.se)$M_mat)
 #' 
 #'
 HDF5NAdrop2matrix <- function(hdf5_assay) {

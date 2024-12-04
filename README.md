@@ -1,3 +1,7 @@
+<p style="text-align: center;">
+  <img src="man/figures/logo.png" alt="Example Image" width="70">
+</p>
+
 # vmrseq: Detecting variably methylated regions (VMRs) from single-cell bisulfite sequencing
 
 The R package `vmrseq` is a novel computational tool developed for pinpointing variably methylated regions (VMRs) in scBS-seq data without prior knowledge on size or location. High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. vmrseq overcomes these challenges and identifies variably methylated regions accurately and robustly. 
@@ -7,12 +11,17 @@ The R package `vmrseq` is a novel computational tool developed for pinpointing v
 
 ## Installation
 
-You can install the development version of `vmrseq` from
-[GitHub](https://github.com/) with:
+You can install the development version of `vmrseq` in R from Bioconductor (recommended) or GitHub with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("nshen7/vmrseq")
+### Install stable version from Bioconductor
+ if (!require("BiocManager", quietly = TRUE))
+     install.packages("BiocManager")
+BiocManager::install("vmrseq")
+
+## Or development version from Github
+# install.packages("remotes")
+remotes::install_github("nshen7/vmrseq")
 ```
 
 ## Online Vignette
@@ -24,7 +33,7 @@ devtools::install_github("nshen7/vmrseq")
 
 ## Docker Image
 
-We provide a Docker image for robust setup and use of this package. The Docker image includes all necessary dependencies for the package and vignettes. To pull the Docker image from Docker Hub, use the following command:
+We provide a Docker image for robust setup and use of this package. The Docker image includes all necessary dependencies for the package and vignettes. To pull the Docker image from Docker Hub, use the following command in bash:
 
 ``` bash
 docker pull nshen7/vmrseq-bioc-3.19:latest
