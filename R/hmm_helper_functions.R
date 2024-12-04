@@ -1,6 +1,6 @@
 ###### utils =====
 # For computing REFARRAY, i.e., array of log factorial of length `max_cov` -- for the purpose of easy computation
-.calRefArray <- function(max_cov) cumsum(log(1:max_cov))
+.calRefArray <- function(max_cov) cumsum(log(seq_len(max_cov)))
 
 # Outputs the log factorial with Stirling's approximation when int >= max_cov
 .logFactorial <- function(int, REFARRAY){
@@ -22,8 +22,8 @@
   max_cov <- length(REFARRAY)
   CHOICEARRAY <- matrix(0, max_cov+1, max_cov+1)
 
-  for(n in 1:(max_cov+1))
-    for(k in 1:n)
+  for(n in seq_len(max_cov+1))
+    for(k in seq_len(n))
       CHOICEARRAY[n,k] <- .logChoose(n-1, k-1, REFARRAY)
 
   rownames(CHOICEARRAY) <- colnames(CHOICEARRAY) <- 0:max_cov
@@ -61,8 +61,8 @@
 
   METHARRAY <- matrix(data = 0, nrow = max_cov+1, ncol = max_cov+1)
   UNMETHARRAY <- matrix(data = 0, nrow = max_cov+1, ncol = max_cov+1)
-  for (n in 1:(max_cov+1)) {
-    for (k in 1:n) {
+  for (n in seq_len(max_cov+1)) {
+    for (k in seq_len(n)) {
       UNMETHARRAY[n,k] <- gamlss.dist::dZIBB(x = k-1, mu = par_u['mu'], sigma = par_u['sigma'],
                                 nu = par_u['nu'], bd = n-1)
       METHARRAY[n,k] <- gamlss.dist::dBB(x = k-1, mu = par_m['mu'], sigma = par_m['sigma'],
@@ -168,7 +168,7 @@
   traceback <- matrix(0, nrow = num_cpg, ncol = 2) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
-  for (i in 1:num_cpg) {
+  for (i in seq_len(num_cpg)) {
     for (j in state_nums+1) {
       log_em_prob <- log(.calEmissionProb1Grp(state_1g = j-1,
                                               total = totals[i], meth = meths[i],
@@ -253,7 +253,7 @@
   traceback <- matrix(0, nrow = num_cpg, ncol = 3) # for storing tracebback pointers
 
   # Distribution of initial state is set to uniform (proportional to 1)
-  for (i in 1:num_cpg) {
+  for (i in seq_len(num_cpg)) {
 
     # Compute transition prob matrix for 3-state model
     if(i > 1) tp_i_mat <- .calTransProb2Grp(i-1, trans_probs)
@@ -360,7 +360,7 @@
     stop("Wrong dimensions of input data.")
 
   grad1 <- 0#; grad2 <- 0 ## grad2 is always 0
-  for (k in 1:length(state_path)) {
+  for (k in seq_along(state_path)) {
     state_2g <- state_path[k]
     total <- totals[k]
     meth <- meths[k]
@@ -390,7 +390,7 @@
   state_path <- init_vit$state_path
   old_loglik <- loglik <- init_vit$loglik_path[nrow(init_vit)]
 
-  for (t in 1:max_iter) {
+  for (t in seq_len(max_iter)) {
     # print(t) # DEBUG
     old_pi_1 <- pi_1
 
@@ -455,7 +455,7 @@
 
   if (gradient) {
     loglik <- -Inf; optim_pi_1 <- -1
-    for (i in 1:length(inits)) {
+    for (i in seq_along(inits)) {
       # cat(i, "\n") # DEBUG
       pi1_init <- inits[i]
       res_temp <- .prevOptimSnglInit(pos, totals, meths, pi1_init, trans_probs,
@@ -469,7 +469,7 @@
     }
   } else {
     loglik <- -Inf
-    for (i in 1:length(inits)) {
+    for (i in seq_along(inits)) {
       pi1 <- inits[i]
       vit <- .Viterbi2Grp(totals, meths, trans_probs, pi1,
                           CHOICEARRAY, METHARRAY, UNMETHARRAY)
