@@ -11,12 +11,17 @@ The R package `vmrseq` is a novel computational tool developed for pinpointing v
 
 ## Installation
 
-You can install the development version of `vmrseq` in R from
-[GitHub](https://github.com/) with:
+You can install the development version of `vmrseq` in R from Bioconductor (recommended) or GitHub:
 
-``` r
-# install.packages("devtools")
-devtools::install_github("nshen7/vmrseq")
+```r
+# Install stable version from Bioconductor
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("vmrseq")
+
+## Or development version from Github
+# install.packages("remotes")
+remotes::install_github("nshen7/vmrseq")
 ```
 
 ## Online Vignette
