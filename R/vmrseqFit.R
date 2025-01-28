@@ -26,7 +26,7 @@
 #' @param gradient logical value indicating whether exponentiated gradient
 #' descent shall be applied to update prevalence parameter. Default is TRUE. If
 #' set as FALSE, initial values (i.e., value of \code{inits} arguments in
-#' \code{vmrsqe::vmrseq.optim.control}, can be set up in the \code{control}
+#' \code{vmrsqe::vmrseqOptimControl}, can be set up in the \code{control}
 #' argument of this function) are used as prevalence parameter for decoding
 #' hidden states.
 #' @param tp a `transitProbs-class` object that contains the transition
@@ -35,8 +35,8 @@
 #' previously trained on mouse brain cells. See manuscript for training
 #' procedure and data source.
 #' @param control list of miscellaneous parameters used to control optimization
-#' of the HMM model. Default is output of \code{vmrseq::vmrseq.optim.control()}.
-#' Can be changed by tweaking arguments in function \code{vmrseq::vmrseq.optim.control()}.
+#' of the HMM model. Default is output of \code{vmrseq::vmrseqOptimControl()}.
+#' Can be changed by tweaking arguments in function \code{vmrseq::vmrseqOptimControl()}.
 #' @param verbose logical value that indicates whether progress messages
 #' should be printed to stdout. Defaults value is TRUE.
 #' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel
@@ -49,7 +49,7 @@
 #' @import GenomicRanges
 #'
 #' @return The results object is a list of 6 elements that contains the following information:
-#' 1. `gr`: The `Granges` object that has been input to `vmrseq.fit` with two added metadata columns:
+#' 1. `gr`: The `Granges` object that has been input to `vmrseqFit` with two added metadata columns:
 #'     + `cr_index` = Index in reference to rows of `cr.ranges`, denoting row number of the candidate region to which the CpG site belongs.
 #'     + `vmr_index` = Index in reference to rows of `vmr.ranges`, denoting row number of the variably methylated region to which the CpG site belongs.
 #' 2. `vmr.ranges`: A `Granges` object with the coordinates of each detected variably methylated region (each row is a VMR), with metadata columns:
@@ -69,11 +69,11 @@
 #' @examples
 #' # load example data
 #' data(toy.gr)
-#' # run vmrseq.fit
-#' toy.results <- vmrseq.fit(toy.gr)
+#' # run vmrseqFit
+#' toy.results <- vmrseqFit(toy.gr)
 #' toy.results
 #'
-vmrseq.fit <- function(
+vmrseqFit <- function(
     gr,
     alpha = 0.05,
     maxGap = 2000,
@@ -82,7 +82,7 @@ vmrseq.fit <- function(
     minNumVMR = 5,
     gradient = TRUE,
     tp = NULL,
-    control = vmrseq.optim.control(),
+    control = vmrseqOptimControl(),
     verbose = TRUE,
     BPPARAM = BiocParallel::bpparam()
 ) {
@@ -98,8 +98,7 @@ vmrseq.fit <- function(
     parallel <- FALSE
   } else {
     if (verbose) {
-      mes <- paste0("Parallel: Parallelizing using %s workers/cores ",
-                    "(backend: %s).")
+      mes <- "Parallel: Parallelizing using %s workers/cores (backend: %s)."
       message(sprintf(mes, bpparam()$workers, backend))
     }
     parallel <- TRUE

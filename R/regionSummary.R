@@ -34,10 +34,10 @@
 #' data(toy.results)
 #' 
 #' # run vmrseq.fit
-#' regions.se <- region.summary(SE = toy.se, region_ranges = toy.results$vmr.ranges[1:3])
+#' regions.se <- regionSummary(SE = toy.se, region_ranges = toy.results$vmr.ranges[1:3])
 #' regions.se
 #' 
-region.summary <- function(
+regionSummary <- function(
     SE,
     region_ranges,
     sparseNAdrop = is_sparse(assays(SE)[[1]]),

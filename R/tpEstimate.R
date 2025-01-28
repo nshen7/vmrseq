@@ -44,11 +44,11 @@
 #' df_2 <- cell_2 %>% mutate(meth = round(mc_count / total)) %>% select(chr, pos, meth)
 #' df_3 <- cell_3 %>% mutate(meth = round(mc_count / total)) %>% select(chr, pos, meth)
 #' 
-#' # run tp.estimate
+#' # run tpEstimate
 #' list <- list(df_1, df_2, df_3)
-#' tp.estimate(list)
+#' tpEstimate(list)
 #'
-tp.estimate <- function(list,
+tpEstimate <- function(list,
                         max_dist_bp = 2000,
                         buffer_bp = 3000,
                         lags = 1:10,

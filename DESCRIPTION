@@ -6,12 +6,11 @@ Authors@R: person("Ning", "Shen", email = "ning.shen.wk@gmail.com",role = c("aut
 Description: High-throughput single-cell measurements of DNA methylation allows studying inter-cellular epigenetic heterogeneity, but this task faces the challenges of sparsity and noise. We present vmrseq, a statistical method that overcomes these challenges and identifies variably methylated regions accurately and robustly.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.2.3
 biocViews: Software, ImmunoOncology, DNAMethylation, Epigenetics, SingleCell,
   Sequencing, WholeGenome
 Depends: 
-    R (>= 3.5.0)
+    R (>= 4.4.0)
 Imports: 
     bumphunter,
     dplyr,

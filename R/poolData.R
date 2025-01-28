@@ -45,10 +45,10 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{data.pool(cellFiles = your_cell_file_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")}
+#' \donttest{poolData(cellFiles = your_cell_file_list, sep = ",", chrNames = "chr1", writeDir = "your/write/path")}
 #' 
 
-data.pool <- function(cellFiles,
+poolData <- function(cellFiles,
                       sep,
                       writeDir,
                       chrNames,

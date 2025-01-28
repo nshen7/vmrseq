@@ -1,7 +1,7 @@
 #' @title Smoothing on single-cell bisulfite sequencing data for the purpose of
 #' constructing candidate regions.
 #'
-#' @description \code{vmrseq.smooth} takes a \code{SummarizedExperiment} object
+#' @description \code{vmrseqSmooth} takes a \code{SummarizedExperiment} object
 #'  with information of methylation level of individual cells as input, and
 #'  perform a kernel smoother to ‘relative’ methylation levels of individual
 #'  cells prior to constructing candidate regions. Purpose of the smoothing is
@@ -53,11 +53,11 @@
 #' total <- DelayedArray::rowSums(SummarizedExperiment::assays(toy.se)$M_mat > 0)
 #' toy.se <- subset(toy.se, total >= 3)
 #' 
-#' # run vmrseq.smooth
-#' toy.gr <- vmrseq.smooth(toy.se)
+#' # run vmrseqSmooth
+#' toy.gr <- vmrseqSmooth(toy.se)
 #' toy.gr
 #'
-vmrseq.smooth <- function(
+vmrseqSmooth <- function(
     SE,
     bpWindow = 2000, # param for individual-cell methylation residual smoother
     sparseNAdrop = is_sparse(assays(SE)[[1]]),
@@ -107,8 +107,7 @@ vmrseq.smooth <- function(
     parallel <- FALSE
   } else {
     if (verbose) {
-      mes <- paste0("Parallel: Parallelizing using %s workers/cores ",
-                    "(backend: %s).")
+      mes <- "Parallel: Parallelizing using %s workers/cores (backend: %s)."
       message(sprintf(mes, bpparam()$workers, backend))
     }
     parallel <- TRUE

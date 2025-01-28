@@ -18,9 +18,9 @@
 #' @export
 #'
 #' @examples
-#' tp.plot(vmrseq:::tp0)
+#' tpPlot(tp0)
 #' 
-tp.plot <- function(tp,
+tpPlot <- function(tp,
                     line_size = 0.2,
                     plot_train = TRUE,
                     point_size = 0.2) {
