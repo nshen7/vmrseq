@@ -29,6 +29,7 @@ vmrseqOptimControl <- function(
     eta = ifelse(backtrack, 0.05, 0.005),
     maxIter = 100
 ) {
+  if (any(inits <= 0 | inits >= 1)) stop('All values in inits has to between 0 and 1!')
   return(list(inits = inits, epsilon = epsilon,
               backtrack = backtrack,
               eta = eta, maxIter = maxIter))

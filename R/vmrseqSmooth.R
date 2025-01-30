@@ -10,13 +10,13 @@
 #'
 #' @param SE \code{SummarizedExperiment} object with one (and only one) assay that
 #'  contains *binary* methylation status of CpG sites in individual cells. We
-#'  recommend using output by \code{vmrseq::data.pool} (i.e., an NA-dropped
+#'  recommend using output by \code{\link{poolData}} (i.e., an NA-dropped
 #'  HDF5-based SummarizedExperiment object) to prevent running out of memory.
 #' @param bpWindow positive integer that represents the width (in bp) of
 #'  smoothing window. Default value is 2000.
 #' @param sparseNAdrop logical value that represents whether the NA values are
 #'  droppped in the input \code{SE} object. \code{SE} objects output by
-#'  \code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
+#'  \code{\link{poolData}} are NA dropped. See \code{?vmrseq::poolData}
 #'  for details about NA-dropped representation.
 #' @param verbose logical value that indicates whether progress messages
 #'  should be printed to stdout. Defaults value is TRUE.
@@ -42,7 +42,7 @@
 #'  2. total: total (non-missing) cell count of the CpG
 #'  3. var: variance computed based on individual-cell smoothed relative methylation levels.
 #'
-#' @seealso \code{\link{data.pool}}, \code{\link{vmrseq.fit}}
+#' @seealso \code{\link{poolData}}, \code{\link{vmrseqFit}}
 #' @export
 #' 
 #' @examples

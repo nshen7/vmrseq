@@ -49,12 +49,12 @@
 #' 
 
 poolData <- function(cellFiles,
-                      sep,
-                      writeDir,
-                      chrNames,
-                      colData = NULL,
-                      sparseNAdrop = TRUE) {
-
+                     sep,
+                     writeDir,
+                     chrNames,
+                     colData = NULL,
+                     sparseNAdrop = TRUE) {
+  
   # TODO: making checks on input data format
   chrNames <- as.character(chrNames)
 
