@@ -16,7 +16,7 @@ vmrseqSmooth(
 \arguments{
 \item{SE}{\code{SummarizedExperiment} object with one (and only one) assay that
 contains *binary* methylation status of CpG sites in individual cells. We
-recommend using output by \code{vmrseq::data.pool} (i.e., an NA-dropped
+recommend using output by \code{\link{poolData}} (i.e., an NA-dropped
 HDF5-based SummarizedExperiment object) to prevent running out of memory.}
 
 \item{bpWindow}{positive integer that represents the width (in bp) of
@@ -24,7 +24,7 @@ smoothing window. Default value is 2000.}
 
 \item{sparseNAdrop}{logical value that represents whether the NA values are
 droppped in the input \code{SE} object. \code{SE} objects output by
-\code{vmrseq::data.pool} are NA dropped. See \code{?vmrseq::data.pool}
+\code{\link{poolData}} are NA dropped. See \code{?vmrseq::poolData}
 for details about NA-dropped representation.}
 
 \item{verbose}{logical value that indicates whether progress messages
@@ -66,5 +66,5 @@ toy.gr
 
 }
 \seealso{
-\code{\link{data.pool}}, \code{\link{vmrseq.fit}}
+\code{\link{poolData}}, \code{\link{vmrseqFit}}
 }
