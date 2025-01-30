@@ -24,7 +24,7 @@ a random cell from mouse frontal cortext dataset published by Luo et al. (2017).
 }
 \examples{
 data(cell_2)
-head(cell_1)
+head(cell_2)
 
 }
 \references{
