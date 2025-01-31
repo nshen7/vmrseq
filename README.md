@@ -42,7 +42,7 @@ docker pull nshen7/vmrseq-bioc-3.19:latest
 
 ## Citation
 
-Ning Shen and Keegan Korthauer. 2023. “Vmrseq: Probabilistic Modeling of Single-Cell Methylation Heterogeneity.” bioRxiv. [https://doi.org/10.1101/2023.11.20.567911](https://doi.org/10.1101/2023.11.20.567911).
+Shen, N., Korthauer, K. vmrseq: probabilistic modeling of single-cell methylation heterogeneity. Genome Biol 25, 321 (2024). https://doi.org/10.1186/s13059-024-03457-7
 
 ## License/Copyright
 
