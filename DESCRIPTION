@@ -10,7 +10,7 @@ RoxygenNote: 7.2.3
 biocViews: Software, ImmunoOncology, DNAMethylation, Epigenetics, SingleCell,
   Sequencing, WholeGenome
 Depends: 
-    R (>= 4.4.0)
+    R (>= 4.5.0)
 Imports: 
     bumphunter,
     dplyr,
