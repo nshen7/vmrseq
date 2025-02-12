@@ -19,7 +19,7 @@ vmrseqFit(
 )
 }
 \arguments{
-\item{gr}{\code{GRanges} object output by \code{vmrseq::vmrseq.smooth},
+\item{gr}{\code{GRanges} object output by \code{vmrseq::vmrseqSmooth},
 containing genomic coordinates (chr, start, end) and summarized information
 (meth, total, var) of CpG sites in the input dataset.}
 

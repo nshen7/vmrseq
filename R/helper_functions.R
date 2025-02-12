@@ -9,11 +9,11 @@
 #' @usage data(cell_1)
 #' @format A data frame with 10000 rows and 5 variables (no column names):
 #' \describe{
-#'   \item{V1}{Chromosome}
-#'   \item{V2}{Genomic coordinate}
-#'   \item{V3}{Strand information}
-#'   \item{V4}{Number of methylated reads}
-#'   \item{V5}{Number of reads in total}
+#'   \item{chr}{Chromosome}
+#'   \item{mc_count}{Genomic coordinate}
+#'   \item{pos}{Strand information}
+#'   \item{strand}{Number of methylated reads}
+#'   \item{total}{Number of reads in total}
 #' }
 #' @references Luo, Chongyuan et al. \emph{Single-cell methylomes identify neuronal
 #' subtypes and regulatory elements in mammalian cortex.}. Science (New York, N.Y.)
@@ -36,11 +36,11 @@
 #' @usage data(cell_2)
 #' @format A data frame with 10000 rows and 5 variables (no column names):
 #' \describe{
-#'   \item{V1}{Chromosome}
-#'   \item{V2}{Genomic coordinate}
-#'   \item{V3}{Strand information}
-#'   \item{V4}{Number of methylated reads}
-#'   \item{V5}{Number of reads in total}
+#'   \item{chr}{Chromosome}
+#'   \item{mc_count}{Genomic coordinate}
+#'   \item{pos}{Strand information}
+#'   \item{strand}{Number of methylated reads}
+#'   \item{total}{Number of reads in total}
 #' }
 #' @references Luo, Chongyuan et al. \emph{Single-cell methylomes identify neuronal
 #' subtypes and regulatory elements in mammalian cortex.}. Science (New York, N.Y.)
@@ -62,11 +62,11 @@
 #' @usage data(cell_3)
 #' @format A data frame with 10000 rows and 5 variables (no column names):
 #' \describe{
-#'   \item{V1}{Chromosome}
-#'   \item{V2}{Genomic coordinate}
-#'   \item{V3}{Strand information}
-#'   \item{V4}{Number of methylated reads}
-#'   \item{V5}{Number of reads in total}
+#'   \item{chr}{Chromosome}
+#'   \item{mc_count}{Genomic coordinate}
+#'   \item{pos}{Strand information}
+#'   \item{strand}{Number of methylated reads}
+#'   \item{total}{Number of reads in total}
 #' }
 #' @references Luo, Chongyuan et al. \emph{Single-cell methylomes identify neuronal
 #' subtypes and regulatory elements in mammalian cortex.}. Science (New York, N.Y.)

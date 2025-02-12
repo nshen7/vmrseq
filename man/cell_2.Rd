@@ -7,11 +7,11 @@
 \format{
 A data frame with 10000 rows and 5 variables (no column names):
 \describe{
-  \item{V1}{Chromosome}
-  \item{V2}{Genomic coordinate}
-  \item{V3}{Strand information}
-  \item{V4}{Number of methylated reads}
-  \item{V5}{Number of reads in total}
+  \item{chr}{Chromosome}
+  \item{mc_count}{Genomic coordinate}
+  \item{pos}{Strand information}
+  \item{strand}{Number of methylated reads}
+  \item{total}{Number of reads in total}
 }
 }
 \usage{
@@ -24,7 +24,7 @@ a random cell from mouse frontal cortext dataset published by Luo et al. (2017).
 }
 \examples{
 data(cell_2)
-head(cell_1)
+head(cell_2)
 
 }
 \references{

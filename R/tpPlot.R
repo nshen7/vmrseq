@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-#' tpPlot(tp0)
+#' tpPlot(vmrseq:::tp0)
 #' 
 tpPlot <- function(tp,
                     line_size = 0.2,

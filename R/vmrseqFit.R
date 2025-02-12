@@ -4,7 +4,7 @@
 #' threshold on the variance of smoothed relative methylation levels and detect
 #' variably methylated regions (VMRs) by optimizing a hidden Markov model (HMM).
 #'
-#' @param gr \code{GRanges} object output by \code{vmrseq::vmrseq.smooth},
+#' @param gr \code{GRanges} object output by \code{vmrseq::vmrseqSmooth},
 #' containing genomic coordinates (chr, start, end) and summarized information
 #' (meth, total, var) of CpG sites in the input dataset.
 #' @param alpha positive scalar value between 0 and 1 that represents the
