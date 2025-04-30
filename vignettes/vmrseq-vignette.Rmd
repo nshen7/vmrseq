@@ -56,9 +56,6 @@ After installation, load the vmrseq package:
 library(vmrseq)
 ```
 
-```{r, include = FALSE}
-devtools::load_all('..')
-```
 
 How to get help for vmrseq: Feel free to raise questions by opening issue(s) in the [vmrseq GitHub repository](https://github.com/nshen7/vmrseq)
 
