@@ -27,7 +27,8 @@ Imports:
     data.table,
     SummarizedExperiment,
     IRanges,
-    S4Vectors
+    S4Vectors,
+    devtools
 Suggests: 
     knitr,
     rmarkdown,
