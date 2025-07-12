@@ -1,6 +1,7 @@
-<p style="text-align: center;">
-  <img src="man/figures/logo.png" alt="Example Image" width="70">
+<p align="center">
+  <img src="man/figures/logo.png" alt="Example Image" width="160">
 </p>
+
 
 # vmrseq: Detecting variably methylated regions (VMRs) from single-cell bisulfite sequencing
 
